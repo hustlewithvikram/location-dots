@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#F4F8FF"/><stop offset=".55" stop-color="#F9FAFF"/><stop offset="1" stop-color="#FFF1FB"/>
+  </linearGradient>
+  <linearGradient id="route" x1="300" y1="700" x2="1350" y2="280" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#1683FF"/><stop offset=".5" stop-color="#5B35F5"/><stop offset="1" stop-color="#E83FAE"/>
+  </linearGradient>
+  <linearGradient id="iconRoute" x1="100" y1="80" x2="310" y2="320" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#1683FF"/><stop offset=".52" stop-color="#5B35F5"/><stop offset="1" stop-color="#E83FAE"/>
+  </linearGradient>
+  <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+    <feDropShadow dx="0" dy="20" stdDeviation="28" flood-color="#34456B" flood-opacity=".16"/>
+  </filter>
+  <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur stdDeviation="35"/>
+  </filter>
+</defs>
+<rect width="1600" height="900" rx="44" fill="url(#bg)"/>
+<circle cx="280" cy="210" r="170" fill="#1683FF" opacity=".10" filter="url(#soft)"/>
+<circle cx="1330" cy="670" r="210" fill="#E83FAE" opacity=".09" filter="url(#soft)"/>
+<g opacity=".20" fill="none" stroke="#B9C8E4" stroke-width="2">
+  <path d="M0 620 C260 470 420 590 650 470 S1050 250 1600 360"/>
+  <path d="M-50 760 C260 600 480 730 720 590 S1200 400 1650 520"/>
+  <path d="M180 80 C360 260 310 430 470 560 S760 760 940 900"/>
+  <path d="M780 0 C650 230 820 360 780 530 S900 760 1110 900"/>
+  <path d="M1220 0 C1050 220 1190 330 1130 510 S1260 740 1510 900"/>
+</g>
+<path d="M180 690 C360 610 410 720 585 650 C750 585 760 465 930 490 C1110 515 1115 390 1275 350 C1370 327 1430 270 1490 210" fill="none" stroke="#FFFFFF" stroke-width="30" stroke-linecap="round" opacity=".9"/>
+<path d="M180 690 C360 610 410 720 585 650 C750 585 760 465 930 490 C1110 515 1115 390 1275 350 C1370 327 1430 270 1490 210" fill="none" stroke="url(#route)" stroke-width="10" stroke-linecap="round"/>
+<g fill="#fff" stroke="url(#route)" stroke-width="8">
+  <circle cx="180" cy="690" r="18"/><circle cx="585" cy="650" r="18"/><circle cx="930" cy="490" r="18"/><circle cx="1275" cy="350" r="18"/><circle cx="1490" cy="210" r="18"/>
+</g>
+<g transform="translate(210 145)" filter="url(#shadow)">
+  <rect width="360" height="360" rx="86" fill="#fff"/>
+  <path d="M88 82 C88 145 124 166 180 180 C236 194 272 215 272 278" fill="none" stroke="url(#iconRoute)" stroke-width="30" stroke-linecap="round"/>
+  <circle cx="88" cy="82" r="42" fill="#1683FF"/><circle cx="180" cy="180" r="42" fill="#5B35F5"/><circle cx="272" cy="278" r="42" fill="#E83FAE"/>
+  <circle cx="88" cy="82" r="13" fill="#fff"/><circle cx="180" cy="180" r="13" fill="#fff"/><circle cx="272" cy="278" r="13" fill="#fff"/>
+</g>
+<text x="640" y="320" font-family="Inter, SF Pro Display, Arial, sans-serif" font-size="88" font-weight="750" letter-spacing="-4" fill="#111827">Location <tspan fill="url(#route)">Dots</tspan></text>
+<text x="646" y="370" font-family="Inter, SF Pro Display, Arial, sans-serif" font-size="29" letter-spacing="1.2" fill="#667085">Every place leaves a dot.</text>
+<g filter="url(#shadow)">
+  <g transform="translate(250 565) rotate(-6)"><rect width="150" height="110" rx="20" fill="#fff"/><rect x="10" y="10" width="130" height="70" rx="13" fill="#EAF1FF"/><circle cx="75" cy="94" r="10" fill="#1683FF"/><text x="75" y="66" text-anchor="middle" font-family="Arial" font-size="17" fill="#355">HOME</text></g>
+  <g transform="translate(680 540) rotate(4)"><rect width="150" height="110" rx="20" fill="#fff"/><rect x="10" y="10" width="130" height="70" rx="13" fill="#EEEAFE"/><circle cx="75" cy="94" r="10" fill="#5B35F5"/><text x="75" y="66" text-anchor="middle" font-family="Arial" font-size="17" fill="#355">CAFE</text></g>
+  <g transform="translate(1115 330) rotate(-5)"><rect width="150" height="110" rx="20" fill="#fff"/><rect x="10" y="10" width="130" height="70" rx="13" fill="#FFF0FA"/><circle cx="75" cy="94" r="10" fill="#E83FAE"/><text x="75" y="66" text-anchor="middle" font-family="Arial" font-size="17" fill="#633">GYM</text></g>
+</g>
+<text x="800" y="825" text-anchor="middle" font-family="Inter, SF Pro Display, Arial, sans-serif" font-size="23" letter-spacing="4" font-weight="600" fill="#7A8499">YOUR DAY · YOUR ROUTE · YOUR STORY</text>
+</svg>
