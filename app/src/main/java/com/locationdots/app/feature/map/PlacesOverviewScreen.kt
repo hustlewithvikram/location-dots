@@ -43,9 +43,11 @@ fun PlacesOverviewScreen(
                         Text("Places", style = MaterialTheme.typography.headlineLarge)
                         Text("The locations that became part of your story.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    FilledTonalIconButton(onClick = { if (points.isNotEmpty()) camera.move(CameraUpdateFactory.newLatLngZoom(points.first(), 13f)) }) {
-                        Icon(Icons.Default.MyLocation, "Center")
-                    }
+                    ExpressiveIconButton(
+                        onClick = { if (points.isNotEmpty()) camera.move(CameraUpdateFactory.newLatLngZoom(points.first(), 13f)) },
+                        icon = { Icon(Icons.Default.MyLocation, "Center") },
+                        emphasized = true
+                    )
                 }
             }
             item {
