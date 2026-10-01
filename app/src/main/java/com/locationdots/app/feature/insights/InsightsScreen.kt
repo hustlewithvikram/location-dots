@@ -15,7 +15,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Route
-import androidx.compose.material.icons.filled.Walk
+import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.PedalBike
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
@@ -188,7 +188,7 @@ private fun ModeCard(snapshot: InsightsSnapshot) {
 @Composable
 private fun ModeRow(mode: JourneyMode, count: Int) {
     val icon = when (mode) {
-        JourneyMode.WALKING -> Icons.Default.Walk
+        JourneyMode.WALKING -> Icons.Default.DirectionsWalk
         JourneyMode.CYCLING -> Icons.Default.PedalBike
         JourneyMode.VEHICLE -> Icons.Default.DirectionsCar
         JourneyMode.UNKNOWN -> Icons.Default.Route
