@@ -2,6 +2,9 @@ package com.locationdots.app.feature.timeline
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
@@ -24,11 +27,20 @@ private sealed interface TimelineItem {
 fun TimelineScreen(
     events: List<TimelineEvent>,
     isTracking: Boolean,
-    onPlaceClick: (String) -> Unit
+    onPlaceClick: (String) -> Unit,
+    onLoadMore: () -> Unit
 ) {
     val items = buildTimelineItems(events)
     val dateFormatter = DateTimeFormatter.ofPattern("EEE, d MMM", Locale.getDefault())
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+            .collect { lastIndex ->
+                if (lastIndex != null && lastIndex >= items.size - 5) onLoadMore()
+            }
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Text("Timeline", style = MaterialTheme.typography.headlineLarge,
@@ -40,7 +52,7 @@ fun TimelineScreen(
             Text("Your timeline will appear here as Location Dots learns your movements.",
                 style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(24.dp))
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(items, key = {
                     when (it) {
                         is TimelineItem.DayHeader -> "day:${it.date}"
