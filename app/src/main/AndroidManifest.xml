@@ -8,6 +8,7 @@
 
     <application
         android:name=".LocationDotsApplication"
+        android:theme="@style/Theme.LocationDots"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="Location Dots"
