@@ -11,6 +11,9 @@ interface LocationDao {
     @Query("SELECT * FROM location_points ORDER BY timestampEpochMillis ASC")
     fun observeAll(): Flow<List<LocationEntity>>
 
+    @Query("SELECT * FROM location_points ORDER BY timestampEpochMillis ASC")
+    suspend fun getAll(): List<LocationEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(point: LocationEntity)
 }
