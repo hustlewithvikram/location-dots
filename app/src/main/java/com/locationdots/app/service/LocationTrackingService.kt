@@ -14,6 +14,8 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.locationdots.app.LocationDotsApplication
 import com.locationdots.app.R
+import java.time.Duration
+import java.time.Instant
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -36,9 +38,12 @@ class LocationTrackingService : LifecycleService() {
             app.locationProvider.locations.collect { point ->
                 app.locationRepository.saveLocationPoint(point)
 
-                val points = app.locationRepository.getAllLocationPoints()
+                val to = point.timestamp
+                val from = to.minus(PROCESSING_WINDOW)
+                val points = app.locationRepository.getLocationPoints(from, to)
                 val events = app.journeyProcessor.process(points)
-                app.timelineRepository.replaceAll(events)
+
+                app.timelineRepository.replaceRange(from, to, events)
             }
         }
 
@@ -92,5 +97,6 @@ class LocationTrackingService : LifecycleService() {
     private companion object {
         const val CHANNEL_ID = "location_tracking"
         const val NOTIFICATION_ID = 1001
+        val PROCESSING_WINDOW: Duration = Duration.ofHours(48)
     }
 }
