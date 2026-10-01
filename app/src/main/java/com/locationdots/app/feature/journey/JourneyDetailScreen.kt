@@ -344,9 +344,6 @@ private fun timeFormatter(timestamp: java.time.Instant): String =
     DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
         .format(timestamp.atZone(ZoneId.systemDefault()))
 
-private fun formatSpeed(speedKmh: Double): String =
-    if (speedKmh < 10) "%.1f km/h".format(speedKmh) else "%.0f km/h".format(speedKmh)
-
 private fun JourneyMode.label(): String = when (this) {
     JourneyMode.WALKING -> "Walking"
     JourneyMode.CYCLING -> "Cycling"
