@@ -57,7 +57,11 @@ class MainActivity : ComponentActivity() {
             hasLocationPermission =
                 result[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
                     result[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-            if (hasLocationPermission) startTracking()
+            if (hasLocationPermission) {
+                preferences.edit().putBoolean("onboarding_complete", true).apply()
+                isFirstRun = false
+                startTracking()
+            }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,13 +92,23 @@ class MainActivity : ComponentActivity() {
                 val insightsLoading by insightsViewModel.isLoading.collectAsStateWithLifecycle()
                 val insightsError by insightsViewModel.error.collectAsStateWithLifecycle()
 
-                LaunchedEffect(Unit) {
-                    delay(650)
-                    showSplash = false
+                LaunchedEffect(isFirstRun) {
+                    if (!isFirstRun) {
+                        delay(650)
+                        showSplash = false
+                    }
                 }
 
                 when {
-                    showSplash -> SplashScreen()
+                    showSplash -> SplashScreen(
+                        onGetStarted = {
+                            if (hasLocationPermission) {
+                                preferences.edit().putBoolean("onboarding_complete", true).apply()
+                                isFirstRun = false
+                            }
+                            showSplash = false
+                        }
+                    )
                     !hasLocationPermission -> OnboardingScreen(
                         hasLocationPermission = false,
                         isTracking = isTracking,
