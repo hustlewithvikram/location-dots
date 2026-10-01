@@ -19,5 +19,6 @@ data class TimelineEventEntity(
     val startedAtEpochMillis: Long?,
     val endedAtEpochMillis: Long?,
     val distanceMeters: Double?,
-    val journeyMode: String?,\n    val pathEncoded: String?
+    val journeyMode: String?,
+    val pathEncoded: String?
 )
