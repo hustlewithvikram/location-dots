@@ -13,6 +13,9 @@ class RoomPlaceRepository(private val dao: PlaceDao) : PlaceRepository {
     override fun observePlaces(): Flow<List<Place>> =
         dao.observeAll().map { it.map { entity -> entity.toDomain() } }
 
+    override suspend fun searchByName(query: String): List<Place> =
+        dao.searchByName(query.trim()).map { it.toDomain() }
+
     override suspend fun getPlace(id: String): Place? =
         dao.findById(id)?.toDomain()
 
