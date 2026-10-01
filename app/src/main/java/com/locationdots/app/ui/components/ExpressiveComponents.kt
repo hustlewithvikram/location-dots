@@ -14,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
@@ -29,7 +28,7 @@ fun ExpressiveCard(
         modifier = modifier
             .animateContentSize()
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
-        shape = RoundedCornerShape(if (emphasized) 28.dp else 22.dp),
+        shape = if (emphasized) MaterialTheme.shapes.extraLarge else MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = if (emphasized) {
                 MaterialTheme.colorScheme.primaryContainer
@@ -55,7 +54,7 @@ fun ExpressiveButton(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier.height(56.dp),
-        shape = RoundedCornerShape(20.dp),
+        shape = MaterialTheme.shapes.large,
         colors = ButtonDefaults.buttonColors(
             containerColor = if (emphasized) {
                 MaterialTheme.colorScheme.primary

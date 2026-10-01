@@ -13,6 +13,7 @@ import com.locationdots.app.domain.model.JourneyMode
 import com.locationdots.app.domain.search.SearchResult
 import com.locationdots.app.ui.components.ExpressiveCard
 import com.locationdots.app.ui.components.ExpressiveListRow
+import com.locationdots.app.ui.components.ExpressiveIconButton
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -36,6 +37,7 @@ fun SearchScreen(
                     OutlinedTextField(
                         query, onQueryChange, Modifier.fillMaxWidth(),
                         singleLine = true, placeholder = { Text("Search places and journeys") },
+                        trailingIcon = { if (query.isNotEmpty()) ExpressiveIconButton(onClick = { onQueryChange("") }, icon = { Icon(Icons.Default.Close, "Clear search") }, modifier = Modifier.size(40.dp), contentDescription = "Clear search") },
                         leadingIcon = { Icon(Icons.Default.Search, null) },
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp)
                     )
@@ -55,7 +57,7 @@ fun SearchScreen(
                 }
             }
             results.isEmpty() -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                ExpressiveCard { Text("No matches found", Modifier.padding(24.dp), style = MaterialTheme.typography.titleLarge) }
+                ExpressiveCard(Modifier.padding(24.dp)) { Column(Modifier.padding(28.dp), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) { Icon(Icons.Default.SearchOff, null, Modifier.size(40.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant); Text("No matches found", style = MaterialTheme.typography.titleLarge); Text("Try another place or movement type.", color = MaterialTheme.colorScheme.onSurfaceVariant) } }
             }
             else -> LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(18.dp, 8.dp, 18.dp, 28.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(results, key = {

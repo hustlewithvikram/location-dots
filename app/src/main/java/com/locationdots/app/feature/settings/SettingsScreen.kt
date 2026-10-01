@@ -44,7 +44,7 @@ fun SettingsScreen(
                 ExpressiveCard(emphasized = true) {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         ExpressiveSectionHeader("Automatic tracking", "Capture places and journeys in the background.")
-                        ExpressiveListRow("Location tracking", if (isTracking) "Active now" else "Paused", { Icon(Icons.Default.LocationOn, null) }, trailing = { Switch(isTracking, onTrackingChange) })
+                        ExpressiveListRow("Location tracking", if (isTracking) "Active now" else "Paused", { Icon(Icons.Default.LocationOn, null) }, trailing = { Switch(checked = isTracking, onCheckedChange = onTrackingChange) })
                     }
                 }
             }
@@ -63,7 +63,7 @@ fun SettingsScreen(
                                 ) { Text(choice.name.lowercase().replaceFirstChar { it.uppercase() }) }
                             }
                         }
-                        ExpressiveListRow("Motion & transitions", "Use expressive screen transitions and animated surfaces.", { Icon(Icons.Default.Speed, null) }, trailing = { Switch(animationsEnabled, onAnimationsChange) })
+                        ExpressiveListRow("Motion & transitions", "Use expressive screen transitions and animated surfaces.", { Icon(Icons.Default.Speed, null) }, trailing = { Switch(checked = animationsEnabled, onCheckedChange = onAnimationsChange) })
                     }
                 }
             }

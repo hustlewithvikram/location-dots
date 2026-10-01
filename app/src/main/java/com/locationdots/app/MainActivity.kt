@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
+import androidx.core.view.WindowCompat
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -85,6 +86,7 @@ class MainActivity : ComponentActivity() {
                 ThemeChoice.LIGHT -> false
                 ThemeChoice.SYSTEM -> isSystemInDarkTheme()
             }
+            SideEffect { WindowCompat.getInsetsController(window, window.decorView).apply { isAppearanceLightStatusBars = !darkTheme; isAppearanceLightNavigationBars = !darkTheme } }
             LocationDotsTheme(darkTheme = darkTheme) {
                 val timelineState by timelineViewModel.uiState.collectAsStateWithLifecycle()
                 val places by placesViewModel.places.collectAsStateWithLifecycle()
