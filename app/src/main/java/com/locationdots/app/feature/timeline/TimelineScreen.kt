@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Walk
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
@@ -40,9 +41,15 @@ private sealed interface TimelineItem {
 fun TimelineScreen(
     events: List<TimelineEvent>,
     isTracking: Boolean,
+    isLoadingMore: Boolean,
+    isRefreshing: Boolean,
+    hasMore: Boolean,
+    errorMessage: String?,
     onPlaceClick: (String) -> Unit,
     onJourneyClick: (String) -> Unit,
-    onLoadMore: () -> Unit
+    onLoadMore: () -> Unit,
+    onRetry: () -> Unit,
+    onClearError: () -> Unit
 ) {
     val items = remember(events) { buildTimelineItems(events) }
     val listState = rememberLazyListState()
@@ -50,7 +57,7 @@ fun TimelineScreen(
         DateTimeFormatter.ofPattern("EEE, d MMM", Locale.getDefault())
     }
 
-    LoadMoreOnScroll(listState, items.size, onLoadMore)
+    LoadMoreOnScroll(listState, items.size, hasMore, isLoadingMore, onLoadMore)
 
     Column(Modifier.fillMaxSize()) {
         TimelineHeader(isTracking)
@@ -79,6 +86,80 @@ fun TimelineScreen(
                         )
                     }
                 }
+
+                if (isLoadingMore) {
+                    item(key = "loading") {
+                        TimelineLoadingIndicator()
+                    }
+                } else if (!hasMore) {
+                    item(key = "end") {
+                        TimelineEndIndicator()
+                    }
+                }
+
+                if (errorMessage != null) {
+                    item(key = "error") {
+                        TimelineError(errorMessage, onRetry, onClearError)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimelineLoadingIndicator() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 18.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(24.dp),
+            strokeWidth = 2.5.dp
+        )
+    }
+}
+
+@Composable
+private fun TimelineEndIndicator() {
+    Text(
+        "You're all caught up",
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 18.dp),
+        textAlign = TextAlign.Center,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+@Composable
+private fun TimelineError(
+    message: String,
+    onRetry: () -> Unit,
+    onClear: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.errorContainer
+    ) {
+        Column(
+            Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onRetry) { Text("Retry") }
+                TextButton(onClick = onClear) { Text("Dismiss") }
             }
         }
     }
@@ -301,13 +382,20 @@ private fun TimelineEmptyState(isTracking: Boolean) {
 private fun LoadMoreOnScroll(
     listState: LazyListState,
     itemCount: Int,
+    hasMore: Boolean,
+    isLoading: Boolean,
     onLoadMore: () -> Unit
 ) {
-    LaunchedEffect(listState, itemCount) {
+    LaunchedEffect(listState, itemCount, hasMore, isLoading) {
         snapshotFlow {
             listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
         }.collect { lastIndex ->
-            if (itemCount > 0 && lastIndex >= itemCount - 5) {
+            if (
+                hasMore &&
+                !isLoading &&
+                itemCount > 0 &&
+                lastIndex >= itemCount - 5
+            ) {
                 onLoadMore()
             }
         }
