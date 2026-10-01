@@ -3,6 +3,7 @@ package com.locationdots.app.data.repository
 import com.locationdots.app.data.local.TimelineEventDao
 import com.locationdots.app.data.local.TimelineEventEntity
 import com.locationdots.app.domain.model.JourneyMode
+import com.locationdots.app.domain.model.LocationPoint
 import com.locationdots.app.domain.model.TimelineEvent
 import com.locationdots.app.domain.places.PlaceRepository
 import com.locationdots.app.domain.timeline.TimelineRepository
