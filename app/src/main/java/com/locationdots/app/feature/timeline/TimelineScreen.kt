@@ -32,44 +32,271 @@ fun TimelineScreen(
     onJourneyClick: (String) -> Unit,
     onLoadMore: () -> Unit
 ) {
-    val items = buildTimelineItems(events)
-    val dateFormatter = DateTimeFormatter.ofPattern("EEE, d MMM", Locale.getDefault())
-    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+    val items = remember(events) { buildTimelineItems(events) }
     val listState = rememberLazyListState()
-
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .collect { lastIndex ->
-                if (lastIndex != null && lastIndex >= items.size - 5) onLoadMore()
-            }
+    val dateFormatter = remember {
+        DateTimeFormatter.ofPattern("EEE, d MMM", Locale.getDefault())
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Text("Timeline", style = MaterialTheme.typography.headlineLarge,
-            modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 8.dp))
-        Text(if (isTracking) "Tracking location" else "Tracking paused",
-            style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(horizontal = 24.dp))
+    LoadMoreOnScroll(listState, items.size, onLoadMore)
+
+    Column(Modifier.fillMaxSize()) {
+        TimelineHeader(isTracking)
 
         if (items.isEmpty()) {
-            Text("Your timeline will appear here as Location Dots learns your movements.",
-                style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(24.dp))
+            TimelineEmptyState(isTracking)
         } else {
-            LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(items, key = {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                items(items = items, key = {
                     when (it) {
-                        is TimelineItem.DayHeader -> "day:${it.date}"
+                        is TimelineItem.DayHeader -> "day:" + it.date
                         is TimelineItem.Event -> it.value.id
                     }
                 }) { item ->
                     when (item) {
-                        is TimelineItem.DayHeader -> Text(
-                            dateFormatter.format(item.date),
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(start = 24.dp, top = 16.dp, end = 24.dp, bottom = 4.dp)
+                        is TimelineItem.DayHeader -> DayHeader(item.date, dateFormatter)
+                        is TimelineItem.Event -> TimelineEventCard(
+                            item.value,
+                            onPlaceClick,
+                            onJourneyClick
                         )
-                        is TimelineItem.Event -> TimelineEventCard(item.value, timeFormatter, onPlaceClick, onJourneyClick)
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimelineHeader(isTracking: Boolean) {
+    Column(
+        modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 28.dp, bottom = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text("Timeline", style = MaterialTheme.typography.headlineLarge)
+
+        Surface(
+            shape = RoundedCornerShape(50),
+            color = if (isTracking) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainer
+            }
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                Box(
+                    Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (isTracking) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.outline
+                        )
+                )
+                Text(
+                    if (isTracking) "Tracking location" else "Tracking paused",
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DayHeader(date: LocalDate, formatter: DateTimeFormatter) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(formatter.format(date), style = MaterialTheme.typography.titleMedium)
+        HorizontalDivider(
+            modifier = Modifier.weight(1f),
+            color = MaterialTheme.colorScheme.outlineVariant
+        )
+    }
+}
+
+@Composable
+private fun TimelineEventCard(
+    event: TimelineEvent,
+    onPlaceClick: (String) -> Unit,
+    onJourneyClick: (String) -> Unit
+) {
+    val zone = ZoneId.systemDefault()
+    val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
+    val isVisit = event is TimelineEvent.Visit
+    val accent = if (isVisit) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.secondary
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                when (event) {
+                    is TimelineEvent.Visit -> onPlaceClick(event.place.id)
+                    is TimelineEvent.Journey -> onJourneyClick(event.id)
+                }
+            },
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TimelineIcon(event, accent)
+
+            Column(
+                Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                Text(
+                    timeFormatter.format(event.timestamp.atZone(zone)),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                when (event) {
+                    is TimelineEvent.Visit -> VisitContent(event)
+                    is TimelineEvent.Journey -> JourneyContent(event)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimelineIcon(
+    event: TimelineEvent,
+    accent: androidx.compose.ui.graphics.Color
+) {
+    val icon = when (event) {
+        is TimelineEvent.Visit -> Icons.Default.Place
+        is TimelineEvent.Journey -> when (event.mode) {
+            JourneyMode.WALKING -> Icons.Default.Walk
+            JourneyMode.CYCLING -> Icons.Default.PedalBike
+            JourneyMode.VEHICLE -> Icons.Default.DirectionsCar
+            JourneyMode.UNKNOWN -> Icons.Default.MyLocation
+        }
+    }
+
+    Surface(
+        modifier = Modifier.size(46.dp),
+        shape = CircleShape,
+        color = accent.copy(alpha = 0.12f)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(23.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun VisitContent(event: TimelineEvent.Visit) {
+    Text(
+        event.place.name ?: "Unnamed place",
+        style = MaterialTheme.typography.titleMedium
+    )
+    Text(
+        durationLabel(event.arrival, event.departure),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+@Composable
+private fun JourneyContent(event: TimelineEvent.Journey) {
+    val destination = event.endPlace?.name ?: "Unnamed place"
+
+    Text(
+        "Journey to " + destination,
+        style = MaterialTheme.typography.titleMedium
+    )
+    Text(
+        listOf(event.mode.label(), formatDistance(event.distanceMeters)).joinToString(" · "),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+@Composable
+private fun TimelineEmptyState(isTracking: Boolean) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Surface(
+                modifier = Modifier.size(72.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(34.dp)
+                    )
+                }
+            }
+
+            Text("Your timeline is empty", style = MaterialTheme.typography.titleLarge)
+            Text(
+                if (isTracking) {
+                    "Location Dots will build your timeline as you move."
+                } else {
+                    "Start tracking to begin building your timeline."
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun LoadMoreOnScroll(
+    listState: LazyListState,
+    itemCount: Int,
+    onLoadMore: () -> Unit
+) {
+    LaunchedEffect(listState, itemCount) {
+        snapshotFlow {
+            listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+        }.collect { lastIndex ->
+            if (itemCount > 0 && lastIndex >= itemCount - 5) {
+                onLoadMore()
             }
         }
     }
@@ -88,60 +315,31 @@ private fun buildTimelineItems(events: List<TimelineEvent>): List<TimelineItem> 
         }
         result += TimelineItem.Event(event)
     }
+
     return result
 }
 
-@Composable
-private fun TimelineEventCard(
-    event: TimelineEvent,
-    timeFormatter: DateTimeFormatter,
-    onPlaceClick: (String) -> Unit,
-    onJourneyClick: (String) -> Unit
-) {
-    val clickable = when (event) {
-        is TimelineEvent.Visit -> Modifier.clickable { onPlaceClick(event.place.id) }
-        is TimelineEvent.Journey -> Modifier.clickable { onJourneyClick(event.id) }
-    }
-
-    Card(modifier = clickable.fillMaxWidth().padding(horizontal = 16.dp)) {
-        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text(timeFormatter.format(event.timestamp.atZone(ZoneId.systemDefault())),
-                style = MaterialTheme.typography.labelLarge)
-
-            Column(modifier = Modifier.weight(1f)) {
-                when (event) {
-                    is TimelineEvent.Visit -> {
-                        Text(event.place.name ?: "Unnamed place", style = MaterialTheme.typography.titleMedium)
-                        Text(durationLabel(event.arrival, event.departure), style = MaterialTheme.typography.bodyMedium)
-                    }
-                    is TimelineEvent.Journey -> {
-                        Text("Journey", style = MaterialTheme.typography.titleMedium)
-                        Text(journeyLabel(event), style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
-            }
-        }
-    }
-}
-
-private fun durationLabel(arrival: java.time.Instant, departure: java.time.Instant?): String {
+private fun durationLabel(
+    arrival: java.time.Instant,
+    departure: java.time.Instant?
+): String {
     if (departure == null) return "Still there"
     val minutes = Duration.between(arrival, departure).toMinutes()
-    return if (minutes < 60) "$minutes min" else "${minutes / 60}h ${minutes % 60}m"
-}
-
-private fun journeyLabel(event: TimelineEvent.Journey): String {
-    val distance = event.distanceMeters?.let {
-        if (it < 1000) "${it.toInt()} m" else "%.1f km".format(it / 1000.0)
-    } ?: "Distance unavailable"
-
-    val destination = event.endPlace?.name ?: "Unnamed place"
-    val mode = when (event.mode) {
-        JourneyMode.WALKING -> "Walking"
-        JourneyMode.CYCLING -> "Cycling"
-        JourneyMode.VEHICLE -> "Vehicle"
-        JourneyMode.UNKNOWN -> "Movement"
+    return if (minutes < 60) {
+        minutes.toString() + " min"
+    } else {
+        (minutes / 60).toString() + "h " + (minutes % 60).toString() + "m"
     }
-
-    return "$destination · $distance · $mode"
 }
+
+private fun JourneyMode.label(): String = when (this) {
+    JourneyMode.WALKING -> "Walking"
+    JourneyMode.CYCLING -> "Cycling"
+    JourneyMode.VEHICLE -> "Vehicle"
+    JourneyMode.UNKNOWN -> "Movement"
+}
+
+private fun formatDistance(distanceMeters: Double?): String = distanceMeters?.let {
+    if (it < 1000) it.toInt().toString() + " m"
+    else "%.1f km".format(it / 1000.0)
+} ?: "Distance unavailable"
