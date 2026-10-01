@@ -1,0 +1,22 @@
+package com.locationdots.app.data.local
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+
+@Dao
+interface TimelineEventDao {
+    @Query("""
+        SELECT * FROM timeline_events
+        ORDER BY timestampEpochMillis DESC
+        LIMIT :limit OFFSET :offset
+    """)
+    suspend fun getPage(limit: Int, offset: Int): List<TimelineEventEntity>
+
+    @Query("DELETE FROM timeline_events")
+    suspend fun deleteAll()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(events: List<TimelineEventEntity>)
+}
