@@ -1,186 +1,97 @@
 package com.locationdots.app.feature.map
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.android.gms.maps.model.*
+import com.google.maps.android.compose.*
 import com.locationdots.app.domain.model.Place
-import java.util.Locale
+import com.locationdots.app.ui.components.*
+import androidx.compose.ui.unit.Dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlacesOverviewScreen(
     places: List<Place>,
     onBack: () -> Unit,
-    onPlaceClick: (String) -> Unit
+    onPlaceClick: (String) -> Unit,
+    onTabSelected: (AppTab) -> Unit = {}
 ) {
     val camera = rememberCameraPositionState()
-    val coordinates = remember(places) {
-        places.map { LatLng(it.latitude, it.longitude) }
-    }
+    val points = remember(places) { places.map { LatLng(it.latitude, it.longitude) } }
 
-    LaunchedEffect(coordinates) {
-        when (coordinates.size) {
-            0 -> Unit
-            1 -> camera.move(
-                CameraUpdateFactory.newLatLngZoom(coordinates.first(), 14f)
-            )
-            else -> {
-                val bounds = LatLngBounds.builder().apply {
-                    coordinates.forEach(::include)
-                }.build()
-                camera.move(CameraUpdateFactory.newLatLngBounds(bounds, 80))
-            }
+    LaunchedEffect(points) {
+        if (points.isNotEmpty()) {
+            val bounds = LatLngBounds.builder().apply { points.forEach(::include) }.build()
+            camera.move(if (points.size == 1) CameraUpdateFactory.newLatLngZoom(points.first(), 13f) else CameraUpdateFactory.newLatLngBounds(bounds, 90))
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Places") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
+    Scaffold(bottomBar = { AppBottomBar(AppTab.MAP, onTabSelected) }) { padding ->
+        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(18.dp, 12.dp, 18.dp, 28.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            item {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Places", style = MaterialTheme.typography.headlineLarge)
+                        Text("The locations that became part of your story.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    FilledTonalIconButton(onClick = { if (points.isNotEmpty()) camera.move(CameraUpdateFactory.newLatLngZoom(points.first(), 13f)) }) {
+                        Icon(Icons.Default.MyLocation, "Center")
                     }
                 }
-            )
-        }
-    ) { padding ->
-        if (places.isEmpty()) {
-            EmptyPlaces(Modifier.fillMaxSize().padding(padding))
-        } else {
-            Column(
-                Modifier.fillMaxSize().padding(padding),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Card(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(300.dp)
-                        .padding(horizontal = 16.dp),
-                    shape = RoundedCornerShape(24.dp)
-                ) {
-                    GoogleMap(
-                        modifier = Modifier.fillMaxSize(),
-                        cameraPositionState = camera,
-                        properties = MapProperties(),
-                        uiSettings = MapUiSettings(
-                            zoomControlsEnabled = false,
-                            mapToolbarEnabled = false,
-                            compassEnabled = true
-                        )
-                    ) {
-                        places.forEach { place ->
-                            Marker(
-                                state = MarkerState(LatLng(place.latitude, place.longitude)),
-                                title = place.name ?: "Unnamed place",
-                                snippet = "%.5f, %.5f".format(
-                                    Locale.US,
-                                    place.latitude,
-                                    place.longitude
-                                ),
-                                onClick = {
-                                    onPlaceClick(place.id)
-                                    true
-                                }
-                            )
+            }
+            item {
+                ExpressiveCard(modifier = Modifier.fillMaxWidth()) {
+                    Box(Modifier.fillMaxWidth().height(330.dp)) {
+                        GoogleMap(
+                            Modifier.fillMaxSize(),
+                            cameraPositionState = camera,
+                            uiSettings = MapUiSettings(zoomControlsEnabled = false, mapToolbarEnabled = false)
+                        ) {
+                            places.forEach { place ->
+                                Marker(
+                                    state = MarkerState(LatLng(place.latitude, place.longitude)),
+                                    title = place.name ?: "Unnamed place",
+                                    onClick = { onPlaceClick(place.id); true }
+                                )
+                            }
+                        }
+                        Surface(Modifier.align(Alignment.TopStart).padding(12.dp), shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface.copy(alpha = .9f)) {
+                            Text(places.size.toString() + " saved places", Modifier.padding(horizontal = 12.dp, vertical = 8.dp), style = MaterialTheme.typography.labelLarge)
                         }
                     }
                 }
-
-                Text(
-                    "Saved places",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(horizontal = 20.dp)
-                )
-
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(places, key = { it.id }) { place ->
-                        PlaceRow(place, onPlaceClick)
+            }
+            item { ExpressiveSectionHeader("Saved places", "Tap a place to see its history.") }
+            if (places.isEmpty()) {
+                item {
+                    ExpressiveCard {
+                        Column(Modifier.fillMaxWidth().padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.Place, null, Modifier.size(42.dp))
+                            Spacer(Modifier.height(10.dp))
+                            Text("No places yet", style = MaterialTheme.typography.titleLarge)
+                            Text("Keep tracking to discover your regular places.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
                 }
+            } else {
+                items(places, key = { it.id }) { place ->
+                    ExpressiveListRow(
+                        title = place.name ?: "Unnamed place",
+                        subtitle = String.format(java.util.Locale.US, "%.5f, %.5f", place.latitude, place.longitude),
+                        icon = { Icon(Icons.Default.Place, null) },
+                        onClick = { onPlaceClick(place.id) }
+                    )
+                }
             }
-        }
-    }
-}
-
-@Composable
-private fun PlaceRow(place: Place, onPlaceClick: (String) -> Unit) {
-    Card(
-        Modifier
-            .fillMaxWidth()
-            .clickable { onPlaceClick(place.id) }
-    ) {
-        Row(
-            Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            Surface(
-                shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.secondaryContainer
-            ) {
-                Icon(
-                    Icons.Default.Place,
-                    null,
-                    modifier = Modifier.padding(10.dp)
-                )
-            }
-            Column(Modifier.weight(1f)) {
-                Text(
-                    place.name ?: "Unnamed place",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    "%.5f, %.5f".format(Locale.US, place.latitude, place.longitude),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun EmptyPlaces(modifier: Modifier = Modifier) {
-    Box(modifier, contentAlignment = Alignment.Center) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Icon(
-                Icons.Default.LocationOn,
-                null,
-                modifier = Modifier.size(44.dp)
-            )
-            Text("No places yet", style = MaterialTheme.typography.titleLarge)
-            Text(
-                "Places will appear as Location Dots learns your visits.",
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }

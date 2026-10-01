@@ -7,32 +7,29 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.*
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import com.locationdots.app.core.location.LocationTrackingController
 import com.locationdots.app.core.permissions.LocationPermissionManager
-import com.locationdots.app.feature.onboarding.OnboardingScreen
+import com.locationdots.app.domain.model.TimelineEvent
+import com.locationdots.app.feature.about.AboutScreen
+import com.locationdots.app.feature.insights.*
 import com.locationdots.app.feature.journey.JourneyDetailScreen
-import com.locationdots.app.feature.insights.InsightsScreen
-import com.locationdots.app.feature.insights.InsightsViewModel
-import com.locationdots.app.feature.insights.InsightsViewModelFactory
-import com.locationdots.app.feature.map.PlacesOverviewScreen
-import com.locationdots.app.feature.map.PlacesOverviewViewModel
-import com.locationdots.app.feature.map.PlacesOverviewViewModelFactory
-import com.locationdots.app.feature.place.PlaceDetailScreen
-import com.locationdots.app.feature.place.PlaceDetailViewModel
-import com.locationdots.app.feature.place.PlaceDetailViewModelFactory
-import com.locationdots.app.feature.search.SearchScreen
-import com.locationdots.app.feature.search.SearchViewModel
-import com.locationdots.app.feature.search.SearchViewModelFactory
-import com.locationdots.app.feature.timeline.TimelineScreen
-import com.locationdots.app.feature.timeline.TimelineViewModel
-import com.locationdots.app.feature.timeline.TimelineViewModelFactory
+import com.locationdots.app.feature.map.*
+import com.locationdots.app.feature.onboarding.OnboardingScreen
+import com.locationdots.app.feature.place.*
+import com.locationdots.app.feature.search.*
+import com.locationdots.app.feature.settings.*
+import com.locationdots.app.feature.splash.SplashScreen
+import com.locationdots.app.feature.timeline.*
+import com.locationdots.app.ui.components.AppTab
 import com.locationdots.app.ui.theme.LocationDotsTheme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private lateinit var permissionManager: LocationPermissionManager
@@ -46,9 +43,14 @@ class MainActivity : ComponentActivity() {
     private var isTracking by mutableStateOf(false)
     private var selectedPlaceId by mutableStateOf<String?>(null)
     private var selectedJourneyId by mutableStateOf<String?>(null)
+    private var currentTab by mutableStateOf(AppTab.TIMELINE)
     private var isSearchOpen by mutableStateOf(false)
-    private var isPlacesOpen by mutableStateOf(false)
-    private var isInsightsOpen by mutableStateOf(false)
+    private var isAboutOpen by mutableStateOf(false)
+    private var showSplash by mutableStateOf(true)
+    private var themeChoice by mutableStateOf(ThemeChoice.SYSTEM)
+    private var animationsEnabled by mutableStateOf(true)
+
+    private val preferences by lazy { getSharedPreferences("location_dots_ui", MODE_PRIVATE) }
 
     private val locationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
@@ -60,127 +62,119 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val app = application as LocationDotsApplication
         permissionManager = LocationPermissionManager(this)
         trackingController = LocationTrackingController(this)
-        timelineViewModel = ViewModelProvider(
-            this,
-            TimelineViewModelFactory(app.timelineRepository)
-        )[TimelineViewModel::class.java]
-        placesViewModel = ViewModelProvider(
-            this,
-            PlacesOverviewViewModelFactory(app.placeRepository)
-        )[PlacesOverviewViewModel::class.java]
-        searchViewModel = ViewModelProvider(
-            this,
-            SearchViewModelFactory(app.searchRepository)
-        )[SearchViewModel::class.java]
-        insightsViewModel = ViewModelProvider(
-            this,
-            InsightsViewModelFactory(app.insightsRepository)
-        )[InsightsViewModel::class.java]
+        themeChoice = runCatching { ThemeChoice.valueOf(preferences.getString("theme", ThemeChoice.SYSTEM.name)!!) }.getOrDefault(ThemeChoice.SYSTEM)
+        animationsEnabled = preferences.getBoolean("animations", true)
 
+        val app = application as LocationDotsApplication
+        timelineViewModel = ViewModelProvider(this, TimelineViewModelFactory(app.timelineRepository))[TimelineViewModel::class.java]
+        placesViewModel = ViewModelProvider(this, PlacesOverviewViewModelFactory(app.placeRepository))[PlacesOverviewViewModel::class.java]
+        searchViewModel = ViewModelProvider(this, SearchViewModelFactory(app.searchRepository))[SearchViewModel::class.java]
+        insightsViewModel = ViewModelProvider(this, InsightsViewModelFactory(app.insightsRepository))[InsightsViewModel::class.java]
         refreshState()
 
         setContent {
-            LocationDotsTheme {
+            val darkTheme = when (themeChoice) {
+                ThemeChoice.DARK -> true
+                ThemeChoice.LIGHT -> false
+                ThemeChoice.SYSTEM -> isSystemInDarkTheme()
+            }
+            LocationDotsTheme(darkTheme = darkTheme) {
                 val timelineState by timelineViewModel.uiState.collectAsStateWithLifecycle()
-                val events = timelineState.events
+                val places by placesViewModel.places.collectAsStateWithLifecycle()
+                val searchState by searchViewModel.uiState.collectAsStateWithLifecycle()
+                val insights by insightsViewModel.snapshot.collectAsStateWithLifecycle()
+                val insightsLoading by insightsViewModel.isLoading.collectAsStateWithLifecycle()
+                val insightsError by insightsViewModel.error.collectAsStateWithLifecycle()
 
-                if (!hasLocationPermission) {
-                    OnboardingScreen(
+                LaunchedEffect(Unit) {
+                    delay(650)
+                    showSplash = false
+                }
+
+                when {
+                    showSplash -> SplashScreen()
+                    !hasLocationPermission -> OnboardingScreen(
                         hasLocationPermission = false,
                         isTracking = isTracking,
                         onRequestLocationPermission = ::requestLocationPermission,
                         onStartTracking = ::startTracking,
                         onStopTracking = ::stopTracking
                     )
-                } else {
-                    val placeId = selectedPlaceId
-                    val journeyId = selectedJourneyId
-                    if (isInsightsOpen) {
-                        val snapshot by insightsViewModel.snapshot.collectAsStateWithLifecycle()
-                        val isLoading by insightsViewModel.isLoading.collectAsStateWithLifecycle()
-                        val error by insightsViewModel.error.collectAsStateWithLifecycle()
-                        InsightsScreen(
-                            snapshot = snapshot,
-                            isLoading = isLoading,
-                            error = error,
-                            onBack = { isInsightsOpen = false },
-                            onRefresh = insightsViewModel::refresh
-                        )
-                    } else if (isPlacesOpen) {
-                        val places by placesViewModel.places.collectAsStateWithLifecycle()
-                        PlacesOverviewScreen(
-                            places = places,
-                            onBack = { isPlacesOpen = false },
-                            onPlaceClick = { selectedPlaceId = it; isPlacesOpen = false }
-                        )
-                    } else if (isSearchOpen) {
-                        val searchState by searchViewModel.uiState.collectAsStateWithLifecycle()
-                        SearchScreen(
-                            query = searchState.query,
-                            results = searchState.results,
-                            isSearching = searchState.isSearching,
-                            onQueryChange = searchViewModel::search,
-                            onBack = {
-                                searchViewModel.clear()
-                                isSearchOpen = false
-                            },
-                            onPlaceClick = {
-                                searchViewModel.clear()
-                                isSearchOpen = false
-                                selectedPlaceId = it
-                            },
-                            onJourneyClick = {
-                                searchViewModel.clear()
-                                isSearchOpen = false
-                                selectedJourneyId = it
-                            }
-                        )
-                    } else if (placeId == null && journeyId == null) {
-                        TimelineScreen(
-                            events = events,
-                            isTracking = isTracking,
-                            isLoadingMore = timelineState.isLoading,
-                            isRefreshing = timelineState.isRefreshing,
-                            hasMore = timelineState.hasMore,
-                            errorMessage = timelineState.errorMessage,
-                            onPlaceClick = { selectedPlaceId = it },
-                            onJourneyClick = { selectedJourneyId = it },
-                            onSearchClick = { isSearchOpen = true },
-                            onPlacesClick = { isPlacesOpen = true },
-                            onInsightsClick = { isInsightsOpen = true },
-                            onLoadMore = timelineViewModel::loadMore,
-                            onRetry = timelineViewModel::retry,
-                            onClearError = timelineViewModel::clearError
-                        )
-                    } else if (journeyId != null) {
-                        val journey = events.firstOrNull { it.id == journeyId } as? com.locationdots.app.domain.model.TimelineEvent.Journey
+                    isAboutOpen -> AboutScreen { isAboutOpen = false }
+                    isSearchOpen -> SearchScreen(
+                        query = searchState.query,
+                        results = searchState.results,
+                        isSearching = searchState.isSearching,
+                        onQueryChange = searchViewModel::search,
+                        onBack = { searchViewModel.clear(); isSearchOpen = false },
+                        onPlaceClick = { searchViewModel.clear(); isSearchOpen = false; selectedPlaceId = it },
+                        onJourneyClick = { searchViewModel.clear(); isSearchOpen = false; selectedJourneyId = it }
+                    )
+                    selectedJourneyId != null -> {
+                        val journey = timelineState.events.firstOrNull { it.id == selectedJourneyId } as? TimelineEvent.Journey
                         if (journey == null) {
+                            LaunchedEffect(selectedJourneyId) { timelineViewModel.refresh() }
                             selectedJourneyId = null
-                        } else {
-                            JourneyDetailScreen(
-                                journey = journey,
-                                onBack = { selectedJourneyId = null }
-                            )
-                        }
-                    } else {
-                        val placeViewModel = ViewModelProvider(
-                            this,
-                            PlaceDetailViewModelFactory(app.placeRepository, app.timelineRepository, placeId!!)
-                        )[PlaceDetailViewModel::class.java]
-                        val place by placeViewModel.place.collectAsStateWithLifecycle()
-                        val visits by placeViewModel.visits.collectAsStateWithLifecycle()
-
-                        PlaceDetailScreen(
-                            place = place,
-                            visits = visits,
-                            onBack = { selectedPlaceId = null },
-                            onRename = placeViewModel::updateName
-                        )
+                        } else JourneyDetailScreen(journey) { selectedJourneyId = null }
                     }
+                    selectedPlaceId != null -> {
+                        val placeVm = ViewModelProvider(this@MainActivity, PlaceDetailViewModelFactory(app.placeRepository, app.timelineRepository, selectedPlaceId!!))[PlaceDetailViewModel::class.java]
+                        val place by placeVm.place.collectAsStateWithLifecycle()
+                        val visits by placeVm.visits.collectAsStateWithLifecycle()
+                        PlaceDetailScreen(place, visits, { selectedPlaceId = null }, placeVm::updateName)
+                    }
+                    currentTab == AppTab.MAP -> PlacesOverviewScreen(
+                        places = places,
+                        onBack = { currentTab = AppTab.TIMELINE },
+                        onPlaceClick = { selectedPlaceId = it },
+                        onTabSelected = ::selectTab
+                    )
+                    currentTab == AppTab.INSIGHTS -> InsightsScreen(
+                        snapshot = insights,
+                        isLoading = insightsLoading,
+                        error = insightsError,
+                        onBack = { currentTab = AppTab.TIMELINE },
+                        onRefresh = insightsViewModel::refresh,
+                        onTabSelected = ::selectTab
+                    )
+                    currentTab == AppTab.SETTINGS -> SettingsScreen(
+                        selectedTab = currentTab,
+                        themeChoice = themeChoice,
+                        isTracking = isTracking,
+                        animationsEnabled = animationsEnabled,
+                        onTabSelected = ::selectTab,
+                        onThemeChange = {
+                            themeChoice = it
+                            preferences.edit().putString("theme", it.name).apply()
+                        },
+                        onTrackingChange = { enabled -> if (enabled) startTracking() else stopTracking() },
+                        onAnimationsChange = {
+                            animationsEnabled = it
+                            preferences.edit().putBoolean("animations", it).apply()
+                        },
+                        onExport = { exportSummary(insights) },
+                        onClearHistory = ::clearHistory,
+                        onAbout = { isAboutOpen = true }
+                    )
+                    else -> TimelineScreen(
+                        events = timelineState.events,
+                        isTracking = isTracking,
+                        isLoadingMore = timelineState.isLoading,
+                        isRefreshing = timelineState.isRefreshing,
+                        hasMore = timelineState.hasMore,
+                        errorMessage = timelineState.errorMessage,
+                        onPlaceClick = { selectedPlaceId = it },
+                        onJourneyClick = { selectedJourneyId = it },
+                        onSearchClick = { isSearchOpen = true },
+                        onPlacesClick = { currentTab = AppTab.MAP },
+                        onInsightsClick = { currentTab = AppTab.INSIGHTS },
+                        onSettingsClick = { currentTab = AppTab.SETTINGS },
+                        onLoadMore = timelineViewModel::loadMore,
+                        onRetry = timelineViewModel::retry,
+                        onClearError = timelineViewModel::clearError
+                    )
                 }
             }
         }
@@ -188,18 +182,19 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        refreshState()
-        timelineViewModel.refresh()
+        if (::permissionManager.isInitialized) refreshState()
+        if (::timelineViewModel.isInitialized) timelineViewModel.refresh()
         if (::insightsViewModel.isInitialized) insightsViewModel.refresh()
     }
 
+    private fun selectTab(tab: AppTab) {
+        selectedPlaceId = null
+        selectedJourneyId = null
+        currentTab = tab
+    }
+
     private fun requestLocationPermission() {
-        locationPermissionLauncher.launch(
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-        )
+        locationPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
     }
 
     private fun startTracking() {
@@ -207,12 +202,10 @@ class MainActivity : ComponentActivity() {
             requestLocationPermission()
             return
         }
-
         if (!isLocationEnabled()) {
             startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
             return
         }
-
         trackingController.start()
         isTracking = true
     }
@@ -222,15 +215,43 @@ class MainActivity : ComponentActivity() {
         isTracking = false
     }
 
+    private fun clearHistory() {
+        val app = application as LocationDotsApplication
+        lifecycleScope.launch {
+            app.database.locationDao().deleteAll()
+            app.database.placeDao().deleteAll()
+            app.database.timelineEventDao().deleteAll()
+            timelineViewModel.refresh()
+            insightsViewModel.refresh()
+        }
+    }
+
+    private fun exportSummary(snapshot: com.locationdots.app.domain.insights.InsightsSnapshot) {
+        val text = buildString {
+            appendLine("Location Dots — activity summary")
+            appendLine()
+            appendLine("Places: " + snapshot.totalPlaces)
+            appendLine("Visits: " + snapshot.totalVisits)
+            appendLine("Journeys: " + snapshot.journeyCount)
+            appendLine("Distance: " + snapshot.totalDistanceMeters.toInt() + " m")
+            appendLine("Time: " + snapshot.totalTimeMinutes + " min")
+            appendLine()
+            appendLine("Generated locally on this device.")
+        }
+        startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+        }, "Share summary"))
+    }
+
     private fun refreshState() {
         hasLocationPermission = permissionManager.hasForegroundLocationPermission()
         isTracking = trackingController.isTracking.value
     }
 
     private fun isLocationEnabled(): Boolean =
-        ContextCompat.getSystemService(this, android.location.LocationManager::class.java)
-            ?.let { manager ->
-                manager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) ||
-                    manager.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER)
-            } ?: false
+        ContextCompat.getSystemService(this, android.location.LocationManager::class.java)?.let { manager ->
+            manager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) ||
+                manager.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER)
+        } ?: false
 }
