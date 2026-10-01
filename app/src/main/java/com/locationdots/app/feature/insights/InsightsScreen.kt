@@ -30,7 +30,7 @@ fun InsightsScreen(
                         Text("Insights", style = MaterialTheme.typography.headlineLarge)
                         Text("Patterns from your movement history.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    FilledTonalIconButton(onClick = onRefresh) { Icon(Icons.Default.Refresh, "Refresh") }
+                    ExpressiveIconButton(onClick = onRefresh, icon = { Icon(Icons.Default.Refresh, "Refresh") }, emphasized = true)
                 }
             }
             if (isLoading) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
