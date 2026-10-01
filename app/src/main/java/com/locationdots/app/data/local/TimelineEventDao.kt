@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 
 @Dao
 interface TimelineEventDao {
@@ -26,4 +27,14 @@ interface TimelineEventDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(events: List<TimelineEventEntity>)
+
+    @Transaction
+    suspend fun replaceRange(
+        fromEpochMillis: Long,
+        toEpochMillis: Long,
+        events: List<TimelineEventEntity>
+    ) {
+        deleteRange(fromEpochMillis, toEpochMillis)
+        insertAll(events)
+    }
 }
