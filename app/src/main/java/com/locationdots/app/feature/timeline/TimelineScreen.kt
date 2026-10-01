@@ -3,7 +3,6 @@ package com.locationdots.app.feature.timeline
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -56,10 +55,9 @@ fun TimelineScreen(
         }
     }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            TimelineTopBar(isTracking, onSearchClick)
             if (items.isEmpty() && !isRefreshing) EmptyTimeline(isTracking)
             else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(18.dp, 4.dp, 18.dp, 28.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                item("summary") { TodayCard(events, isTracking) }
+                item("summary") { TodayCard(events, isTracking, onSearchClick) }
                 items(items, key = { when (it) { is TimelineItem.Day -> "day-" + it.date; is TimelineItem.Event -> it.event.id } }) { item ->
                     when (item) {
                         is TimelineItem.Day -> Text(DateTimeFormatter.ofPattern("EEEE, d MMM", Locale.getDefault()).format(item.date), Modifier.padding(top = 8.dp, start = 4.dp), style = MaterialTheme.typography.titleMedium)
@@ -83,19 +81,7 @@ fun TimelineScreen(
     }
 }
 
-@Composable private fun TimelineTopBar(isTracking: Boolean, onSearchClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text("Your timeline", style = MaterialTheme.typography.headlineMedium)
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Box(Modifier.size(8.dp).background(if (isTracking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, RoundedCornerShape(50)))
-                Text(if (isTracking) "Tracking automatically" else "Tracking paused", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-        FilledTonalIconButton(onClick = onSearchClick) { Icon(Icons.Default.Search, "Search") }
-    }
-}
-@Composable private fun TodayCard(events: List<TimelineEvent>, isTracking: Boolean) {
+@Composable private fun TodayCard(events: List<TimelineEvent>, isTracking: Boolean, onSearchClick: () -> Unit) {
     val zone = ZoneId.systemDefault()
     val today = LocalDate.now(zone)
     val todayEvents = events.filter { it.timestamp.atZone(zone).toLocalDate() == today }
@@ -110,7 +96,15 @@ fun TimelineScreen(
                     Text("Today", style = MaterialTheme.typography.titleLarge)
                     Text(if (todayEvents.isEmpty()) "Your timeline is ready." else "A quick view of your day.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                ExpressiveIconBadge(icon = { Icon(if (isTracking) Icons.Default.MyLocation else Icons.Default.PauseCircleOutline, null) })
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ExpressiveIconButton(
+                        onClick = onSearchClick,
+                        icon = { Icon(Icons.Default.Search, contentDescription = "Search") }
+                    )
+                    ExpressiveIconBadge(
+                        icon = { Icon(if (isTracking) Icons.Default.MyLocation else Icons.Default.PauseCircleOutline, null) }
+                    )
+                }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 MiniStat(visits.size.toString(), "places", Modifier.weight(1f))
@@ -121,7 +115,7 @@ fun TimelineScreen(
     }
 }
 @Composable private fun MiniStat(value: String, label: String, modifier: Modifier) {
-    Surface(modifier, shape = RoundedCornerShape(18.dp), color = MaterialTheme.colorScheme.surface.copy(alpha = .55f)) {
+    Surface(modifier, shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surface.copy(alpha = .55f)) {
         Column(Modifier.padding(12.dp)) { Text(value, style = MaterialTheme.typography.titleMedium); Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }
