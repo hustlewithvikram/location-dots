@@ -102,9 +102,11 @@ class MainActivity : ComponentActivity() {
                             PlaceDetailViewModelFactory(app.placeRepository, app.timelineRepository, placeId)
                         )[PlaceDetailViewModel::class.java]
                         val place by placeViewModel.place.collectAsStateWithLifecycle()
+                        val visits by placeViewModel.visits.collectAsStateWithLifecycle()
 
                         PlaceDetailScreen(
                             place = place,
+                            visits = visits,
                             onBack = { selectedPlaceId = null },
                             onRename = placeViewModel::updateName
                         )
