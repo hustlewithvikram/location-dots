@@ -96,6 +96,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         refreshState()
+        timelineViewModel.refresh()
     }
 
     private fun requestLocationPermission() {
