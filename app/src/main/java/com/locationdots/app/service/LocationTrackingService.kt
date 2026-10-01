@@ -31,6 +31,14 @@ class LocationTrackingService : LifecycleService() {
             return
         }
 
+        val app = application as LocationDotsApplication
+
+        collectionJob = lifecycleScope.launch {
+            app.locationProvider.locations.collect { point ->
+                app.locationRepository.saveLocationPoint(point)
+            }
+        }
+
         ServiceCompat.startForeground(
             this,
             NOTIFICATION_ID,
@@ -38,14 +46,7 @@ class LocationTrackingService : LifecycleService() {
             android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
         )
 
-        val app = application as LocationDotsApplication
         app.locationProvider.start()
-
-        collectionJob = lifecycleScope.launch {
-            app.locationProvider.locations.collect { point ->
-                app.locationRepository.saveLocationPoint(point)
-            }
-        }
     }
 
     override fun onDestroy() {
