@@ -5,5 +5,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface LocationRepository {
     fun observeLocationPoints(): Flow<List<LocationPoint>>
+    suspend fun getAllLocationPoints(): List<LocationPoint>
     suspend fun saveLocationPoint(point: LocationPoint)
 }
