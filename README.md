@@ -9,7 +9,7 @@ A passive Android timeline that automatically turns your everyday movement into 
 [![Android](https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white)](https://www.android.com/)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.x-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/compose)
-[![Status](https://img.shields.io/badge/Status-Early%20Development-orange)](#status)
+[![Status](https://img.shields.io/badge/Status-Functional%20Prototype-blue)](#status)
 
 <img src="assets/location-dots-hero-banner.svg" alt="Location Dots hero banner" width="100%" />
 
@@ -51,10 +51,10 @@ You don't manually create places or log trips. The app is designed to quietly bu
 - **Infinite history** — scroll through days, weeks, months, and eventually years.
 - **Day separators** — clearly separates one day from the next.
 - **Visit details** — arrival time, departure time, and time spent at a place.
-- **Travel details** — distance and travel duration, with travel-mode detection planned.
+- **Travel details** — distance, travel duration, route maps, and travel-mode detection.
 - **Place editing** — rename or correct places when the app gets them wrong.
 - **Pause tracking** — stop recording whenever you want.
-- **Export & delete** — keep control of your location history.
+- **Local-first storage** — location history stays in the app database by default.
 
 ## The timeline
 
@@ -98,19 +98,16 @@ The timeline is the main interface. It is designed to feel like **scrolling thro
 
 ## Permissions
 
-Location Dots needs background access because the timeline is meant to keep recording when the app is not open.
+Location Dots currently uses foreground location permission and a foreground location service. Approximate location is supported.
 
 | Permission | Purpose |
 | --- | --- |
-| `ACCESS_FINE_LOCATION` | Accurate location tracking |
-| `ACCESS_COARSE_LOCATION` | Approximate location when precise access isn't granted |
-| `ACCESS_BACKGROUND_LOCATION` | Continue location tracking in the background where required by Android |
-| `ACTIVITY_RECOGNITION` | Detect movement/activity and reduce unnecessary location updates |
-| `FOREGROUND_SERVICE` | Run the tracking service on supported Android versions |
-| `FOREGROUND_SERVICE_LOCATION` | Declare location use by the foreground service on newer Android versions |
-| `POST_NOTIFICATIONS` | Show the tracking service notification on Android versions that require notification permission |
+| `ACCESS_FINE_LOCATION` | Precise location when granted |
+| `ACCESS_COARSE_LOCATION` | Approximate location |
+| `FOREGROUND_SERVICE` | Keep the tracking service running |
+| `FOREGROUND_SERVICE_LOCATION` | Declare location use by the foreground service |
 
-Permissions will be requested only when needed and explained clearly before they are used.
+The app does not currently request `ACCESS_BACKGROUND_LOCATION`.
 
 ## Privacy
 
@@ -136,37 +133,25 @@ Location history can reveal sensitive information about where someone lives, wor
 - Activity Recognition
 - Foreground Service
 
-## Roadmap
+## Current functionality
 
-### MVP
-
-- [ ] Background location tracking
-- [ ] Permission onboarding
-- [ ] Automatic timeline
-- [ ] Place detection
-- [ ] Visit duration
-- [ ] Travel segments
-- [ ] Day separators
-- [ ] Pause/resume tracking
-- [ ] Edit place names
-- [ ] Delete history
-- [ ] Export history
-
-### Later
-
-- [ ] Travel-mode detection
-- [ ] Mini route maps
-- [ ] Timeline search
-- [ ] Day / week / month / year replay
-- [ ] Frequently visited places
-- [ ] Frequent routes
-- [ ] Personal location statistics
-- [ ] Encrypted backup
-- [ ] Optional device sync
+- [x] Location permission onboarding
+- [x] Foreground location tracking
+- [x] Automatic place detection
+- [x] Visits and journeys
+- [x] Travel distance and movement mode
+- [x] Persisted timeline with pagination
+- [x] Place history and visit insights
+- [x] Journey route maps
+- [x] Timeline search
+- [x] Places map overview
+- [x] Personal insights and statistics
+- [x] Today timeline summary
+- [x] Local place renaming
 
 ## Status
 
-**Early development — MVP**
+**Functional prototype**
 
 The first milestone:
 
