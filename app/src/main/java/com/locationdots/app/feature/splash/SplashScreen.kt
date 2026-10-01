@@ -26,7 +26,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Composable\nimport androidx.compose.runtime.getValue\nimport androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -65,7 +65,7 @@ fun SplashScreen(
         label = "glowAlpha"
     )
 
-    var contentVisible = remember { false }
+    var contentVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         delay(90)
         contentVisible = true
