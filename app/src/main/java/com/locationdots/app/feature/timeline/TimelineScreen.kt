@@ -480,6 +480,7 @@ private fun LoadMoreOnScroll(
                 hasMore &&
                 !isLoading &&
                 itemCount > 0 &&
+                lastIndex != null &&
                 lastIndex >= itemCount - 5
             ) {
                 onLoadMore()
