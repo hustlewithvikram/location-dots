@@ -119,7 +119,7 @@ private fun JourneyMap(points: List<LocationPoint>) {
             )
         } else {
             val bounds = LatLngBounds.builder().apply {
-                coordinates.forEach(::include)
+                coordinates.forEach { include(it) }
             }.build()
             cameraPositionState.move(
                 CameraUpdateFactory.newLatLngBounds(bounds, 72)
