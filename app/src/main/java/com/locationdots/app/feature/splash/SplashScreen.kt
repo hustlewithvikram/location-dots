@@ -30,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -81,8 +82,6 @@ fun SplashScreen(
             .fillMaxSize()
             .background(background)
     ) {
-        // The expressive color field deliberately starts in the lower half,
-        // leaving the upper area calm and typography-first.
         Box(
             modifier = Modifier
                 .fillMaxSize()
