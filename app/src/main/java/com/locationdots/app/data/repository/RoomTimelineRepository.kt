@@ -14,6 +14,9 @@ class RoomTimelineRepository(
     private val placeRepository: PlaceRepository
 ) : TimelineRepository {
 
+    override suspend fun getAll(): List<TimelineEvent> =
+        dao.getAll().mapNotNull { toDomain(it) }
+
     override suspend fun getPage(limit: Int, offset: Int): List<TimelineEvent> =
         dao.getPage(limit, offset).map { toDomain(it) }.filterNotNull()
 
