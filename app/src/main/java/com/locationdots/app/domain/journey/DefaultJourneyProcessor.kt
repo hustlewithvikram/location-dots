@@ -169,7 +169,7 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
         val ACTIVE_VISIT_WINDOW: Duration = Duration.ofMinutes(15)
 
         const val PLACE_RADIUS_METERS = 150.0
-        const val MAX_ACCURACY_METERS = 100.0
+        const val MAX_ACCURACY_METERS = 200.0
         const val MIN_POINTS_PER_VISIT = 3
         const val MIN_JOURNEY_DISTANCE_METERS = 100.0
 
