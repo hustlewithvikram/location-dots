@@ -3,7 +3,7 @@ import org.gradle.kotlin.dsl.configure
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.secrets.gradle)
 }
@@ -59,7 +59,7 @@ dependencies {
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    add("kapt", libs.androidx.room.compiler)
+    add("ksp", libs.androidx.room.compiler)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
