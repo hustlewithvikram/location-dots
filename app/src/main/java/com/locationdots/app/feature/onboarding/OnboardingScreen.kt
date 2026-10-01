@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.locationdots.app.ui.components.ExpressiveButton
 import com.locationdots.app.ui.components.ExpressiveCard
 import com.locationdots.app.ui.components.ExpressiveIconBadge
 
@@ -64,10 +65,10 @@ fun OnboardingScreen(
                     Box(Modifier.padding(horizontal = 4.dp).size(if (index == page) 28.dp else 8.dp, 8.dp).clip(CircleShape).background(if (index == page) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest))
                 }
             }
-            if (page < 2) Button({ page++ }, Modifier.fillMaxWidth()) { Text("Continue") }
-            else if (!hasLocationPermission) Button(onRequestLocationPermission, Modifier.fillMaxWidth()) { Text("Allow location access") }
-            else if (isTracking) OutlinedButton(onStopTracking, Modifier.fillMaxWidth()) { Text("Pause tracking") }
-            else Button(onStartTracking, Modifier.fillMaxWidth()) { Text("Start tracking") }
+            if (page < 2) ExpressiveButton("Continue", { page++ }, Modifier.fillMaxWidth())
+            else if (!hasLocationPermission) ExpressiveButton("Allow location access", onRequestLocationPermission, Modifier.fillMaxWidth())
+            else if (isTracking) ExpressiveButton("Pause tracking", onStopTracking, Modifier.fillMaxWidth(), emphasized = false)
+            else ExpressiveButton("Start tracking", onStartTracking, Modifier.fillMaxWidth())
         }
     }
 }
