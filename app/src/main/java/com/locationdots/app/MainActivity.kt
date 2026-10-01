@@ -49,7 +49,7 @@ class MainActivity : ComponentActivity() {
         trackingController = LocationTrackingController(this)
         timelineViewModel = ViewModelProvider(
             this,
-            TimelineViewModelFactory(app.insightsRepository)
+            TimelineViewModelFactory(app.timelineRepository)
         )[TimelineViewModel::class.java]
 
         refreshState()
@@ -72,7 +72,8 @@ class MainActivity : ComponentActivity() {
                         TimelineScreen(
                             events = events,
                             isTracking = isTracking,
-                            onPlaceClick = { selectedPlaceId = it }
+                            onPlaceClick = { selectedPlaceId = it },
+                            onLoadMore = timelineViewModel::loadMore
                         )
                     } else {
                         val placeViewModel = ViewModelProvider(
