@@ -23,7 +23,6 @@ class LocationTrackingService : LifecycleService() {
 
     override fun onCreate() {
         super.onCreate()
-
         createNotificationChannel()
 
         if (!hasLocationPermission()) {
@@ -36,6 +35,10 @@ class LocationTrackingService : LifecycleService() {
         collectionJob = lifecycleScope.launch {
             app.locationProvider.locations.collect { point ->
                 app.locationRepository.saveLocationPoint(point)
+
+                val points = app.locationRepository.getAllLocationPoints()
+                val events = app.journeyProcessor.process(points)
+                app.timelineRepository.replaceAll(events)
             }
         }
 
@@ -55,8 +58,7 @@ class LocationTrackingService : LifecycleService() {
         super.onDestroy()
     }
 
-    override fun onBind(intent: Intent): IBinder? =
-        super.onBind(intent)
+    override fun onBind(intent: Intent): IBinder? = super.onBind(intent)
 
     private fun buildNotification(): Notification =
         NotificationCompat.Builder(this, CHANNEL_ID)
@@ -82,14 +84,10 @@ class LocationTrackingService : LifecycleService() {
     }
 
     private fun hasLocationPermission(): Boolean =
-        ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
+        ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
 
     private companion object {
         const val CHANNEL_ID = "location_tracking"
