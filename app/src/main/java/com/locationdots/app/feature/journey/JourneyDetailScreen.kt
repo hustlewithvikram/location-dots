@@ -2,8 +2,12 @@ package com.locationdots.app.feature.journey
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Directions
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -28,32 +32,40 @@ import java.util.Locale
 fun JourneyDetailScreen(journey: TimelineEvent.Journey, onBack: () -> Unit) {
     val duration = journey.endedAt?.let { Duration.between(journey.startedAt, it).toMinutes() }
     val formatter = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
-    val mode = when (journey.mode) {
-        JourneyMode.WALKING -> "Walking"
-        JourneyMode.CYCLING -> "Cycling"
-        JourneyMode.VEHICLE -> "Vehicle"
-        JourneyMode.UNKNOWN -> "Movement"
-    }
+    val modeLabel = journey.mode.label()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(20.dp),
+            .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        TextButton(onClick = onBack) {
+        TextButton(
+            onClick = onBack,
+            contentPadding = PaddingValues(horizontal = 0.dp)
+        ) {
             Text("Back")
         }
 
         Text("Journey", style = MaterialTheme.typography.headlineMedium)
 
+        JourneySummary(
+            mode = modeLabel,
+            distance = formatDistance(journey.distanceMeters),
+            duration = duration?.let(::formatDuration) ?: "In progress"
+        )
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(300.dp),
+                .height(320.dp),
             shape = RoundedCornerShape(24.dp)
         ) {
-            JourneyMap(journey.path)
+            JourneyMap(
+                points = journey.path,
+                startLabel = journey.startPlace?.name ?: "Start",
+                endLabel = journey.endPlace?.name ?: "End"
+            )
         }
 
         Card(Modifier.fillMaxWidth()) {
@@ -63,8 +75,11 @@ fun JourneyDetailScreen(journey: TimelineEvent.Journey, onBack: () -> Unit) {
             ) {
                 StatRow("From", journey.startPlace?.name ?: "Unknown place")
                 StatRow("To", journey.endPlace?.name ?: "Unknown place")
-                StatRow("Mode", mode)
-                StatRow("Started", formatter.format(journey.startedAt.atZone(ZoneId.systemDefault())))
+                StatRow("Mode", modeLabel)
+                StatRow(
+                    "Started",
+                    formatter.format(journey.startedAt.atZone(ZoneId.systemDefault()))
+                )
                 StatRow(
                     "Ended",
                     journey.endedAt?.let {
@@ -80,17 +95,47 @@ fun JourneyDetailScreen(journey: TimelineEvent.Journey, onBack: () -> Unit) {
 }
 
 @Composable
-private fun JourneyMap(points: List<LocationPoint>) {
+private fun JourneySummary(mode: String, distance: String, duration: String) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            SummaryItem("Mode", mode)
+            SummaryItem("Distance", distance)
+            SummaryItem("Duration", duration)
+        }
+    }
+}
+
+@Composable
+private fun SummaryItem(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(label, style = MaterialTheme.typography.labelMedium)
+        Text(value, style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+@Composable
+private fun JourneyMap(
+    points: List<LocationPoint>,
+    startLabel: String,
+    endLabel: String
+) {
     val coordinates = remember(points) {
         points.map { LatLng(it.latitude, it.longitude) }
     }
 
     if (coordinates.isEmpty()) {
         Box(
-            Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            contentAlignment = androidx.compose.ui.Alignment.Center
+            Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
             Text(
                 "No route data available",
@@ -108,9 +153,6 @@ private fun JourneyMap(points: List<LocationPoint>) {
             compassEnabled = true
         )
     }
-    val mapProperties = remember {
-        MapProperties()
-    }
 
     LaunchedEffect(coordinates) {
         if (coordinates.size == 1) {
@@ -122,36 +164,84 @@ private fun JourneyMap(points: List<LocationPoint>) {
                 coordinates.forEach { include(it) }
             }.build()
             cameraPositionState.move(
-                CameraUpdateFactory.newLatLngBounds(bounds, 72)
+                CameraUpdateFactory.newLatLngBounds(bounds, 80)
             )
         }
     }
 
-    GoogleMap(
-        modifier = Modifier.fillMaxSize(),
-        cameraPositionState = cameraPositionState,
-        properties = mapProperties,
-        uiSettings = uiSettings
-    ) {
-        if (coordinates.size >= 2) {
-            Polyline(
-                points = coordinates,
-                width = 8f
+    Box(Modifier.fillMaxSize()) {
+        GoogleMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPositionState = cameraPositionState,
+            properties = MapProperties(),
+            uiSettings = uiSettings
+        ) {
+            if (coordinates.size >= 2) {
+                Polyline(
+                    points = coordinates,
+                    width = 9f
+                )
+            }
+
+            Marker(
+                state = MarkerState(position = coordinates.first()),
+                title = startLabel,
+                snippet = "Journey started here"
             )
+
+            if (coordinates.size >= 2) {
+                Marker(
+                    state = MarkerState(position = coordinates.last()),
+                    title = endLabel,
+                    snippet = "Journey ended here"
+                )
+            }
         }
 
-        Marker(
-            state = MarkerState(position = coordinates.first()),
-            title = "Start",
-            snippet = "Journey started here"
-        )
-
         if (coordinates.size >= 2) {
-            Marker(
-                state = MarkerState(position = coordinates.last()),
-                title = "End",
-                snippet = "Journey ended here"
-            )
+            FilledTonalIconButton(
+                onClick = {
+                    val bounds = LatLngBounds.builder().apply {
+                        coordinates.forEach { include(it) }
+                    }.build()
+                    cameraPositionState.move(
+                        CameraUpdateFactory.newLatLngBounds(bounds, 80)
+                    )
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MyLocation,
+                    contentDescription = "Fit route"
+                )
+            }
+        }
+
+        Surface(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(12.dp),
+            shape = RoundedCornerShape(14.dp),
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+            tonalElevation = 3.dp
+        ) {
+            Row(
+                Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.Directions,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    if (coordinates.size >= 2) "Route recorded" else "Location recorded",
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
         }
     }
 }
@@ -165,6 +255,13 @@ private fun StatRow(label: String, value: String) {
         Text(label, style = MaterialTheme.typography.bodyMedium)
         Text(value, style = MaterialTheme.typography.bodyLarge)
     }
+}
+
+private fun JourneyMode.label(): String = when (this) {
+    JourneyMode.WALKING -> "Walking"
+    JourneyMode.CYCLING -> "Cycling"
+    JourneyMode.VEHICLE -> "Vehicle"
+    JourneyMode.UNKNOWN -> "Movement"
 }
 
 private fun formatDistance(distanceMeters: Double?): String = distanceMeters?.let {
