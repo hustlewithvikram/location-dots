@@ -5,7 +5,6 @@ import com.locationdots.app.domain.insights.InsightsRepository
 import com.locationdots.app.domain.insights.InsightsSnapshot
 import com.locationdots.app.domain.insights.PlaceInsight
 import com.locationdots.app.domain.model.TimelineEvent
-import com.locationdots.app.domain.places.PlaceRepository
 import com.locationdots.app.domain.timeline.TimelineRepository
 import java.time.Duration
 import java.time.LocalDate
@@ -13,8 +12,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 class RoomInsightsRepository(
-    private val timelineRepository: TimelineRepository,
-    private val placeRepository: PlaceRepository
+    private val timelineRepository: TimelineRepository
 ) : InsightsRepository {
     override suspend fun getSnapshot(): InsightsSnapshot {
         val events = timelineRepository.getAll()
