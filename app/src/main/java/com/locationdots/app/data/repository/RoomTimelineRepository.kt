@@ -13,20 +13,19 @@ class RoomTimelineRepository(
 ) : TimelineRepository {
 
     override suspend fun getPage(limit: Int, offset: Int): List<TimelineEvent> =
-        dao.getPage(limit, offset).mapNotNull(::toDomain)
+        dao.getPage(limit, offset).mapNotNull { toDomain(it) }
 
     override suspend fun replaceAll(events: List<TimelineEvent>) {
         dao.deleteAll()
         dao.insertAll(events.map(::toEntity))
     }
 
-    override suspend fun replaceRange(
-        from: Instant,
-        to: Instant,
-        events: List<TimelineEvent>
-    ) {
-        dao.deleteRange(from.toEpochMilli(), to.toEpochMilli())
-        dao.insertAll(events.map(::toEntity))
+    override suspend fun replaceRange(from: Instant, to: Instant, events: List<TimelineEvent>) {
+        dao.replaceRange(
+            fromEpochMillis = from.toEpochMilli(),
+            toEpochMillis = to.toEpochMilli(),
+            events = events.map(::toEntity)
+        )
     }
 
     private suspend fun toDomain(entity: TimelineEventEntity): TimelineEvent? =
