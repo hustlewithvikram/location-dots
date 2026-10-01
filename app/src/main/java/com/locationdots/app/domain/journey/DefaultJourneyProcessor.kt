@@ -1,5 +1,6 @@
 package com.locationdots.app.domain.journey
 
+import com.locationdots.app.domain.model.JourneyMode
 import com.locationdots.app.domain.model.LocationPoint
 import com.locationdots.app.domain.model.TimelineEvent
 import com.locationdots.app.domain.places.PlaceEngine
@@ -52,6 +53,15 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
                 val journeyStart = visit.departure ?: visit.arrival
 
                 if (next.arrival.isAfter(journeyStart)) {
+                    val path = sorted.filter {
+                        !it.timestamp.isBefore(journeyStart) &&
+                            !it.timestamp.isAfter(next.arrival)
+                    }
+
+                    val distance = pathDistance(path).takeIf { it >= MIN_JOURNEY_DISTANCE_METERS }
+                    val durationSeconds = Duration.between(journeyStart, next.arrival).seconds
+                    val mode = classifyMode(distance, durationSeconds)
+
                     add(
                         TimelineEvent.Journey(
                             id = "journey:" + visit.id + ":" + next.id,
@@ -60,12 +70,8 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
                             endPlace = next.place,
                             startedAt = journeyStart,
                             endedAt = next.arrival,
-                            distanceMeters = distanceMeters(
-                                visit.place.latitude,
-                                visit.place.longitude,
-                                next.place.latitude,
-                                next.place.longitude
-                            )
+                            distanceMeters = distance,
+                            mode = mode
                         )
                     )
                 }
@@ -99,11 +105,34 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
             }
         }
 
-        if (current.isNotEmpty()) {
-            clusters += current
-        }
-
+        if (current.isNotEmpty()) clusters += current
         return clusters
+    }
+
+    private fun pathDistance(points: List<LocationPoint>): Double {
+        if (points.size < 2) return 0.0
+
+        return points.zipWithNext().sumOf { (from, to) ->
+            distanceMeters(
+                from.latitude,
+                from.longitude,
+                to.latitude,
+                to.longitude
+            )
+        }
+    }
+
+    private fun classifyMode(distanceMeters: Double?, durationSeconds: Long): JourneyMode {
+        if (distanceMeters == null || durationSeconds <= 0) return JourneyMode.UNKNOWN
+
+        val speedKmh = distanceMeters / durationSeconds * 3.6
+
+        return when {
+            speedKmh <= WALKING_MAX_KMH -> JourneyMode.WALKING
+            speedKmh <= CYCLING_MAX_KMH -> JourneyMode.CYCLING
+            speedKmh >= VEHICLE_MIN_KMH -> JourneyMode.VEHICLE
+            else -> JourneyMode.UNKNOWN
+        }
     }
 
     private fun isUsablePoint(point: LocationPoint): Boolean {
@@ -142,5 +171,10 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
         const val PLACE_RADIUS_METERS = 150.0
         const val MAX_ACCURACY_METERS = 100.0
         const val MIN_POINTS_PER_VISIT = 3
+        const val MIN_JOURNEY_DISTANCE_METERS = 100.0
+
+        const val WALKING_MAX_KMH = 7.0
+        const val CYCLING_MAX_KMH = 25.0
+        const val VEHICLE_MIN_KMH = 35.0
     }
 }
