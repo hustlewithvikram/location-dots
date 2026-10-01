@@ -7,12 +7,14 @@ import com.locationdots.app.data.local.LocationDotsDatabase
 import com.locationdots.app.data.repository.RoomInsightsRepository
 import com.locationdots.app.data.repository.RoomLocationRepository
 import com.locationdots.app.data.repository.RoomPlaceRepository
+import com.locationdots.app.data.repository.RoomTimelineRepository
 import com.locationdots.app.domain.insights.InsightsRepository
 import com.locationdots.app.domain.journey.DefaultJourneyProcessor
 import com.locationdots.app.domain.journey.JourneyProcessor
 import com.locationdots.app.domain.location.LocationRepository
 import com.locationdots.app.domain.places.PlaceEngine
 import com.locationdots.app.domain.places.PlaceRepository
+import com.locationdots.app.domain.timeline.TimelineRepository
 
 class LocationDotsApplication : Application() {
     val database: LocationDotsDatabase by lazy { LocationDotsDatabase.create(this) }
@@ -36,6 +38,10 @@ class LocationDotsApplication : Application() {
 
     val journeyProcessor: JourneyProcessor by lazy {
         DefaultJourneyProcessor(placeEngine)
+    }
+
+    val timelineRepository: TimelineRepository by lazy {
+        RoomTimelineRepository(database.timelineEventDao(), placeRepository)
     }
 
     val insightsRepository: InsightsRepository by lazy {
