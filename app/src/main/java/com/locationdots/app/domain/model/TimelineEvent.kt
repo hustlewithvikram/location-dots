@@ -21,6 +21,14 @@ sealed interface TimelineEvent {
         val endPlace: Place?,
         val startedAt: Instant,
         val endedAt: Instant?,
-        val distanceMeters: Double?
+        val distanceMeters: Double?,
+        val mode: JourneyMode
     ) : TimelineEvent
+}
+
+enum class JourneyMode {
+    WALKING,
+    CYCLING,
+    VEHICLE,
+    UNKNOWN
 }
