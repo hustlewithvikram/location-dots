@@ -9,7 +9,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [LocationEntity::class, PlaceEntity::class, TimelineEventEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class LocationDotsDatabase : RoomDatabase() {
@@ -48,13 +48,19 @@ abstract class LocationDotsDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE timeline_events ADD COLUMN pathEncoded TEXT")
+            }
+        }
+
         fun create(context: Context): LocationDotsDatabase =
             Room.databaseBuilder(
                 context,
                 LocationDotsDatabase::class.java,
                 "location_dots.db"
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .build()
     }
 }
