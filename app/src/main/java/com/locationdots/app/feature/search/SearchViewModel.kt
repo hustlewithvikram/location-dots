@@ -7,6 +7,8 @@ import com.locationdots.app.domain.search.SearchResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 data class SearchUiState(
@@ -16,18 +18,22 @@ data class SearchUiState(
 )
 
 class SearchViewModel(private val repository: SearchRepository) : ViewModel() {
+    private var searchJob: Job? = null
+
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
     fun search(query: String) {
         _uiState.value = _uiState.value.copy(query = query)
-        viewModelScope.launch {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
             if (query.trim().length < 2) {
                 _uiState.value = _uiState.value.copy(results = emptyList(), isSearching = false)
                 return@launch
             }
 
             _uiState.value = _uiState.value.copy(isSearching = true)
+            delay(180)
             val results = repository.search(query)
             _uiState.value = _uiState.value.copy(results = results, isSearching = false)
         }
