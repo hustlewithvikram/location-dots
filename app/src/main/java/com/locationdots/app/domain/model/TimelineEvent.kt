@@ -22,7 +22,8 @@ sealed interface TimelineEvent {
         val startedAt: Instant,
         val endedAt: Instant?,
         val distanceMeters: Double?,
-        val mode: JourneyMode
+        val mode: JourneyMode,
+        val path: List<LocationPoint> = emptyList()
     ) : TimelineEvent
 }
 
