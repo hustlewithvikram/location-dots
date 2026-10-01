@@ -169,7 +169,7 @@ class MainActivity : ComponentActivity() {
                     } else {
                         val placeViewModel = ViewModelProvider(
                             this,
-                            PlaceDetailViewModelFactory(app.placeRepository, app.timelineRepository, placeId)
+                            PlaceDetailViewModelFactory(app.placeRepository, app.timelineRepository, placeId!!)
                         )[PlaceDetailViewModel::class.java]
                         val place by placeViewModel.place.collectAsStateWithLifecycle()
                         val visits by placeViewModel.visits.collectAsStateWithLifecycle()
