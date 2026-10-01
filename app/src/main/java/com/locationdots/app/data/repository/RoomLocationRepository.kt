@@ -7,14 +7,15 @@ import com.locationdots.app.domain.location.LocationRepository
 import com.locationdots.app.domain.model.LocationPoint
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.time.Instant
 import java.util.UUID
 
 class RoomLocationRepository(private val dao: LocationDao) : LocationRepository {
     override fun observeLocationPoints(): Flow<List<LocationPoint>> =
         dao.observeAll().map { it.map { entity -> entity.toDomain() } }
 
-    override suspend fun getAllLocationPoints(): List<LocationPoint> =
-        dao.getAll().map { it.toDomain() }
+    override suspend fun getLocationPoints(from: Instant, to: Instant): List<LocationPoint> =
+        dao.getRange(from.toEpochMilli(), to.toEpochMilli()).map { it.toDomain() }
 
     override suspend fun saveLocationPoint(point: LocationPoint) {
         dao.insert(point.toEntity(UUID.randomUUID().toString()))
