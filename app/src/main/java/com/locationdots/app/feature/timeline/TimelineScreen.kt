@@ -3,8 +3,10 @@ package com.locationdots.app.feature.timeline
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,7 +22,7 @@ import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.PedalBike
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.Walk
+import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.style.TextAlign
@@ -370,7 +372,7 @@ private fun TimelineIcon(
     val icon = when (event) {
         is TimelineEvent.Visit -> Icons.Default.Place
         is TimelineEvent.Journey -> when (event.mode) {
-            JourneyMode.WALKING -> Icons.Default.Walk
+            JourneyMode.WALKING -> Icons.Default.DirectionsWalk
             JourneyMode.CYCLING -> Icons.Default.PedalBike
             JourneyMode.VEHICLE -> Icons.Default.DirectionsCar
             JourneyMode.UNKNOWN -> Icons.Default.MyLocation
