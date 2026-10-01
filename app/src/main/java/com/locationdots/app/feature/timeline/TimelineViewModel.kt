@@ -9,43 +9,86 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+data class TimelineUiState(
+    val events: List<TimelineEvent> = emptyList(),
+    val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
+    val hasMore: Boolean = true,
+    val errorMessage: String? = null
+)
+
 class TimelineViewModel(private val repository: TimelineRepository) : ViewModel() {
     companion object {
         const val PAGE_SIZE = 30
     }
 
-    private val _timeline = MutableStateFlow<List<TimelineEvent>>(emptyList())
-    val timeline: StateFlow<List<TimelineEvent>> = _timeline.asStateFlow()
-
-    private var offset = 0
-    private var loading = false
-    private var hasMore = true
+    private val _uiState = MutableStateFlow(TimelineUiState())
+    val uiState: StateFlow<TimelineUiState> = _uiState.asStateFlow()
 
     init {
         loadMore()
     }
 
     fun refresh() {
-        if (loading) return
-        offset = 0
-        hasMore = true
-        _timeline.value = emptyList()
-        loadMore()
+        if (_uiState.value.isLoading || _uiState.value.isRefreshing) return
+
+        _uiState.value = _uiState.value.copy(
+            isRefreshing = true,
+            hasMore = true,
+            errorMessage = null
+        )
+
+        viewModelScope.launch {
+            try {
+                val page = repository.getPage(PAGE_SIZE, 0)
+                _uiState.value = TimelineUiState(
+                    events = page.distinctBy { it.id },
+                    isRefreshing = false,
+                    hasMore = page.size == PAGE_SIZE
+                )
+            } catch (error: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isRefreshing = false,
+                    errorMessage = error.message ?: "Unable to refresh timeline"
+                )
+            }
+        }
     }
 
     fun loadMore() {
-        if (loading || !hasMore) return
+        val state = _uiState.value
+        if (state.isLoading || state.isRefreshing || !state.hasMore) return
 
-        loading = true
+        _uiState.value = state.copy(
+            isLoading = true,
+            errorMessage = null
+        )
+
         viewModelScope.launch {
             try {
-                val page = repository.getPage(PAGE_SIZE, offset)
-                _timeline.value = _timeline.value + page
-                offset += page.size
-                hasMore = page.size == PAGE_SIZE
-            } finally {
-                loading = false
+                val current = _uiState.value.events
+                val page = repository.getPage(PAGE_SIZE, current.size)
+                val merged = (current + page).distinctBy { it.id }
+
+                _uiState.value = _uiState.value.copy(
+                    events = merged,
+                    isLoading = false,
+                    hasMore = page.size == PAGE_SIZE
+                )
+            } catch (error: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = error.message ?: "Unable to load timeline"
+                )
             }
         }
+    }
+
+    fun retry() {
+        if (_uiState.value.events.isEmpty()) refresh() else loadMore()
+    }
+
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(errorMessage = null)
     }
 }
