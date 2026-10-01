@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -28,7 +29,6 @@ import com.locationdots.app.feature.splash.SplashScreen
 import com.locationdots.app.feature.timeline.*
 import com.locationdots.app.ui.components.AppTab
 import com.locationdots.app.ui.theme.LocationDotsTheme
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -47,7 +47,6 @@ class MainActivity : ComponentActivity() {
     private var isSearchOpen by mutableStateOf(false)
     private var isAboutOpen by mutableStateOf(false)
     private var showSplash by mutableStateOf(true)
-    private var isFirstRun by mutableStateOf(true)
     private var themeChoice by mutableStateOf(ThemeChoice.SYSTEM)
     private var animationsEnabled by mutableStateOf(true)
 
@@ -60,17 +59,18 @@ class MainActivity : ComponentActivity() {
                     result[Manifest.permission.ACCESS_COARSE_LOCATION] == true
             if (hasLocationPermission) {
                 preferences.edit().putBoolean("onboarding_complete", true).apply()
-                isFirstRun = false
                 startTracking()
             }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         permissionManager = LocationPermissionManager(this)
         trackingController = LocationTrackingController(this)
         themeChoice = runCatching { ThemeChoice.valueOf(preferences.getString("theme", ThemeChoice.SYSTEM.name)!!) }.getOrDefault(ThemeChoice.SYSTEM)
         animationsEnabled = preferences.getBoolean("animations", true)
+        showSplash = !preferences.getBoolean("splash_seen", false)
 
         val app = application as LocationDotsApplication
         timelineViewModel = ViewModelProvider(this, TimelineViewModelFactory(app.timelineRepository))[TimelineViewModel::class.java]
@@ -92,13 +92,6 @@ class MainActivity : ComponentActivity() {
                 val insights by insightsViewModel.snapshot.collectAsStateWithLifecycle()
                 val insightsLoading by insightsViewModel.isLoading.collectAsStateWithLifecycle()
                 val insightsError by insightsViewModel.error.collectAsStateWithLifecycle()
-
-                LaunchedEffect(isFirstRun) {
-                    if (!isFirstRun) {
-                        delay(650)
-                        showSplash = false
-                    }
-                }
 
                 when {
                     showSplash -> SplashScreen(
