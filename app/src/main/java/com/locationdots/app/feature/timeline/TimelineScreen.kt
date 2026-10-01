@@ -415,7 +415,7 @@ private fun JourneyContent(event: TimelineEvent.Journey) {
         style = MaterialTheme.typography.titleMedium
     )
     Text(
-        listOf(event.mode.label(), formatDistance(event.distanceMeters)).joinToString(" · "),
+        buildJourneyMeta(event),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
@@ -507,13 +507,31 @@ private fun durationLabel(
     arrival: java.time.Instant,
     departure: java.time.Instant?
 ): String {
-    if (departure == null) return "Still there"
-    val minutes = Duration.between(arrival, departure).toMinutes()
+    if (departure == null) return "Still here · ongoing visit"
+    val minutes = Duration.between(arrival, departure).toMinutes().coerceAtLeast(0)
     return if (minutes < 60) {
-        minutes.toString() + " min"
+        "${minutes} min stay"
     } else {
-        (minutes / 60).toString() + "h " + (minutes % 60).toString() + "m"
+        "${minutes / 60}h ${minutes % 60}m stay"
     }
+}
+
+private fun buildJourneyMeta(event: TimelineEvent.Journey): String {
+    val parts = mutableListOf(event.mode.label(), formatDistance(event.distanceMeters))
+    event.endedAt?.let {
+        val minutes = Duration.between(event.startedAt, it).toMinutes().coerceAtLeast(0)
+        parts += if (minutes < 60) {
+            "${minutes} min"
+        } else {
+            "${minutes / 60}h ${minutes % 60}m"
+        }
+    } ?: parts.add("In progress")
+
+    event.startPlace?.name?.let { start ->
+        parts.add(0, "From ${start}")
+    }
+
+    return parts.joinToString(" · ")
 }
 
 private fun JourneyMode.label(): String = when (this) {
