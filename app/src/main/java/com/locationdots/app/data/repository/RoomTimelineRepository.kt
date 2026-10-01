@@ -50,6 +50,7 @@ class RoomTimelineRepository(
                 startedAt = Instant.ofEpochMilli(entity.startedAtEpochMillis ?: entity.timestampEpochMillis),
                 endedAt = entity.endedAtEpochMillis?.let(Instant::ofEpochMilli),
                 distanceMeters = entity.distanceMeters,
+                path = decodePath(entity.pathEncoded),
                 mode = entity.journeyMode?.let {
                     runCatching { JourneyMode.valueOf(it) }.getOrDefault(JourneyMode.UNKNOWN)
                 } ?: JourneyMode.UNKNOWN
@@ -71,7 +72,8 @@ class RoomTimelineRepository(
                 startedAtEpochMillis = null,
                 endedAtEpochMillis = null,
                 distanceMeters = null,
-                journeyMode = null
+                journeyMode = null,
+                pathEncoded = null
             )
             is TimelineEvent.Journey -> TimelineEventEntity(
                 id = event.id,
@@ -85,10 +87,29 @@ class RoomTimelineRepository(
                 startedAtEpochMillis = event.startedAt.toEpochMilli(),
                 endedAtEpochMillis = event.endedAt?.toEpochMilli(),
                 distanceMeters = event.distanceMeters,
-                journeyMode = event.mode.name
+                journeyMode = event.mode.name,
+                pathEncoded = encodePath(event.path)
             )
         }
 
+    private fun encodePath(path: List<LocationPoint>): String =
+        path.joinToString(";") { point ->
+            listOf(point.latitude, point.longitude, point.accuracyMeters ?: -1f, point.timestamp.toEpochMilli()).joinToString(",")
+        }
+
+    private fun decodePath(encoded: String?): List<LocationPoint> =
+        encoded?.split(";")?.mapNotNull { value ->
+            val parts = value.split(",")
+            if (parts.size != 4) return@mapNotNull null
+            runCatching {
+                LocationPoint(
+                    latitude = parts[0].toDouble(),
+                    longitude = parts[1].toDouble(),
+                    accuracyMeters = parts[2].toFloat().takeUnless { it < 0f },
+                    timestamp = Instant.ofEpochMilli(parts[3].toLong())
+                )
+            }.getOrNull()
+        }.orEmpty()
     private companion object {
         const val TYPE_VISIT = "visit"
         const val TYPE_JOURNEY = "journey"
