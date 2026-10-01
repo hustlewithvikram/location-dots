@@ -5,8 +5,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.MyLocation
-import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -72,6 +70,37 @@ fun JourneyDetailScreen(journey: TimelineEvent.Journey, onBack: () -> Unit) {
                 startLabel = journey.startPlace?.name ?: "Start",
                 endLabel = journey.endPlace?.name ?: "End"
             )
+        }
+
+        if (journey.path.size >= 2) {
+            Card(Modifier.fillMaxWidth()) {
+                Column(
+                    Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text("Route timeline", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Recorded ${journey.path.size} GPS points",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(timeFormatter(journey.path.first().timestamp), style = MaterialTheme.typography.labelMedium)
+                        Text(timeFormatter(journey.path.last().timestamp), style = MaterialTheme.typography.labelMedium)
+                    }
+                    LinearProgressIndicator(
+                        progress = { 1f },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        "Route data spans ${formatDuration(Duration.between(journey.path.first().timestamp, journey.path.last().timestamp).toMinutes().coerceAtLeast(0))}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
 
         Card(Modifier.fillMaxWidth()) {
@@ -310,6 +339,13 @@ private fun RouteTimeline(
         )
     }
 }
+
+private fun timeFormatter(timestamp: java.time.Instant): String =
+    DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
+        .format(timestamp.atZone(ZoneId.systemDefault()))
+
+private fun formatSpeed(speedKmh: Double): String =
+    if (speedKmh < 10) "%.1f km/h".format(speedKmh) else "%.0f km/h".format(speedKmh)
 
 private fun JourneyMode.label(): String = when (this) {
     JourneyMode.WALKING -> "Walking"
