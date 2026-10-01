@@ -11,49 +11,64 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationdots.app.core.location.LocationTrackingController
 import com.locationdots.app.core.permissions.LocationPermissionManager
 import com.locationdots.app.feature.onboarding.OnboardingScreen
+import com.locationdots.app.feature.timeline.TimelineScreen
+import com.locationdots.app.feature.timeline.TimelineViewModel
+import com.locationdots.app.feature.timeline.TimelineViewModelFactory
 import com.locationdots.app.ui.theme.LocationDotsTheme
 
 class MainActivity : ComponentActivity() {
-
     private lateinit var permissionManager: LocationPermissionManager
     private lateinit var trackingController: LocationTrackingController
+    private lateinit var timelineViewModel: TimelineViewModel
 
     private var hasLocationPermission by mutableStateOf(false)
     private var isTracking by mutableStateOf(false)
 
     private val locationPermissionLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions()
-        ) { result ->
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
             hasLocationPermission =
                 result[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
                     result[Manifest.permission.ACCESS_COARSE_LOCATION] == true
 
-            if (hasLocationPermission) {
-                startTracking()
-            }
+            if (hasLocationPermission) startTracking()
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val app = application as LocationDotsApplication
         permissionManager = LocationPermissionManager(this)
         trackingController = LocationTrackingController(this)
+        timelineViewModel = ViewModelProvider(
+            this,
+            TimelineViewModelFactory(app.insightsRepository)
+        )[TimelineViewModel::class.java]
 
         refreshState()
 
         setContent {
             LocationDotsTheme {
-                OnboardingScreen(
-                    hasLocationPermission = hasLocationPermission,
-                    isTracking = isTracking,
-                    onRequestLocationPermission = ::requestLocationPermission,
-                    onStartTracking = ::startTracking,
-                    onStopTracking = ::stopTracking
-                )
+                val events by timelineViewModel.timeline.collectAsStateWithLifecycle()
+
+                if (hasLocationPermission) {
+                    TimelineScreen(
+                        events = events,
+                        isTracking = isTracking
+                    )
+                } else {
+                    OnboardingScreen(
+                        hasLocationPermission = false,
+                        isTracking = isTracking,
+                        onRequestLocationPermission = ::requestLocationPermission,
+                        onStartTracking = ::startTracking,
+                        onStopTracking = ::stopTracking
+                    )
+                }
             }
         }
     }
@@ -93,17 +108,14 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun refreshState() {
-        hasLocationPermission =
-            permissionManager.hasForegroundLocationPermission()
+        hasLocationPermission = permissionManager.hasForegroundLocationPermission()
         isTracking = trackingController.isTracking.value
     }
 
     private fun isLocationEnabled(): Boolean =
-        ContextCompat.getSystemService(
-            this,
-            android.location.LocationManager::class.java
-        )?.let { manager ->
-            manager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) ||
-                manager.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER)
-        } ?: false
+        ContextCompat.getSystemService(this, android.location.LocationManager::class.java)
+            ?.let { manager ->
+                manager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) ||
+                    manager.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER)
+            } ?: false
 }
