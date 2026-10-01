@@ -11,7 +11,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.PedalBike
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Walk
+import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -99,7 +99,7 @@ private fun SearchResultRow(
         is SearchResult.PlaceResult -> Icons.Default.Place
         is SearchResult.VisitResult -> Icons.Default.LocationOn
         is SearchResult.JourneyResult -> when (result.event.mode) {
-            JourneyMode.WALKING -> Icons.Default.Walk
+            JourneyMode.WALKING -> Icons.Default.DirectionsWalk
             JourneyMode.CYCLING -> Icons.Default.PedalBike
             JourneyMode.VEHICLE -> Icons.Default.DirectionsCar
             JourneyMode.UNKNOWN -> Icons.Default.LocationOn
