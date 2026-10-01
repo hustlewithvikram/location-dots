@@ -12,11 +12,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PlaceDetailScreen(
-    place: Place?,
-    onBack: () -> Unit,
-    onRename: (String?) -> Unit
-) {
+fun PlaceDetailScreen(place: Place?, onBack: () -> Unit, onRename: (String?) -> Unit) {
     var name by remember(place?.id, place?.name) { mutableStateOf(place?.name.orEmpty()) }
 
     Scaffold(
@@ -36,33 +32,24 @@ fun PlaceDetailScreen(
             return@Scaffold
         }
 
-        val formatter = DateTimeFormatter
-            .ofPattern("d MMM yyyy, HH:mm", Locale.getDefault())
+        val formatter = DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm", Locale.getDefault())
             .withZone(ZoneId.systemDefault())
 
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(20.dp)
-                .navigationBarsPadding()
-                .imePadding(),
+            modifier = Modifier.fillMaxSize().padding(padding).padding(20.dp)
+                .navigationBarsPadding().imePadding(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Card(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Place details", style = MaterialTheme.typography.titleMedium)
                     Text("%.5f, %.5f".format(Locale.US, place.latitude, place.longitude))
-                    Text("First recorded · \${formatter.format(place.createdAt)}")
-                    Text("Last visited · \${formatter.format(place.updatedAt)}")
+                    Text("First recorded · ${formatter.format(place.createdAt)}")
+                    Text("Last visited · ${formatter.format(place.updatedAt)}")
                 }
             }
 
             Text("Name this place", style = MaterialTheme.typography.titleMedium)
-
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
@@ -71,21 +58,12 @@ fun PlaceDetailScreen(
                 placeholder = { Text("e.g. Home, Office, Gym") }
             )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Button(onClick = { onRename(name) }, modifier = Modifier.weight(1f)) {
-                    Text("Save")
-                }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(onClick = { onRename(name) }, modifier = Modifier.weight(1f)) { Text("Save") }
                 if (place.name != null) {
-                    Button(
-                        onClick = {
-                            name = ""
-                            onRename(null)
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) { Text("Clear") }
+                    Button(onClick = { name = ""; onRename(null) }, modifier = Modifier.weight(1f)) {
+                        Text("Clear")
+                    }
                 }
             }
         }
