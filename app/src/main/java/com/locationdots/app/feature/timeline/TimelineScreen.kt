@@ -29,6 +29,7 @@ fun TimelineScreen(
     events: List<TimelineEvent>,
     isTracking: Boolean,
     onPlaceClick: (String) -> Unit,
+    onJourneyClick: (String) -> Unit,
     onLoadMore: () -> Unit
 ) {
     val items = buildTimelineItems(events)
@@ -66,7 +67,7 @@ fun TimelineScreen(
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.padding(start = 24.dp, top = 16.dp, end = 24.dp, bottom = 4.dp)
                         )
-                        is TimelineItem.Event -> TimelineEventCard(item.value, timeFormatter, onPlaceClick)
+                        is TimelineItem.Event -> TimelineEventCard(item.value, timeFormatter, onPlaceClick, onJourneyClick)
                     }
                 }
             }
@@ -94,11 +95,13 @@ private fun buildTimelineItems(events: List<TimelineEvent>): List<TimelineItem> 
 private fun TimelineEventCard(
     event: TimelineEvent,
     timeFormatter: DateTimeFormatter,
-    onPlaceClick: (String) -> Unit
+    onPlaceClick: (String) -> Unit,
+    onJourneyClick: (String) -> Unit
 ) {
-    val clickable = if (event is TimelineEvent.Visit) {
-        Modifier.clickable { onPlaceClick(event.place.id) }
-    } else Modifier
+    val clickable = when (event) {
+        is TimelineEvent.Visit -> Modifier.clickable { onPlaceClick(event.place.id) }
+        is TimelineEvent.Journey -> Modifier.clickable { onJourneyClick(event.id) }
+    }
 
     Card(modifier = clickable.fillMaxWidth().padding(horizontal = 16.dp)) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
