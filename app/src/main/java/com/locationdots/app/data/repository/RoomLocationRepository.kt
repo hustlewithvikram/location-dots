@@ -13,6 +13,9 @@ class RoomLocationRepository(private val dao: LocationDao) : LocationRepository 
     override fun observeLocationPoints(): Flow<List<LocationPoint>> =
         dao.observeAll().map { it.map { entity -> entity.toDomain() } }
 
+    override suspend fun getAllLocationPoints(): List<LocationPoint> =
+        dao.getAll().map { it.toDomain() }
+
     override suspend fun saveLocationPoint(point: LocationPoint) {
         dao.insert(point.toEntity(UUID.randomUUID().toString()))
     }
