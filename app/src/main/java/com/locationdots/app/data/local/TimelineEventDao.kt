@@ -17,6 +17,13 @@ interface TimelineEventDao {
     @Query("DELETE FROM timeline_events")
     suspend fun deleteAll()
 
+    @Query("""
+        DELETE FROM timeline_events
+        WHERE timestampEpochMillis >= :fromEpochMillis
+        AND timestampEpochMillis <= :toEpochMillis
+    """)
+    suspend fun deleteRange(fromEpochMillis: Long, toEpochMillis: Long)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(events: List<TimelineEventEntity>)
 }
