@@ -25,6 +25,14 @@ class TimelineViewModel(private val repository: TimelineRepository) : ViewModel(
         loadMore()
     }
 
+    fun refresh() {
+        if (loading) return
+        offset = 0
+        hasMore = true
+        _timeline.value = emptyList()
+        loadMore()
+    }
+
     fun loadMore() {
         if (loading || !hasMore) return
 
