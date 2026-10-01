@@ -2,6 +2,7 @@ package com.locationdots.app.data.repository
 
 import com.locationdots.app.data.local.TimelineEventDao
 import com.locationdots.app.data.local.TimelineEventEntity
+import com.locationdots.app.domain.model.JourneyMode
 import com.locationdots.app.domain.model.TimelineEvent
 import com.locationdots.app.domain.places.PlaceRepository
 import com.locationdots.app.domain.timeline.TimelineRepository
@@ -47,7 +48,10 @@ class RoomTimelineRepository(
                 endPlace = entity.endPlaceId?.let { placeRepository.getPlace(it) },
                 startedAt = Instant.ofEpochMilli(entity.startedAtEpochMillis ?: entity.timestampEpochMillis),
                 endedAt = entity.endedAtEpochMillis?.let(Instant::ofEpochMilli),
-                distanceMeters = entity.distanceMeters
+                distanceMeters = entity.distanceMeters,
+                mode = entity.journeyMode?.let {
+                    runCatching { JourneyMode.valueOf(it) }.getOrDefault(JourneyMode.UNKNOWN)
+                } ?: JourneyMode.UNKNOWN
             )
             else -> null
         }
@@ -65,7 +69,8 @@ class RoomTimelineRepository(
                 endPlaceId = null,
                 startedAtEpochMillis = null,
                 endedAtEpochMillis = null,
-                distanceMeters = null
+                distanceMeters = null,
+                journeyMode = null
             )
             is TimelineEvent.Journey -> TimelineEventEntity(
                 id = event.id,
@@ -78,7 +83,8 @@ class RoomTimelineRepository(
                 endPlaceId = event.endPlace?.id,
                 startedAtEpochMillis = event.startedAt.toEpochMilli(),
                 endedAtEpochMillis = event.endedAt?.toEpochMilli(),
-                distanceMeters = event.distanceMeters
+                distanceMeters = event.distanceMeters,
+                journeyMode = event.mode.name
             )
         }
 
