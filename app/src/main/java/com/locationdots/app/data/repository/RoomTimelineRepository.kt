@@ -13,7 +13,7 @@ class RoomTimelineRepository(
 ) : TimelineRepository {
 
     override suspend fun getPage(limit: Int, offset: Int): List<TimelineEvent> =
-        dao.getPage(limit, offset).mapNotNull { toDomain(it) }
+        dao.getPage(limit, offset).map { toDomain(it) }.filterNotNull()
 
     override suspend fun replaceAll(events: List<TimelineEvent>) {
         dao.deleteAll()
