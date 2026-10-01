@@ -47,6 +47,7 @@ class MainActivity : ComponentActivity() {
     private var isSearchOpen by mutableStateOf(false)
     private var isAboutOpen by mutableStateOf(false)
     private var showSplash by mutableStateOf(true)
+    private var isFirstRun by mutableStateOf(true)
     private var themeChoice by mutableStateOf(ThemeChoice.SYSTEM)
     private var animationsEnabled by mutableStateOf(true)
 
