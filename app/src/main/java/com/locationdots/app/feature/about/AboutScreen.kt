@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import com.locationdots.app.ui.components.ExpressiveCard
 import com.locationdots.app.ui.components.ExpressiveListRow
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
     Scaffold(topBar = {
