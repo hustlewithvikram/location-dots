@@ -1,3 +1,6 @@
+import com.android.build.api.dsl.ApplicationExtension
+import org.gradle.kotlin.dsl.configure
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.kapt)
@@ -5,7 +8,7 @@ plugins {
     alias(libs.plugins.secrets.gradle)
 }
 
-android {
+extensions.configure<ApplicationExtension> {
     namespace = "com.locationdots.app"
     compileSdk {
         version = release(37) {
@@ -56,7 +59,7 @@ dependencies {
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    kapt(libs.androidx.room.compiler)
+    add("kapt", libs.androidx.room.compiler)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
