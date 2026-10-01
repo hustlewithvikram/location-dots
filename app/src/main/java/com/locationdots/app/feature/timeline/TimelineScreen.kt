@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.locationdots.app.domain.model.JourneyMode
 import com.locationdots.app.domain.model.TimelineEvent
 import java.time.Duration
 import java.time.LocalDate
@@ -130,6 +131,14 @@ private fun journeyLabel(event: TimelineEvent.Journey): String {
     val distance = event.distanceMeters?.let {
         if (it < 1000) "${it.toInt()} m" else "%.1f km".format(it / 1000.0)
     } ?: "Distance unavailable"
+
     val destination = event.endPlace?.name ?: "Unnamed place"
-    return "$destination · $distance"
+    val mode = when (event.mode) {
+        JourneyMode.WALKING -> "Walking"
+        JourneyMode.CYCLING -> "Cycling"
+        JourneyMode.VEHICLE -> "Vehicle"
+        JourneyMode.UNKNOWN -> "Movement"
+    }
+
+    return "$destination · $distance · $mode"
 }
