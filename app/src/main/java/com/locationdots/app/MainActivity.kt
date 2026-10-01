@@ -16,6 +16,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationdots.app.core.location.LocationTrackingController
 import com.locationdots.app.core.permissions.LocationPermissionManager
 import com.locationdots.app.feature.onboarding.OnboardingScreen
+import com.locationdots.app.feature.place.PlaceDetailScreen
+import com.locationdots.app.feature.place.PlaceDetailViewModel
+import com.locationdots.app.feature.place.PlaceDetailViewModelFactory
 import com.locationdots.app.feature.timeline.TimelineScreen
 import com.locationdots.app.feature.timeline.TimelineViewModel
 import com.locationdots.app.feature.timeline.TimelineViewModelFactory
@@ -28,13 +31,13 @@ class MainActivity : ComponentActivity() {
 
     private var hasLocationPermission by mutableStateOf(false)
     private var isTracking by mutableStateOf(false)
+    private var selectedPlaceId by mutableStateOf<String?>(null)
 
     private val locationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
             hasLocationPermission =
                 result[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
                     result[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-
             if (hasLocationPermission) startTracking()
         }
 
@@ -55,12 +58,7 @@ class MainActivity : ComponentActivity() {
             LocationDotsTheme {
                 val events by timelineViewModel.timeline.collectAsStateWithLifecycle()
 
-                if (hasLocationPermission) {
-                    TimelineScreen(
-                        events = events,
-                        isTracking = isTracking
-                    )
-                } else {
+                if (!hasLocationPermission) {
                     OnboardingScreen(
                         hasLocationPermission = false,
                         isTracking = isTracking,
@@ -68,6 +66,27 @@ class MainActivity : ComponentActivity() {
                         onStartTracking = ::startTracking,
                         onStopTracking = ::stopTracking
                     )
+                } else {
+                    val placeId = selectedPlaceId
+                    if (placeId == null) {
+                        TimelineScreen(
+                            events = events,
+                            isTracking = isTracking,
+                            onPlaceClick = { selectedPlaceId = it }
+                        )
+                    } else {
+                        val placeViewModel = ViewModelProvider(
+                            this,
+                            PlaceDetailViewModelFactory(app.placeRepository, placeId)
+                        )[PlaceDetailViewModel::class.java]
+                        val place by placeViewModel.place.collectAsStateWithLifecycle()
+
+                        PlaceDetailScreen(
+                            place = place,
+                            onBack = { selectedPlaceId = null },
+                            onRename = placeViewModel::updateName
+                        )
+                    }
                 }
             }
         }
