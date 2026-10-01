@@ -96,9 +96,9 @@ class MainActivity : ComponentActivity() {
                 when {
                     showSplash -> SplashScreen(
                         onGetStarted = {
+                            preferences.edit().putBoolean("splash_seen", true).apply()
                             if (hasLocationPermission) {
                                 preferences.edit().putBoolean("onboarding_complete", true).apply()
-                                isFirstRun = false
                             }
                             showSplash = false
                         }
