@@ -11,6 +11,9 @@ interface PlaceDao {
     @Query("SELECT * FROM places ORDER BY updatedAtEpochMillis DESC")
     fun observeAll(): Flow<List<PlaceEntity>>
 
+    @Query("SELECT * FROM places WHERE name LIKE '%' || :query || '%' COLLATE NOCASE ORDER BY updatedAtEpochMillis DESC")
+    suspend fun searchByName(query: String): List<PlaceEntity>
+
     @Query("SELECT * FROM places")
     suspend fun getAll(): List<PlaceEntity>
 
