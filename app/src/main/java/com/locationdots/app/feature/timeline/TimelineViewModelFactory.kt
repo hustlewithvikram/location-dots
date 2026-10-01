@@ -2,10 +2,10 @@ package com.locationdots.app.feature.timeline
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.locationdots.app.domain.insights.InsightsRepository
+import com.locationdots.app.domain.timeline.TimelineRepository
 
 class TimelineViewModelFactory(
-    private val repository: InsightsRepository
+    private val repository: TimelineRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
