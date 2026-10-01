@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,15 +29,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.luminance
-import com.locationdots.app.ui.components.ExpressiveButton
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.locationdots.app.ui.components.ExpressiveButton
 
 @Composable
 fun SplashScreen(
@@ -66,7 +65,7 @@ fun SplashScreen(
 
     var contentVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-contentVisible = true
+        contentVisible = true
     }
 
     val background = MaterialTheme.colorScheme.background
@@ -140,9 +139,9 @@ contentVisible = true
                 .fillMaxSize()
                 .padding(
                     start = 28.dp,
-                    top = 34.dp + WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding(),
+                    top = 24.dp + WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding(),
                     end = 28.dp,
-                    bottom = 22.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                    bottom = 18.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
                 ),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
@@ -153,9 +152,7 @@ contentVisible = true
                     initialOffsetY = { -24 }
                 )
             ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         "Location",
                         color = inverseText,
@@ -192,12 +189,12 @@ contentVisible = true
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.alpha(0.9f)
                     )
-
                     ExpressiveButton(
                         text = "Get Started",
                         onClick = onGetStarted,
                         modifier = Modifier.fillMaxWidth()
                     )
+                }
             }
         }
     }
