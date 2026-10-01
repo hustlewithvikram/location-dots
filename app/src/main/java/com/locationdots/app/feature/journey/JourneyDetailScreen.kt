@@ -1,13 +1,21 @@
 package com.locationdots.app.feature.journey
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.Polyline
+import com.google.maps.android.compose.rememberCameraPositionState
 import com.locationdots.app.domain.model.JourneyMode
 import com.locationdots.app.domain.model.LocationPoint
 import com.locationdots.app.domain.model.TimelineEvent
@@ -26,16 +34,43 @@ fun JourneyDetailScreen(journey: TimelineEvent.Journey, onBack: () -> Unit) {
         JourneyMode.VEHICLE -> "Vehicle"
         JourneyMode.UNKNOWN -> "Movement"
     }
-    Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        TextButton(onClick = onBack) {
+            Text("Back")
+        }
+
         Text("Journey", style = MaterialTheme.typography.headlineMedium)
-        Card(Modifier.fillMaxWidth()) { JourneyPath(journey.path) }
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(300.dp),
+            shape = RoundedCornerShape(24.dp)
+        ) {
+            JourneyMap(journey.path)
+        }
+
         Card(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(
+                Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 StatRow("From", journey.startPlace?.name ?: "Unknown place")
                 StatRow("To", journey.endPlace?.name ?: "Unknown place")
                 StatRow("Mode", mode)
                 StatRow("Started", formatter.format(journey.startedAt.atZone(ZoneId.systemDefault())))
-                StatRow("Ended", journey.endedAt?.let { formatter.format(it.atZone(ZoneId.systemDefault())) } ?: "In progress")
+                StatRow(
+                    "Ended",
+                    journey.endedAt?.let {
+                        formatter.format(it.atZone(ZoneId.systemDefault()))
+                    } ?: "In progress"
+                )
                 StatRow("Duration", duration?.let(::formatDuration) ?: "In progress")
                 StatRow("Distance", formatDistance(journey.distanceMeters))
                 StatRow("GPS points", journey.path.size.toString())
@@ -45,38 +80,104 @@ fun JourneyDetailScreen(journey: TimelineEvent.Journey, onBack: () -> Unit) {
 }
 
 @Composable
-private fun JourneyPath(points: List<LocationPoint>) {
-    Canvas(Modifier.fillMaxWidth().height(260.dp).padding(16.dp)) {
-        if (points.size < 2) return@Canvas
-        val minLat = points.minOf { it.latitude }
-        val maxLat = points.maxOf { it.latitude }
-        val minLon = points.minOf { it.longitude }
-        val maxLon = points.maxOf { it.longitude }
-        val latRange = (maxLat - minLat).coerceAtLeast(0.000001)
-        val lonRange = (maxLon - minLon).coerceAtLeast(0.000001)
-        val mapped = points.map { point ->
-            Offset(
-                x = ((point.longitude - minLon) / lonRange * size.width).toFloat(),
-                y = ((maxLat - point.latitude) / latRange * size.height).toFloat()
+private fun JourneyMap(points: List<LocationPoint>) {
+    val coordinates = remember(points) {
+        points.map { LatLng(it.latitude, it.longitude) }
+    }
+
+    if (coordinates.isEmpty()) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            contentAlignment = androidx.compose.ui.Alignment.Center
+        ) {
+            Text(
+                "No route data available",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        mapped.zipWithNext().forEach { pair -> drawLine(pair.first, pair.second, strokeWidth = 6f) }
-        drawCircle(radius = 10f, center = mapped.first())
-        drawCircle(radius = 10f, center = mapped.last())
+        return
+    }
+
+    val cameraPositionState = rememberCameraPositionState()
+    val uiSettings = remember {
+        MapUiSettings(
+            zoomControlsEnabled = false,
+            mapToolbarEnabled = false,
+            compassEnabled = true
+        )
+    }
+    val mapProperties = remember {
+        MapProperties()
+    }
+
+    LaunchedEffect(coordinates) {
+        if (coordinates.size == 1) {
+            cameraPositionState.move(
+                CameraUpdateFactory.newLatLngZoom(coordinates.first(), 16f)
+            )
+        } else {
+            val bounds = LatLngBounds.builder().apply {
+                coordinates.forEach(::include)
+            }.build()
+            cameraPositionState.move(
+                CameraUpdateFactory.newLatLngBounds(bounds, 72)
+            )
+        }
+    }
+
+    GoogleMap(
+        modifier = Modifier.fillMaxSize(),
+        cameraPositionState = cameraPositionState,
+        properties = mapProperties,
+        uiSettings = uiSettings
+    ) {
+        if (coordinates.size >= 2) {
+            Polyline(
+                points = coordinates,
+                width = 8f
+            )
+        }
+
+        Marker(
+            state = MarkerState(position = coordinates.first()),
+            title = "Start",
+            snippet = "Journey started here"
+        )
+
+        if (coordinates.size >= 2) {
+            Marker(
+                state = MarkerState(position = coordinates.last()),
+                title = "End",
+                snippet = "Journey ended here"
+            )
+        }
     }
 }
 
 @Composable
 private fun StatRow(label: String, value: String) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
         Text(label, style = MaterialTheme.typography.bodyMedium)
         Text(value, style = MaterialTheme.typography.bodyLarge)
     }
 }
 
 private fun formatDistance(distanceMeters: Double?): String = distanceMeters?.let {
-    if (it < 1000) it.toInt().toString() + " m" else "%.1f km".format(it / 1000.0)
+    if (it < 1000) {
+        it.toInt().toString() + " m"
+    } else {
+        "%.1f km".format(it / 1000.0)
+    }
 } ?: "Unavailable"
 
 private fun formatDuration(minutes: Long): String =
-    if (minutes < 60) minutes.toString() + " min" else (minutes / 60).toString() + "h " + (minutes % 60).toString() + "m"
+    if (minutes < 60) {
+        minutes.toString() + " min"
+    } else {
+        (minutes / 60).toString() + "h " + (minutes % 60).toString() + "m"
+    }
