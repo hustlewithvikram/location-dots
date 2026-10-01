@@ -17,6 +17,9 @@ import com.locationdots.app.core.location.LocationTrackingController
 import com.locationdots.app.core.permissions.LocationPermissionManager
 import com.locationdots.app.feature.onboarding.OnboardingScreen
 import com.locationdots.app.feature.journey.JourneyDetailScreen
+import com.locationdots.app.feature.insights.InsightsScreen
+import com.locationdots.app.feature.insights.InsightsViewModel
+import com.locationdots.app.feature.insights.InsightsViewModelFactory
 import com.locationdots.app.feature.map.PlacesOverviewScreen
 import com.locationdots.app.feature.map.PlacesOverviewViewModel
 import com.locationdots.app.feature.map.PlacesOverviewViewModelFactory
@@ -37,6 +40,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var timelineViewModel: TimelineViewModel
     private lateinit var searchViewModel: SearchViewModel
     private lateinit var placesViewModel: PlacesOverviewViewModel
+    private lateinit var insightsViewModel: InsightsViewModel
 
     private var hasLocationPermission by mutableStateOf(false)
     private var isTracking by mutableStateOf(false)
@@ -44,6 +48,7 @@ class MainActivity : ComponentActivity() {
     private var selectedJourneyId by mutableStateOf<String?>(null)
     private var isSearchOpen by mutableStateOf(false)
     private var isPlacesOpen by mutableStateOf(false)
+    private var isInsightsOpen by mutableStateOf(false)
 
     private val locationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
@@ -71,6 +76,10 @@ class MainActivity : ComponentActivity() {
             this,
             SearchViewModelFactory(app.searchRepository)
         )[SearchViewModel::class.java]
+        insightsViewModel = ViewModelProvider(
+            this,
+            InsightsViewModelFactory(app.insightsRepository)
+        )[InsightsViewModel::class.java]
 
         refreshState()
 
@@ -90,7 +99,18 @@ class MainActivity : ComponentActivity() {
                 } else {
                     val placeId = selectedPlaceId
                     val journeyId = selectedJourneyId
-                    if (isPlacesOpen) {
+                    if (isInsightsOpen) {
+                        val snapshot by insightsViewModel.snapshot.collectAsStateWithLifecycle()
+                        val isLoading by insightsViewModel.isLoading.collectAsStateWithLifecycle()
+                        val error by insightsViewModel.error.collectAsStateWithLifecycle()
+                        InsightsScreen(
+                            snapshot = snapshot,
+                            isLoading = isLoading,
+                            error = error,
+                            onBack = { isInsightsOpen = false },
+                            onRefresh = insightsViewModel::refresh
+                        )
+                    } else if (isPlacesOpen) {
                         val places by placesViewModel.places.collectAsStateWithLifecycle()
                         PlacesOverviewScreen(
                             places = places,
@@ -131,6 +151,7 @@ class MainActivity : ComponentActivity() {
                             onJourneyClick = { selectedJourneyId = it },
                             onSearchClick = { isSearchOpen = true },
                             onPlacesClick = { isPlacesOpen = true },
+                            onInsightsClick = { isInsightsOpen = true },
                             onLoadMore = timelineViewModel::loadMore,
                             onRetry = timelineViewModel::retry,
                             onClearError = timelineViewModel::clearError
@@ -169,6 +190,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         refreshState()
         timelineViewModel.refresh()
+        if (::insightsViewModel.isInitialized) insightsViewModel.refresh()
     }
 
     private fun requestLocationPermission() {
