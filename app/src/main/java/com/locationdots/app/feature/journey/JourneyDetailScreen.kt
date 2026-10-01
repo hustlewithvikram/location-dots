@@ -5,6 +5,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,6 +35,9 @@ fun JourneyDetailScreen(journey: TimelineEvent.Journey, onBack: () -> Unit) {
     val duration = journey.endedAt?.let { Duration.between(journey.startedAt, it).toMinutes() }
     val formatter = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
     val modeLabel = journey.mode.label()
+    val averageSpeedKmh = if (duration != null && duration > 0 && journey.distanceMeters != null) {
+        journey.distanceMeters / 1000.0 / (duration / 60.0)
+    } else null
 
     Column(
         modifier = Modifier
@@ -52,7 +57,8 @@ fun JourneyDetailScreen(journey: TimelineEvent.Journey, onBack: () -> Unit) {
         JourneySummary(
             mode = modeLabel,
             distance = formatDistance(journey.distanceMeters),
-            duration = duration?.let(::formatDuration) ?: "In progress"
+            duration = duration?.let(::formatDuration) ?: "In progress",
+            averageSpeed = averageSpeedKmh?.let(::formatSpeed) ?: "—"
         )
 
         Card(
@@ -88,6 +94,7 @@ fun JourneyDetailScreen(journey: TimelineEvent.Journey, onBack: () -> Unit) {
                 )
                 StatRow("Duration", duration?.let(::formatDuration) ?: "In progress")
                 StatRow("Distance", formatDistance(journey.distanceMeters))
+                StatRow("Average speed", averageSpeedKmh?.let(::formatSpeed) ?: "Unavailable")
                 StatRow("GPS points", journey.path.size.toString())
             }
         }
@@ -95,7 +102,7 @@ fun JourneyDetailScreen(journey: TimelineEvent.Journey, onBack: () -> Unit) {
 }
 
 @Composable
-private fun JourneySummary(mode: String, distance: String, duration: String) {
+private fun JourneySummary(mode: String, distance: String, duration: String, averageSpeed: String) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -110,6 +117,7 @@ private fun JourneySummary(mode: String, distance: String, duration: String) {
             SummaryItem("Mode", mode)
             SummaryItem("Distance", distance)
             SummaryItem("Duration", duration)
+            SummaryItem("Avg speed", averageSpeed)
         }
     }
 }
@@ -257,12 +265,65 @@ private fun StatRow(label: String, value: String) {
     }
 }
 
+@Composable
+private fun RouteTimeline(
+    points: List<LocationPoint>,
+    startTime: java.time.Instant,
+    endTime: java.time.Instant?
+) {
+    val first = points.firstOrNull()?.timestamp ?: startTime
+    val last = points.lastOrNull()?.timestamp ?: endTime ?: startTime
+    val elapsed = Duration.between(first, last).toMinutes().coerceAtLeast(0)
+
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            "Recorded points: ${points.size}",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
+                    .format(first.atZone(ZoneId.systemDefault())),
+                style = MaterialTheme.typography.labelMedium
+            )
+            Text(
+                if (endTime != null) {
+                    DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
+                        .format(last.atZone(ZoneId.systemDefault()))
+                } else {
+                    "In progress"
+                },
+                style = MaterialTheme.typography.labelMedium
+            )
+        }
+        LinearProgressIndicator(
+            progress = { 1f },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Text(
+            if (elapsed > 0) "${elapsed} min of route data" else "Route data recorded",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
 private fun JourneyMode.label(): String = when (this) {
     JourneyMode.WALKING -> "Walking"
     JourneyMode.CYCLING -> "Cycling"
     JourneyMode.VEHICLE -> "Vehicle"
     JourneyMode.UNKNOWN -> "Movement"
 }
+
+private fun formatSpeed(speedKmh: Double): String =
+    if (speedKmh < 10) {
+        "%.1f km/h".format(speedKmh)
+    } else {
+        "%.0f km/h".format(speedKmh)
+    }
 
 private fun formatDistance(distanceMeters: Double?): String = distanceMeters?.let {
     if (it < 1000) {
@@ -278,3 +339,4 @@ private fun formatDuration(minutes: Long): String =
     } else {
         (minutes / 60).toString() + "h " + (minutes % 60).toString() + "m"
     }
+
