@@ -124,8 +124,8 @@ fun PlaceDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text("History", style = MaterialTheme.typography.titleMedium)
-                        Text("First recorded · \${formatter.format(place.createdAt)}")
-                        Text("Last visited · \${formatter.format(place.updatedAt)}")
+                        Text("First recorded · ${formatter.format(place.createdAt)}")
+                        Text("Last visited · ${formatter.format(place.updatedAt)}")
                     }
                 }
             }
@@ -253,9 +253,9 @@ private fun formatDuration(totalSeconds: Long): String {
     val hours = totalSeconds / 3600
     val minutes = (totalSeconds % 3600) / 60
     return when {
-        hours > 0 && minutes > 0 -> "\${hours}h \${minutes}m"
-        hours > 0 -> "\${hours}h"
-        minutes > 0 -> "\${minutes}m"
+        hours > 0 && minutes > 0 -> "${hours}h ${minutes}m"
+        hours > 0 -> "${hours}h"
+        minutes > 0 -> "${minutes}m"
         else -> "<1m"
     }
 }
