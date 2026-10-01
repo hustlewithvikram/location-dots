@@ -58,7 +58,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             LocationDotsTheme {
-                val events by timelineViewModel.timeline.collectAsStateWithLifecycle()
+                val timelineState by timelineViewModel.uiState.collectAsStateWithLifecycle()
+                val events = timelineState.events
 
                 if (!hasLocationPermission) {
                     OnboardingScreen(
@@ -75,9 +76,15 @@ class MainActivity : ComponentActivity() {
                         TimelineScreen(
                             events = events,
                             isTracking = isTracking,
+                            isLoadingMore = timelineState.isLoading,
+                            isRefreshing = timelineState.isRefreshing,
+                            hasMore = timelineState.hasMore,
+                            errorMessage = timelineState.errorMessage,
                             onPlaceClick = { selectedPlaceId = it },
                             onJourneyClick = { selectedJourneyId = it },
-                            onLoadMore = timelineViewModel::loadMore
+                            onLoadMore = timelineViewModel::loadMore,
+                            onRetry = timelineViewModel::retry,
+                            onClearError = timelineViewModel::clearError
                         )
                     } else if (journeyId != null) {
                         val journey = events.firstOrNull { it.id == journeyId } as? com.locationdots.app.domain.model.TimelineEvent.Journey
