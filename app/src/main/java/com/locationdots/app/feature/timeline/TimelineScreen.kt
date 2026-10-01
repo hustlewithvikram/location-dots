@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.PedalBike
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Walk
@@ -51,6 +52,7 @@ fun TimelineScreen(
     onJourneyClick: (String) -> Unit,
     onSearchClick: () -> Unit,
     onPlacesClick: () -> Unit,
+    onInsightsClick: () -> Unit,
     onLoadMore: () -> Unit,
     onRetry: () -> Unit,
     onClearError: () -> Unit
@@ -64,7 +66,7 @@ fun TimelineScreen(
     LoadMoreOnScroll(listState, items.size, hasMore, isLoadingMore, onLoadMore)
 
     Column(Modifier.fillMaxSize()) {
-        TimelineHeader(isTracking, onSearchClick, onPlacesClick)
+        TimelineHeader(isTracking, onSearchClick, onPlacesClick, onInsightsClick)
 
         if (items.isEmpty()) {
             TimelineEmptyState(isTracking)
@@ -170,7 +172,7 @@ private fun TimelineError(
 }
 
 @Composable
-private fun TimelineHeader(isTracking: Boolean, onSearchClick: () -> Unit, onPlacesClick: () -> Unit) {
+private fun TimelineHeader(isTracking: Boolean, onSearchClick: () -> Unit, onPlacesClick: () -> Unit, onInsightsClick: () -> Unit) {
     Column(
         modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 28.dp, bottom = 14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -186,6 +188,9 @@ private fun TimelineHeader(isTracking: Boolean, onSearchClick: () -> Unit, onPla
             )
             IconButton(onClick = onPlacesClick) {
                 Icon(Icons.Default.Map, contentDescription = "Places")
+            }
+            IconButton(onClick = onInsightsClick) {
+                Icon(Icons.Default.Insights, contentDescription = "Insights")
             }
             IconButton(onClick = onSearchClick) {
                 Icon(Icons.Default.Search, contentDescription = "Search")
