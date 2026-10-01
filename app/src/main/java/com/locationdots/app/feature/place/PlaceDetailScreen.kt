@@ -4,9 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.locationdots.app.domain.model.Place
 import com.locationdots.app.domain.model.TimelineEvent
 import java.time.Duration
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -52,13 +53,24 @@ fun PlaceDetailScreen(
             return@Scaffold
         }
 
-        val formatter = DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm", Locale.getDefault())
-            .withZone(ZoneId.systemDefault())
-        val timeFormatter = DateTimeFormatter.ofPattern("d MMM · HH:mm", Locale.getDefault())
-            .withZone(ZoneId.systemDefault())
+        val zone = ZoneId.systemDefault()
+        val formatter = DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm", Locale.getDefault()).withZone(zone)
+        val timeFormatter = DateTimeFormatter.ofPattern("d MMM · HH:mm", Locale.getDefault()).withZone(zone)
+
         val totalDuration = visits.sumOf { visit ->
             Duration.between(visit.arrival, visit.departure ?: visit.arrival).seconds.coerceAtLeast(0)
         }
+        val completedVisits = visits.count { it.departure != null }
+        val averageDuration = if (completedVisits > 0) totalDuration / completedVisits else 0L
+        val firstVisit = visits.minByOrNull { it.arrival }?.arrival
+        val lastVisit = visits.maxByOrNull { it.arrival }?.arrival
+
+        val today = LocalDate.now(zone)
+        val dailyCounts = (0 until 14).map { daysAgo ->
+            val date = today.minusDays((13 - daysAgo).toLong())
+            date to visits.count { it.arrival.atZone(zone).toLocalDate() == date }
+        }
+        val maxDailyCount = dailyCounts.maxOfOrNull { it.second }?.coerceAtLeast(1) ?: 1
 
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -83,10 +95,7 @@ fun PlaceDetailScreen(
                             )
                         }
                         Column {
-                            Text(
-                                place.name ?: "Unnamed place",
-                                style = MaterialTheme.typography.headlineSmall
-                            )
+                            Text(place.name ?: "Unnamed place", style = MaterialTheme.typography.headlineSmall)
                             Text(
                                 "%.5f, %.5f".format(Locale.US, place.latitude, place.longitude),
                                 style = MaterialTheme.typography.bodyMedium,
@@ -121,11 +130,58 @@ fun PlaceDetailScreen(
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         modifier = Modifier.padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text("Visit insights", style = MaterialTheme.typography.titleMedium)
+                        InsightRow("Average stay", if (completedVisits > 0) formatDuration(averageDuration) else "—")
+                        InsightRow("First visit", firstVisit?.let(formatter::format) ?: "—")
+                        InsightRow("Last visit", lastVisit?.let(formatter::format) ?: "—")
+                    }
+                }
+            }
+
+            item {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Visit activity", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                "Last 14 days",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth().height(110.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.Bottom
+                        ) {
+                            dailyCounts.forEach { (date, count) ->
+                                VisitBar(
+                                    count = count,
+                                    maxCount = maxDailyCount,
+                                    label = date.dayOfMonth.toString(),
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            item {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.padding(18.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("History", style = MaterialTheme.typography.titleMedium)
-                        Text("First recorded · ${formatter.format(place.createdAt)}")
-                        Text("Last visited · ${formatter.format(place.updatedAt)}")
+                        Text("Place history", style = MaterialTheme.typography.titleMedium)
+                        Text("Created · ${formatter.format(place.createdAt)}")
+                        Text("Updated · ${formatter.format(place.updatedAt)}")
                     }
                 }
             }
@@ -136,10 +192,7 @@ fun PlaceDetailScreen(
 
             if (visits.isEmpty()) {
                 item {
-                    Text(
-                        "No visits recorded yet.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text("No visits recorded yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
                 items(visits.take(20), key = { it.id }) { visit ->
@@ -166,10 +219,7 @@ fun PlaceDetailScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Button(
-                        onClick = { onRename(name) },
-                        modifier = Modifier.weight(1f)
-                    ) {
+                    Button(onClick = { onRename(name) }, modifier = Modifier.weight(1f)) {
                         Text("Save")
                     }
                     if (place.name != null) {
@@ -200,12 +250,45 @@ private fun PlaceStat(
         ) {
             icon()
             Text(value, style = MaterialTheme.typography.titleLarge)
-            Text(
-                label,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+    }
+}
+
+@Composable
+private fun InsightRow(label: String, value: String) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+@Composable
+private fun VisitBar(
+    count: Int,
+    maxCount: Int,
+    label: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Bottom
+    ) {
+        Box(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight((count.toFloat() / maxCount).coerceAtLeast(0.08f)),
+                shape = MaterialTheme.shapes.small,
+                color = if (count > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+            ) {}
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(label, style = MaterialTheme.typography.labelSmall)
     }
 }
 
@@ -228,19 +311,12 @@ private fun VisitHistoryRow(
                 shape = MaterialTheme.shapes.medium,
                 color = MaterialTheme.colorScheme.surfaceVariant
             ) {
-                Icon(
-                    Icons.Default.Schedule,
-                    contentDescription = null,
-                    modifier = Modifier.padding(10.dp)
-                )
+                Icon(Icons.Default.Schedule, contentDescription = null, modifier = Modifier.padding(10.dp))
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(formatter.format(visit.arrival), style = MaterialTheme.typography.titleSmall)
                 Text(
-                    when {
-                        duration != null -> formatDuration(duration)
-                        else -> "Currently here"
-                    },
+                    duration?.let(::formatDuration) ?: "Currently here",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
