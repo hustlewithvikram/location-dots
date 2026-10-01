@@ -52,8 +52,7 @@ class LocationDotsApplication : Application() {
 
     val insightsRepository: InsightsRepository by lazy {
         RoomInsightsRepository(
-            timelineRepository = timelineRepository,
-            placeRepository = placeRepository
+            timelineRepository = timelineRepository
         )
     }
 }
