@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.PedalBike
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Walk
@@ -49,6 +50,7 @@ fun TimelineScreen(
     onPlaceClick: (String) -> Unit,
     onJourneyClick: (String) -> Unit,
     onSearchClick: () -> Unit,
+    onPlacesClick: () -> Unit,
     onLoadMore: () -> Unit,
     onRetry: () -> Unit,
     onClearError: () -> Unit
@@ -62,7 +64,7 @@ fun TimelineScreen(
     LoadMoreOnScroll(listState, items.size, hasMore, isLoadingMore, onLoadMore)
 
     Column(Modifier.fillMaxSize()) {
-        TimelineHeader(isTracking, onSearchClick)
+        TimelineHeader(isTracking, onSearchClick, onPlacesClick)
 
         if (items.isEmpty()) {
             TimelineEmptyState(isTracking)
@@ -168,7 +170,7 @@ private fun TimelineError(
 }
 
 @Composable
-private fun TimelineHeader(isTracking: Boolean, onSearchClick: () -> Unit) {
+private fun TimelineHeader(isTracking: Boolean, onSearchClick: () -> Unit, onPlacesClick: () -> Unit) {
     Column(
         modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 28.dp, bottom = 14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -182,6 +184,9 @@ private fun TimelineHeader(isTracking: Boolean, onSearchClick: () -> Unit) {
                 style = MaterialTheme.typography.headlineLarge,
                 modifier = Modifier.weight(1f)
             )
+            IconButton(onClick = onPlacesClick) {
+                Icon(Icons.Default.Map, contentDescription = "Places")
+            }
             IconButton(onClick = onSearchClick) {
                 Icon(Icons.Default.Search, contentDescription = "Search")
             }
