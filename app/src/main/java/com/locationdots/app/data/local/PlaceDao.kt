@@ -11,6 +11,9 @@ interface PlaceDao {
     @Query("SELECT * FROM places ORDER BY updatedAtEpochMillis DESC")
     fun observeAll(): Flow<List<PlaceEntity>>
 
+    @Query("SELECT * FROM places")
+    suspend fun getAll(): List<PlaceEntity>
+
     @Query("SELECT * FROM places WHERE id = :id LIMIT 1")
     suspend fun findById(id: String): PlaceEntity?
 

@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 interface PlaceRepository {
     fun observePlaces(): Flow<List<Place>>
     suspend fun getPlace(id: String): Place?
+    suspend fun findNearby(latitude: Double, longitude: Double, radiusMeters: Double): Place?
     suspend fun savePlace(place: Place)
     suspend fun updatePlaceName(id: String, name: String?)
 }

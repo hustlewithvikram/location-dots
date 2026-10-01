@@ -6,16 +6,23 @@ import com.locationdots.app.core.location.FusedLocationProvider
 import com.locationdots.app.data.local.LocationDotsDatabase
 import com.locationdots.app.data.repository.RoomInsightsRepository
 import com.locationdots.app.data.repository.RoomLocationRepository
+import com.locationdots.app.data.repository.RoomPlaceRepository
 import com.locationdots.app.domain.insights.InsightsRepository
 import com.locationdots.app.domain.journey.DefaultJourneyProcessor
 import com.locationdots.app.domain.journey.JourneyProcessor
 import com.locationdots.app.domain.location.LocationRepository
+import com.locationdots.app.domain.places.PlaceEngine
+import com.locationdots.app.domain.places.PlaceRepository
 
 class LocationDotsApplication : Application() {
     val database: LocationDotsDatabase by lazy { LocationDotsDatabase.create(this) }
 
     val locationRepository: LocationRepository by lazy {
         RoomLocationRepository(database.locationDao())
+    }
+
+    val placeRepository: PlaceRepository by lazy {
+        RoomPlaceRepository(database.placeDao())
     }
 
     val locationProvider by lazy {
@@ -25,7 +32,11 @@ class LocationDotsApplication : Application() {
         )
     }
 
-    val journeyProcessor: JourneyProcessor by lazy { DefaultJourneyProcessor() }
+    val placeEngine: PlaceEngine by lazy { PlaceEngine(placeRepository) }
+
+    val journeyProcessor: JourneyProcessor by lazy {
+        DefaultJourneyProcessor(placeEngine)
+    }
 
     val insightsRepository: InsightsRepository by lazy {
         RoomInsightsRepository(
