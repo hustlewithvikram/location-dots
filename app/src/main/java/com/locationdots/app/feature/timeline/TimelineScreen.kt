@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.PedalBike
+import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Walk
 import androidx.compose.material3.*
@@ -77,6 +78,10 @@ fun TimelineScreen(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                item(key = "daily-summary") {
+                    DailySummaryCard(events)
+                }
+
                 items(items = items, key = {
                     when (it) {
                         is TimelineItem.DayHeader -> "day:" + it.date
@@ -112,6 +117,61 @@ fun TimelineScreen(
         }
     }
 }
+
+@Composable
+private fun DailySummaryCard(events: List<TimelineEvent>) {
+    val zone = ZoneId.systemDefault()
+    val today = LocalDate.now(zone)
+    val todayEvents = events.filter { it.timestamp.atZone(zone).toLocalDate() == today }
+    val visits = todayEvents.filterIsInstance<TimelineEvent.Visit>()
+    val journeys = todayEvents.filterIsInstance<TimelineEvent.Journey>()
+    val minutes = visits.sumOf { visit ->
+        visit.departure?.let {
+            Duration.between(visit.arrival, it).toMinutes().coerceAtLeast(0)
+        } ?: 0
+    }
+    val distance = journeys.sumOf { it.distanceMeters ?: 0.0 }
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        shape = RoundedCornerShape(22.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Today", style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        if (todayEvents.isEmpty()) "No activity recorded yet" else "Your day so far",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+                Icon(Icons.Default.Route, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SummaryStat("Visits", visits.size.toString(), Modifier.weight(1f))
+                SummaryStat("Journeys", journeys.size.toString(), Modifier.weight(1f))
+                SummaryStat("Distance", formatDistance(distance), Modifier.weight(1f))
+            }
+            if (minutes > 0) {
+                Text(formatDuration(minutes) + " spent at places", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SummaryStat(label: String, value: String, modifier: Modifier) {
+    Surface(modifier = modifier, color = MaterialTheme.colorScheme.surface.copy(alpha = 0.45f), shape = MaterialTheme.shapes.large) {
+        Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(value, style = MaterialTheme.typography.titleMedium)
+            Text(label, style = MaterialTheme.typography.labelSmall)
+        }
+    }
+}
+
+private fun formatDuration(minutes: Long): String =
+    if (minutes < 60) minutes.toString() + " min" else (minutes / 60).toString() + "h " + (minutes % 60).toString() + "m"
 
 @Composable
 private fun TimelineLoadingIndicator() {
