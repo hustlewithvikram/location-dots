@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationdots.app.core.location.LocationTrackingController
 import com.locationdots.app.core.permissions.LocationPermissionManager
 import com.locationdots.app.feature.onboarding.OnboardingScreen
+import com.locationdots.app.feature.journey.JourneyDetailScreen
 import com.locationdots.app.feature.place.PlaceDetailScreen
 import com.locationdots.app.feature.place.PlaceDetailViewModel
 import com.locationdots.app.feature.place.PlaceDetailViewModelFactory
@@ -32,6 +33,7 @@ class MainActivity : ComponentActivity() {
     private var hasLocationPermission by mutableStateOf(false)
     private var isTracking by mutableStateOf(false)
     private var selectedPlaceId by mutableStateOf<String?>(null)
+    private var selectedJourneyId by mutableStateOf<String?>(null)
 
     private val locationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
@@ -68,13 +70,25 @@ class MainActivity : ComponentActivity() {
                     )
                 } else {
                     val placeId = selectedPlaceId
-                    if (placeId == null) {
+                    val journeyId = selectedJourneyId
+                    if (placeId == null && journeyId == null) {
                         TimelineScreen(
                             events = events,
                             isTracking = isTracking,
                             onPlaceClick = { selectedPlaceId = it },
+                            onJourneyClick = { selectedJourneyId = it },
                             onLoadMore = timelineViewModel::loadMore
                         )
+                    } else if (journeyId != null) {
+                        val journey = events.firstOrNull { it.id == journeyId } as? com.locationdots.app.domain.model.TimelineEvent.Journey
+                        if (journey == null) {
+                            selectedJourneyId = null
+                        } else {
+                            JourneyDetailScreen(
+                                journey = journey,
+                                onBack = { selectedJourneyId = null }
+                            )
+                        }
                     } else {
                         val placeViewModel = ViewModelProvider(
                             this,
