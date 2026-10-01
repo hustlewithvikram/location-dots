@@ -20,8 +20,28 @@ extensions.configure<ApplicationExtension> {
         applicationId = "com.locationdots.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = providers.gradleProperty("versionCode")
+            .map(String::toInt)
+            .orElse(1)
+            .get()
+        versionName = providers.gradleProperty("versionName")
+            .orElse("0.1.0")
+            .get()
+    }
+
+    signingConfigs {
+        create("locationDotsDebug") {
+            storeFile = rootProject.file("keystore/location-dots-debug.keystore")
+            storePassword = "locationdots"
+            keyAlias = "location-dots-debug"
+            keyPassword = "locationdots"
+        }
+    }
+
+    buildTypes {
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("locationDotsDebug")
+        }
     }
 
     buildFeatures {

@@ -9,8 +9,13 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: build-debug-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
+    name: Build debug APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -49,7 +54,7 @@ jobs:
       - name: Build debug APK
         env:
           MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
-        run: ./gradlew :app:assembleDebug --stacktrace --no-daemon
+        run: ./gradlew :app:assembleDebug --stacktrace --no-daemon -PversionCode=$((1000 + ${{ github.run_number }})) -PversionName=0.1.${{ github.run_number }}
 
       - name: Verify APK
         run: |
