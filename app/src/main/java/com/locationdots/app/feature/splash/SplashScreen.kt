@@ -21,8 +21,6 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,15 +30,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.luminance
+import com.locationdots.app.ui.components.ExpressiveButton
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(
@@ -68,14 +66,14 @@ fun SplashScreen(
 
     var contentVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        delay(90)
-        contentVisible = true
+contentVisible = true
     }
 
     val background = MaterialTheme.colorScheme.background
     val blue = MaterialTheme.colorScheme.primary
     val purple = MaterialTheme.colorScheme.secondary
     val pink = MaterialTheme.colorScheme.tertiary
+    val inverseText = if (background.luminance() < 0.5f) Color.White else Color.Black
 
     Box(
         modifier = Modifier
@@ -160,6 +158,7 @@ fun SplashScreen(
                 ) {
                     Text(
                         "Location",
+                        color = inverseText,
                         style = MaterialTheme.typography.displayLarge.copy(
                             fontWeight = FontWeight.Black,
                             lineHeight = MaterialTheme.typography.displayLarge.lineHeight * 0.88f
@@ -167,12 +166,10 @@ fun SplashScreen(
                     )
                     Text(
                         "Dots",
+                        color = inverseText,
                         style = MaterialTheme.typography.displayLarge.copy(
                             fontWeight = FontWeight.Black,
-                            lineHeight = MaterialTheme.typography.displayLarge.lineHeight * 0.88f,
-                            brush = Brush.linearGradient(
-                                listOf(blue, purple, pink)
-                            )
+                            lineHeight = MaterialTheme.typography.displayLarge.lineHeight * 0.88f
                         )
                     )
                 }
@@ -196,22 +193,11 @@ fun SplashScreen(
                         modifier = Modifier.alpha(0.9f)
                     )
 
-                    Button(
+                    ExpressiveButton(
+                        text = "Get Started",
                         onClick = onGetStarted,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(24.dp)),
-                        shape = RoundedCornerShape(24.dp),
-                        contentPadding = ButtonDefaults.ContentPadding
-                    ) {
-                        Text(
-                            "Get Started",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
-                    }
-                }
+                        modifier = Modifier.fillMaxWidth()
+                    )
             }
         }
     }
