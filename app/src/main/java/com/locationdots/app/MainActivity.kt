@@ -20,6 +20,9 @@ import com.locationdots.app.feature.journey.JourneyDetailScreen
 import com.locationdots.app.feature.place.PlaceDetailScreen
 import com.locationdots.app.feature.place.PlaceDetailViewModel
 import com.locationdots.app.feature.place.PlaceDetailViewModelFactory
+import com.locationdots.app.feature.search.SearchScreen
+import com.locationdots.app.feature.search.SearchViewModel
+import com.locationdots.app.feature.search.SearchViewModelFactory
 import com.locationdots.app.feature.timeline.TimelineScreen
 import com.locationdots.app.feature.timeline.TimelineViewModel
 import com.locationdots.app.feature.timeline.TimelineViewModelFactory
@@ -29,11 +32,13 @@ class MainActivity : ComponentActivity() {
     private lateinit var permissionManager: LocationPermissionManager
     private lateinit var trackingController: LocationTrackingController
     private lateinit var timelineViewModel: TimelineViewModel
+    private lateinit var searchViewModel: SearchViewModel
 
     private var hasLocationPermission by mutableStateOf(false)
     private var isTracking by mutableStateOf(false)
     private var selectedPlaceId by mutableStateOf<String?>(null)
     private var selectedJourneyId by mutableStateOf<String?>(null)
+    private var isSearchOpen by mutableStateOf(false)
 
     private val locationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
@@ -53,6 +58,10 @@ class MainActivity : ComponentActivity() {
             this,
             TimelineViewModelFactory(app.timelineRepository)
         )[TimelineViewModel::class.java]
+        searchViewModel = ViewModelProvider(
+            this,
+            SearchViewModelFactory(app.searchRepository)
+        )[SearchViewModel::class.java]
 
         refreshState()
 
@@ -72,7 +81,29 @@ class MainActivity : ComponentActivity() {
                 } else {
                     val placeId = selectedPlaceId
                     val journeyId = selectedJourneyId
-                    if (placeId == null && journeyId == null) {
+                    if (isSearchOpen) {
+                        val searchState by searchViewModel.uiState.collectAsStateWithLifecycle()
+                        SearchScreen(
+                            query = searchState.query,
+                            results = searchState.results,
+                            isSearching = searchState.isSearching,
+                            onQueryChange = searchViewModel::search,
+                            onBack = {
+                                searchViewModel.clear()
+                                isSearchOpen = false
+                            },
+                            onPlaceClick = {
+                                searchViewModel.clear()
+                                isSearchOpen = false
+                                selectedPlaceId = it
+                            },
+                            onJourneyClick = {
+                                searchViewModel.clear()
+                                isSearchOpen = false
+                                selectedJourneyId = it
+                            }
+                        )
+                    } else if (placeId == null && journeyId == null) {
                         TimelineScreen(
                             events = events,
                             isTracking = isTracking,
@@ -82,6 +113,7 @@ class MainActivity : ComponentActivity() {
                             errorMessage = timelineState.errorMessage,
                             onPlaceClick = { selectedPlaceId = it },
                             onJourneyClick = { selectedJourneyId = it },
+                            onSearchClick = { isSearchOpen = true },
                             onLoadMore = timelineViewModel::loadMore,
                             onRetry = timelineViewModel::retry,
                             onClearError = timelineViewModel::clearError
