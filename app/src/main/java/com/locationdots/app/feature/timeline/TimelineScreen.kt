@@ -490,12 +490,12 @@ private fun formatDistance(m: Double): String {
         distance < 10 -> "0 m"
         distance < 1000 -> {
             val roundedMeters = kotlin.math.round(distance / 10.0).toInt() * 10
-            "$" + "roundedMeters m"
+            "${roundedMeters} m"
         }
         else -> {
             val roundedKm = kotlin.math.round(distance / 100.0) / 10.0
             if (roundedKm == roundedKm.toLong().toDouble()) {
-                "$" + "roundedKm.toLong() km"
+                "${roundedKm.toLong()} km"
             } else {
                 "%.1f km".format(Locale.getDefault(), roundedKm)
             }
