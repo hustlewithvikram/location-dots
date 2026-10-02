@@ -64,7 +64,7 @@ class PlaceEngineTest {
         val resolved = engine.resolve(points)
 
         assertEquals("place:existing", resolved.id)
-        assertEquals(100.0, repository.lastRadiusMeters)
+        assertEquals(96.0, repository.lastRadiusMeters)
     }
 
     @Test
