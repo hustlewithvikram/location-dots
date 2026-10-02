@@ -1,11 +1,15 @@
 package com.locationdots.app.data.local
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "timeline_events",
-    indices = []
+    indices = [
+        Index(value = ["timestampEpochMillis"]),
+        Index(value = ["type", "placeId"])
+    ]
 )
 data class TimelineEventEntity(
     @PrimaryKey val id: String,
