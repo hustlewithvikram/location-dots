@@ -349,7 +349,6 @@ class MainActivity : ComponentActivity() {
     private fun saveNamedPlace(name: String, latitude: Double, longitude: Double) {
         lifecycleScope.launch {
             application.let { (it as LocationDotsApplication).placeRepository.saveNamedPlace(name, latitude, longitude) }
-            placesViewModel.places
             timelineViewModel.refresh()
             insightsViewModel.refresh()
         }
