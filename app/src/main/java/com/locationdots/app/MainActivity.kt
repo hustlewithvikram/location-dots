@@ -232,23 +232,19 @@ class MainActivity : ComponentActivity() {
                             isAboutOpen = false
                         }
                         selectedJourneyId != null -> {
-                            navigationDirection = NavigationDirection.BACK
                             pendingNavigationDirection = NavigationDirection.BACK
                             selectedJourneyId = null
                         }
                         selectedPlaceId != null -> {
-                            navigationDirection = NavigationDirection.BACK
                             pendingNavigationDirection = NavigationDirection.BACK
                             selectedPlaceId = null
                         }
                         isSearchOpen -> {
-                            navigationDirection = NavigationDirection.BACK
                             searchViewModel.clear()
                             pendingNavigationDirection = NavigationDirection.BACK
                             isSearchOpen = false
                         }
                         currentTab != AppTab.TIMELINE -> {
-                            navigationDirection = NavigationDirection.BACK
                             pendingNavigationDirection = NavigationDirection.BACK
                             currentTab = AppTab.TIMELINE
                         }
@@ -287,6 +283,7 @@ class MainActivity : ComponentActivity() {
                     when {
                         destination.key == -100 -> SplashScreen(
                         onGetStarted = {
+                            pendingNavigationDirection = NavigationDirection.FORWARD
                             preferences.edit().putBoolean("splash_seen", true).apply()
                             if (hasLocationPermission) {
                                 preferences.edit().putBoolean("onboarding_complete", true).apply()
@@ -302,7 +299,8 @@ class MainActivity : ComponentActivity() {
                         onStopTracking = ::stopTracking
                     )
                         destination.key == -80 -> AboutScreen {
-                            onBack = { isAboutOpen = false }
+                            pendingNavigationDirection = NavigationDirection.BACK
+                            isAboutOpen = false
                         }
                         destination.key == -70 -> SearchScreen(
                         query = searchState.query,
@@ -310,7 +308,6 @@ class MainActivity : ComponentActivity() {
                         isSearching = searchState.isSearching,
                         onQueryChange = searchViewModel::search,
                         onBack = {
-                            navigationDirection = NavigationDirection.BACK
                             searchViewModel.clear()
                             isSearchOpen = false
                         },
@@ -321,6 +318,7 @@ class MainActivity : ComponentActivity() {
                             selectedPlaceId = it
                         },
                         onJourneyClick = {
+                            pendingNavigationDirection = NavigationDirection.FORWARD
                             selectedJourneyId = it
                         }
                     )
@@ -329,7 +327,10 @@ class MainActivity : ComponentActivity() {
                         if (journey == null) {
                             LaunchedEffect(selectedJourneyId) { timelineViewModel.refresh() }
                             selectedJourneyId = null
-                        } else JourneyDetailScreen(journey) { navigationDirection = NavigationDirection.BACK; selectedJourneyId = null }
+                        } else JourneyDetailScreen(journey) {
+                            pendingNavigationDirection = NavigationDirection.BACK
+                            selectedJourneyId = null
+                        }
                     }
                     destination.key == -50 -> {
                         val placeId = selectedPlaceId
@@ -347,15 +348,24 @@ class MainActivity : ComponentActivity() {
                             PlaceDetailScreen(
                                 place,
                                 visits,
-                                { navigationDirection = NavigationDirection.BACK; selectedPlaceId = null },
+                                {
+                                    pendingNavigationDirection = NavigationDirection.BACK
+                                    selectedPlaceId = null
+                                },
                                 placeVm::updateName
                             )
                         }
                     }
                     destination.key == 1 -> PlacesOverviewScreen(
                         places = places,
-                        onBack = { currentTab = AppTab.TIMELINE },
-                        onPlaceClick = { selectedPlaceId = it },
+                        onBack = {
+                            pendingNavigationDirection = NavigationDirection.BACK
+                            currentTab = AppTab.TIMELINE
+                        },
+                        onPlaceClick = {
+                            pendingNavigationDirection = NavigationDirection.FORWARD
+                            selectedPlaceId = it
+                        },
                         onTabSelected = ::selectTab
                     )
                     destination.key == 2 -> InsightsScreen(
@@ -420,7 +430,6 @@ class MainActivity : ComponentActivity() {
                         onClearHistory = ::clearHistory,
                         onResetSettings = ::resetAppSettings,
                         onAbout = {
-                            navigationDirection = NavigationDirection.FORWARD
                             pendingNavigationDirection = NavigationDirection.FORWARD
                             isAboutOpen = true
                         },
@@ -443,20 +452,30 @@ class MainActivity : ComponentActivity() {
                         isRefreshing = timelineState.isRefreshing,
                         hasMore = timelineState.hasMore,
                         errorMessage = timelineState.errorMessage,
-                        onPlaceClick = { selectedPlaceId = it },
+                        onPlaceClick = {
+                            pendingNavigationDirection = NavigationDirection.FORWARD
+                            selectedPlaceId = it
+                        },
                         onJourneyClick = {
-                            navigationDirection = NavigationDirection.FORWARD
                             pendingNavigationDirection = NavigationDirection.FORWARD
                             selectedJourneyId = it
                         },
                         onSearchClick = {
-                            navigationDirection = NavigationDirection.FORWARD
                             pendingNavigationDirection = NavigationDirection.FORWARD
                             isSearchOpen = true
                         },
-                        onPlacesClick = { currentTab = AppTab.MAP },
-                        onInsightsClick = { currentTab = AppTab.INSIGHTS },
-                        onSettingsClick = { currentTab = AppTab.SETTINGS },
+                        onPlacesClick = {
+                            pendingNavigationDirection = NavigationDirection.FORWARD
+                            currentTab = AppTab.MAP
+                        },
+                        onInsightsClick = {
+                            pendingNavigationDirection = NavigationDirection.FORWARD
+                            currentTab = AppTab.INSIGHTS
+                        },
+                        onSettingsClick = {
+                            pendingNavigationDirection = NavigationDirection.FORWARD
+                            currentTab = AppTab.SETTINGS
+                        },
                         onLoadMore = timelineViewModel::loadMore,
                         onRetry = timelineViewModel::retry,
                         onClearError = timelineViewModel::clearError
