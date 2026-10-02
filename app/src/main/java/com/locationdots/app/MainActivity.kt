@@ -9,6 +9,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.SystemBarStyle
 import androidx.core.view.WindowCompat
@@ -128,14 +129,35 @@ class MainActivity : ComponentActivity() {
                     showSplash -> -100
                     !hasLocationPermission -> -90
                     isAboutOpen -> -80
-                    isSearchOpen -> -70
                     selectedJourneyId != null -> -60
                     selectedPlaceId != null -> -50
+                    isSearchOpen -> -70
                     else -> when (currentTab) {
                         AppTab.TIMELINE -> 0
                         AppTab.MAP -> 1
                         AppTab.INSIGHTS -> 2
                         AppTab.SETTINGS -> 3
+                    }
+                }
+
+                // One app-level back handler keeps every manually-managed destination
+                // consistent with its visible navigation hierarchy.
+                val canNavigateBack = isAboutOpen ||
+                    selectedJourneyId != null ||
+                    selectedPlaceId != null ||
+                    isSearchOpen ||
+                    currentTab != AppTab.TIMELINE
+
+                BackHandler(enabled = canNavigateBack) {
+                    when {
+                        isAboutOpen -> isAboutOpen = false
+                        selectedJourneyId != null -> selectedJourneyId = null
+                        selectedPlaceId != null -> selectedPlaceId = null
+                        isSearchOpen -> {
+                            searchViewModel.clear()
+                            isSearchOpen = false
+                        }
+                        currentTab != AppTab.TIMELINE -> currentTab = AppTab.TIMELINE
                     }
                 }
 
@@ -187,8 +209,10 @@ class MainActivity : ComponentActivity() {
                         isSearching = searchState.isSearching,
                         onQueryChange = searchViewModel::search,
                         onBack = { searchViewModel.clear(); isSearchOpen = false },
-                        onPlaceClick = { searchViewModel.clear(); isSearchOpen = false; selectedPlaceId = it },
-                        onJourneyClick = { searchViewModel.clear(); isSearchOpen = false; selectedJourneyId = it }
+                        // Keep Search in the navigation hierarchy while opening details.
+                        // Back from the detail screen will reveal the existing search state.
+                        onPlaceClick = { selectedPlaceId = it },
+                        onJourneyClick = { selectedJourneyId = it }
                     )
                     destination == -60 -> {
                         val journey = timelineState.events.firstOrNull { it.id == selectedJourneyId } as? TimelineEvent.Journey
@@ -198,10 +222,25 @@ class MainActivity : ComponentActivity() {
                         } else JourneyDetailScreen(journey) { selectedJourneyId = null }
                     }
                     destination == -50 -> {
-                        val placeVm = ViewModelProvider(this@MainActivity, PlaceDetailViewModelFactory(app.placeRepository, app.timelineRepository, selectedPlaceId!!))[PlaceDetailViewModel::class.java]
-                        val place by placeVm.place.collectAsStateWithLifecycle()
-                        val visits by placeVm.visits.collectAsStateWithLifecycle()
-                        PlaceDetailScreen(place, visits, { selectedPlaceId = null }, placeVm::updateName)
+                        val placeId = selectedPlaceId
+                        if (placeId != null) {
+                            val placeVm = ViewModelProvider(
+                                this@MainActivity,
+                                PlaceDetailViewModelFactory(
+                                    app.placeRepository,
+                                    app.timelineRepository,
+                                    placeId
+                                )
+                            )[PlaceDetailViewModel::class.java]
+                            val place by placeVm.place.collectAsStateWithLifecycle()
+                            val visits by placeVm.visits.collectAsStateWithLifecycle()
+                            PlaceDetailScreen(
+                                place,
+                                visits,
+                                { selectedPlaceId = null },
+                                placeVm::updateName
+                            )
+                        }
                     }
                     destination == 1 -> PlacesOverviewScreen(
                         places = places,
