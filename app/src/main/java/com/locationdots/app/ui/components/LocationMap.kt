@@ -1,5 +1,6 @@
 package com.locationdots.app.ui.components
 
+import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
 import androidx.compose.foundation.layout.Box
@@ -121,6 +122,9 @@ fun LocationMap(
 
     LaunchedEffect(map, points, interactive, fitRequest) {
         val readyMap = map ?: return@LaunchedEffect
+        val preferences = context.getSharedPreferences("location_dots_ui", Context.MODE_PRIVATE)
+        val showMarkers = preferences.getBoolean("show_place_markers", true)
+        val showRoutes = preferences.getBoolean("show_route_lines", true)
         readyMap.uiSettings.setAllGesturesEnabled(interactive)
         readyMap.uiSettings.setLogoEnabled(true)
         readyMap.setStyle(Style.Builder().fromUri(OPEN_FREE_MAP_STYLE)) { style ->
@@ -141,17 +145,19 @@ fun LocationMap(
                 }
             """.trimIndent()
 
-            style.addSource(GeoJsonSource(POINT_SOURCE, pointGeoJson))
-            style.addLayer(
-                CircleLayer(POINT_LAYER, POINT_SOURCE).withProperties(
-                    circleColor(Color.parseColor("#6750A4")),
-                    circleRadius(7f),
-                    circleStrokeColor(Color.WHITE),
-                    circleStrokeWidth(2.5f)
+            if (showMarkers) {
+                style.addSource(GeoJsonSource(POINT_SOURCE, pointGeoJson))
+                style.addLayer(
+                    CircleLayer(POINT_LAYER, POINT_SOURCE).withProperties(
+                        circleColor(Color.parseColor("#6750A4")),
+                        circleRadius(7f),
+                        circleStrokeColor(Color.WHITE),
+                        circleStrokeWidth(2.5f)
+                    )
                 )
-            )
+            }
 
-            if (points.size >= 2) {
+            if (showRoutes && points.size >= 2) {
                 val routeGeoJson = """
                     {
                       "type": "Feature",
