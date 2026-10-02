@@ -9,7 +9,7 @@ class PlaceEngine(private val repository: PlaceRepository) {
 
         val center = robustCenter(points)
         val timestamp = points.last().timestamp
-        val mergeRadius = mergeRadiusFor(points)
+        val mergeRadius = mergeRadiusFor(points, center)
 
         val existing = repository.findNearby(center.first, center.second, mergeRadius)
 
@@ -42,13 +42,45 @@ class PlaceEngine(private val repository: PlaceRepository) {
         }
     }
 
-    private fun mergeRadiusFor(points: List<LocationPoint>): Double {
+    private fun mergeRadiusFor(
+        points: List<LocationPoint>,
+        center: Pair<Double, Double>
+    ): Double {
         val accuracies = points.mapNotNull { it.accuracyMeters?.toDouble() }
-        if (accuracies.isEmpty()) return DEFAULT_MERGE_RADIUS_METERS
+        val accuracyRadius = if (accuracies.isEmpty()) {
+            DEFAULT_MERGE_RADIUS_METERS
+        } else {
+            median(accuracies) * ACCURACY_RADIUS_MULTIPLIER
+        }
 
-        val medianAccuracy = median(accuracies)
-        return (medianAccuracy * ACCURACY_RADIUS_MULTIPLIER)
-            .coerceIn(MIN_MERGE_RADIUS_METERS, MAX_MERGE_RADIUS_METERS)
+        val clusterSpread = points.maxOfOrNull { point ->
+            distanceMeters(
+                center.first,
+                center.second,
+                point.latitude,
+                point.longitude
+            )
+        } ?: 0.0
+
+        return maxOf(MIN_MERGE_RADIUS_METERS, accuracyRadius, clusterSpread + accuracyRadius)
+            .coerceAtMost(MAX_MERGE_RADIUS_METERS)
+    }
+
+    private fun distanceMeters(
+        latitude1: Double,
+        longitude1: Double,
+        latitude2: Double,
+        longitude2: Double
+    ): Double {
+        val earthRadius = 6_371_000.0
+        val dLat = Math.toRadians(latitude2 - latitude1)
+        val dLon = Math.toRadians(longitude2 - longitude1)
+        val a = kotlin.math.sin(dLat / 2) * kotlin.math.sin(dLat / 2) +
+            kotlin.math.cos(Math.toRadians(latitude1)) *
+            kotlin.math.cos(Math.toRadians(latitude2)) *
+            kotlin.math.sin(dLon / 2) * kotlin.math.sin(dLon / 2)
+
+        return earthRadius * 2 * kotlin.math.atan2(kotlin.math.sqrt(a), kotlin.math.sqrt(1 - a))
     }
 
     private companion object {
