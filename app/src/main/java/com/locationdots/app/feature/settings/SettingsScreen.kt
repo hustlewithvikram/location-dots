@@ -1,5 +1,6 @@
 package com.locationdots.app.feature.settings
 
+import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,6 +18,14 @@ import com.locationdots.app.feature.place.PlaceEditorDialog
 import com.locationdots.app.ui.components.*
 
 enum class ThemeChoice { SYSTEM, LIGHT, DARK }
+
+data class ImportPreview(
+    val uri: Uri,
+    val locations: Int,
+    val places: Int,
+    val timelineEvents: Int,
+    val generatedAtEpochMillis: Long
+)
 
 private enum class SettingsPage {
     HOME, SAVED_PLACES, TRACKING, MAP_APPEARANCE, PRIVACY_DATA, EXPORT_BACKUP, DIAGNOSTICS
@@ -53,6 +62,11 @@ fun SettingsScreen(
     onPlaceMarkersChange: (Boolean) -> Unit,
     onExport: () -> Unit,
     onExportData: () -> Unit,
+    onImportData: () -> Unit,
+    importPreview: ImportPreview?,
+    importError: String?,
+    onDismissImport: () -> Unit,
+    onConfirmImport: (ImportPreview, Boolean) -> Unit,
     onClearHistory: () -> Unit,
     onResetSettings: () -> Unit,
     onAbout: () -> Unit,
@@ -347,28 +361,97 @@ fun SettingsScreen(
             }
             SettingsPage.EXPORT_BACKUP -> SettingsSubPage(
                 Modifier.padding(padding), "Export & backup",
-                "Take your local data with you when you need it.",
+                "",
                 onBack = { page = SettingsPage.HOME }
             ) {
                 item {
                     ExpressiveCard(emphasized = true) {
-                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            ExpressiveSectionHeader("Export", "Nothing is uploaded automatically. You choose when to share data.")
-                            ExpressiveButton("Export activity summary", onExport, Modifier.fillMaxWidth())
+                        Column(
+                            Modifier.padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                ExpressiveIconBadge(
+                                    icon = { Icon(Icons.Default.Security, null) },
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                )
+                                Spacer(Modifier.width(14.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text("Your backup", style = MaterialTheme.typography.titleLarge)
+                                    Text(
+                                        "JSON file · stored wherever you choose",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            ExpressiveButton(
+                                "Export backup",
+                                onExportData,
+                                Modifier.fillMaxWidth()
+                            )
                             OutlinedButton(
-                                onClick = onExportData,
+                                onClick = onImportData,
                                 modifier = Modifier.fillMaxWidth().height(56.dp),
                                 shape = MaterialTheme.shapes.large
                             ) {
-                                Icon(Icons.Default.DataObject, null)
+                                Icon(Icons.Default.FileDownload, null)
                                 Spacer(Modifier.width(8.dp))
-                                Text("Export local data")
+                                Text("Import backup")
                             }
                         }
                     }
                 }
+
                 item {
-                    InfoCard(Icons.Default.Backup, "Local-first backup", "The exported data is generated on-device. Location Dots does not maintain a cloud backup account.")
+                    ExpressiveCard {
+                        Column(Modifier.padding(8.dp)) {
+                            ExpressiveListRow(
+                                "Activity summary",
+                                icon = { Icon(Icons.Default.Share, null) },
+                                onClick = onExport
+                            )
+                            ExpressiveListRow(
+                                "What is included",
+                                icon = { Icon(Icons.Default.DataObject, null) },
+                                trailing = {
+                                    Text(
+                                        "Places · locations · timeline",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            )
+                        }
+                    }
+                }
+
+                if (importError != null) {
+                    item {
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer
+                            ),
+                            shape = MaterialTheme.shapes.large
+                        ) {
+                            Row(
+                                Modifier.padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.ErrorOutline, null, tint = MaterialTheme.colorScheme.onErrorContainer)
+                                Spacer(Modifier.width(10.dp))
+                                Text(
+                                    importError,
+                                    Modifier.weight(1f),
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                IconButton(onClick = onDismissImport) {
+                                    Icon(Icons.Default.Close, "Dismiss")
+                                }
+                            }
+                        }
+                    }
                 }
             }
             SettingsPage.DIAGNOSTICS -> SettingsSubPage(
@@ -448,6 +531,53 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showMapStyleDialog = false }) { Text("Done") }
+            }
+        )
+    }
+
+    if (importPreview != null) {
+        AlertDialog(
+            onDismissRequest = onDismissImport,
+            icon = { Icon(Icons.Default.FileDownload, null) },
+            title = { Text("Import backup") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        "This backup contains:",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    ImportStatRow("Places", importPreview.places)
+                    ImportStatRow("Locations", importPreview.locations)
+                    ImportStatRow("Timeline events", importPreview.timelineEvents)
+                    HorizontalDivider()
+                    Text(
+                        "Choose how to apply it.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { onConfirmImport(importPreview, false) }
+                ) {
+                    Text("Merge")
+                }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(
+                        onClick = { onConfirmImport(importPreview, true) }
+                    ) {
+                        Text(
+                            "Replace all",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                    TextButton(onClick = onDismissImport) {
+                        Text("Cancel")
+                    }
+                }
             }
         )
     }
@@ -560,6 +690,21 @@ private fun SettingsSubPage(
             }
         }
         content()
+    }
+}
+
+@Composable
+private fun ImportStatRow(label: String, value: Int) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyLarge)
+        Text(
+            value.toString(),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
     }
 }
 
