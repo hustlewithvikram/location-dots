@@ -292,7 +292,7 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                         destination.key == -90 -> OnboardingScreen(
-                        hasLocationPermission = false,
+                        hasLocationPermission = hasLocationPermission,
                         isTracking = isTracking,
                         onRequestLocationPermission = ::requestLocationPermission,
                         onStartTracking = ::startTracking,
