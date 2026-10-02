@@ -55,7 +55,23 @@ fun TimelineScreen(
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (items.isEmpty() && !isRefreshing) EmptyTimeline(isTracking)
             else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(18.dp, 10.dp, 18.dp, 108.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                item("summary") { TodayCard(events, isTracking, onSearchClick) }
+                item("summary") {
+                    TodayCard(events, isTracking, onSearchClick)
+                }
+                item("quick-actions") {
+                    QuickActionsCard(
+                        onSearchClick = onSearchClick,
+                        onPlacesClick = onPlacesClick,
+                        onInsightsClick = onInsightsClick,
+                        onSettingsClick = onSettingsClick
+                    )
+                }
+                item("activity-header") {
+                    ExpressiveSectionHeader(
+                        title = "Activity",
+                        subtitle = "Your visits and journeys, newest first."
+                    )
+                }
                 items(items, key = { when (it) { is TimelineItem.Day -> "day-" + it.date; is TimelineItem.Event -> it.event.id } }) { item ->
                     when (item) {
                         is TimelineItem.Day -> DayHeader(item.date)
@@ -76,6 +92,78 @@ fun TimelineScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun QuickActionsCard(
+    onSearchClick: () -> Unit,
+    onPlacesClick: () -> Unit,
+    onInsightsClick: () -> Unit,
+    onSettingsClick: () -> Unit
+) {
+    ExpressiveCard {
+        Column(
+            Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text("Quick actions", style = MaterialTheme.typography.titleMedium)
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                QuickAction(
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.Default.Search,
+                    label = "Search",
+                    onClick = onSearchClick
+                )
+                QuickAction(
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.Default.Place,
+                    label = "Places",
+                    onClick = onPlacesClick
+                )
+                QuickAction(
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.Default.Insights,
+                    label = "Insights",
+                    onClick = onInsightsClick
+                )
+                QuickAction(
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.Default.Settings,
+                    label = "Settings",
+                    onClick = onSettingsClick
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuickAction(
+    modifier: Modifier,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        FilledTonalIconButton(
+            onClick = onClick,
+            modifier = Modifier.size(48.dp)
+        ) {
+            Icon(icon, contentDescription = label)
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            maxLines = 1
+        )
     }
 }
 
@@ -122,54 +210,192 @@ fun TimelineScreen(
                     .align(Alignment.TopCenter)
             )
         }
-        Spacer(Modifier.width(4.dp))
-        EventCard(event, onPlaceClick, onJourneyClick, Modifier.weight(1f))
+        Spacer(Modifier.width(6.dp))
+        EventCard(
+            event,
+            onPlaceClick,
+            onJourneyClick,
+            Modifier.weight(1f)
+        )
     }
 }
 
-@Composable private fun TodayCard(events: List<TimelineEvent>, isTracking: Boolean, onSearchClick: () -> Unit) {
+@Composable
+private fun TodayCard(
+    events: List<TimelineEvent>,
+    isTracking: Boolean,
+    onSearchClick: () -> Unit
+) {
     val zone = ZoneId.systemDefault()
     val today = LocalDate.now(zone)
     val todayEvents = events.filter { it.timestamp.atZone(zone).toLocalDate() == today }
     val visits = todayEvents.filterIsInstance<TimelineEvent.Visit>()
     val journeys = todayEvents.filterIsInstance<TimelineEvent.Journey>()
-    val minutes = visits.sumOf { it.departure?.let { end -> Duration.between(it.arrival, end).toMinutes().coerceAtLeast(0) } ?: 0 }
+    val minutes = visits.sumOf {
+        it.departure?.let { end ->
+            Duration.between(it.arrival, end).toMinutes().coerceAtLeast(0)
+        } ?: 0
+    }
     val distance = journeys.sumOf { it.distanceMeters ?: 0.0 }
+
     ExpressiveCard(emphasized = true) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(
+            Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Today", style = MaterialTheme.typography.titleLarge)
-                    Text(if (todayEvents.isEmpty()) "Your timeline is ready." else "A quick view of your day.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ExpressiveIconButton(
-                        onClick = onSearchClick,
-                        icon = { Icon(Icons.Default.Search, contentDescription = "Search") }
-                    )
-                    ExpressiveIconBadge(
-                        icon = { Icon(if (isTracking) Icons.Default.MyLocation else Icons.Default.PauseCircleOutline, null) }
+                    Text("Today", style = MaterialTheme.typography.headlineSmall)
+                    Text(
+                        if (todayEvents.isEmpty()) "Your timeline is ready."
+                        else "Your movement at a glance.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                ExpressiveIconBadge(
+                    modifier = Modifier.size(48.dp),
+                    containerColor = if (isTracking) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerHighest
+                    },
+                    icon = {
+                        Icon(
+                            if (isTracking) Icons.Default.MyLocation
+                            else Icons.Default.PauseCircleOutline,
+                            contentDescription = if (isTracking) "Tracking on" else "Tracking off",
+                            tint = if (isTracking) {
+                                MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                        )
+                    }
+                )
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 MiniStat(visits.size.toString(), "stops", Modifier.weight(1f))
                 MiniStat(journeys.size.toString(), "journeys", Modifier.weight(1f))
                 MiniStat(formatMinutes(minutes), "stayed", Modifier.weight(1f))
                 MiniStat(formatDistance(distance), "distance", Modifier.weight(1f))
             }
+
+            OutlinedButton(
+                onClick = onSearchClick,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Icon(Icons.Default.Search, null)
+                Spacer(Modifier.width(8.dp))
+                Text("Search your timeline")
+            }
         }
     }
 }
-@Composable private fun MiniStat(value: String, label: String, modifier: Modifier) {
-    Surface(modifier, shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surface.copy(alpha = .55f)) {
-        Column(Modifier.padding(12.dp)) { Text(value, style = MaterialTheme.typography.titleMedium); Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+
+@Composable
+private fun MiniStat(
+    value: String,
+    label: String,
+    modifier: Modifier
+) {
+    Surface(
+        modifier,
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surface.copy(alpha = .55f)
+    ) {
+        Column(
+            Modifier.padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(value, style = MaterialTheme.typography.titleMedium)
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
-@Composable private fun EventCard(event: TimelineEvent, onPlaceClick: (String) -> Unit, onJourneyClick: (String) -> Unit, modifier: Modifier = Modifier) {
+@Composable
+private fun EventCard(
+    event: TimelineEvent,
+    onPlaceClick: (String) -> Unit,
+    onJourneyClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val title: String
+    val subtitle: String
+    val icon: androidx.compose.ui.graphics.vector.ImageVector
+    val action: () -> Unit
+
     when (event) {
-        is TimelineEvent.Visit -> ExpressiveListRow(event.place.name ?: "Unnamed place", "Arrived " + time(event.arrival) + " · " + (event.departure?.let { formatMinutes(Duration.between(event.arrival, it).toMinutes()) } ?: "Still here"), { Icon(Icons.Default.Place, null) }, modifier = modifier, onClick = { onPlaceClick(event.place.id) })
-        is TimelineEvent.Journey -> ExpressiveListRow((event.startPlace?.name ?: "Unknown") + " → " + (event.endPlace?.name ?: "Unknown"), event.mode.label() + " · " + formatDistance(event.distanceMeters ?: 0.0) + (event.endedAt?.let { " · " + formatMinutes(Duration.between(event.startedAt, it).toMinutes().coerceAtLeast(0)) } ?: ""), { Icon(modeIcon(event.mode), null) }, modifier = modifier, onClick = { onJourneyClick(event.id) })
+        is TimelineEvent.Visit -> {
+            title = event.place.name ?: "Unnamed place"
+            subtitle = if (event.departure != null) {
+                "Visited for " + formatMinutes(
+                    Duration.between(event.arrival, event.departure).toMinutes().coerceAtLeast(0)
+                )
+            } else {
+                "Still here"
+            }
+            icon = Icons.Default.Place
+            action = { onPlaceClick(event.place.id) }
+        }
+
+        is TimelineEvent.Journey -> {
+            title = (event.startPlace?.name ?: "Unknown") + " → " +
+                (event.endPlace?.name ?: "Unknown")
+            subtitle = event.mode.label() + " · " +
+                formatDistance(event.distanceMeters ?: 0.0) +
+                (event.endedAt?.let {
+                    " · " + formatMinutes(
+                        Duration.between(event.startedAt, it).toMinutes().coerceAtLeast(0)
+                    )
+                } ?: "")
+            icon = modeIcon(event.mode)
+            action = { onJourneyClick(event.id) }
+        }
+    }
+
+    ExpressiveCard(
+        modifier = modifier,
+        onClick = action
+    ) {
+        Row(
+            Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            ExpressiveIconBadge(
+                modifier = Modifier.size(48.dp),
+                icon = { Icon(icon, contentDescription = null) }
+            )
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(7.dp))
+                Text(
+                    time(event.timestamp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            Icon(
+                Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 @Composable private fun EmptyTimeline(isTracking: Boolean) {
