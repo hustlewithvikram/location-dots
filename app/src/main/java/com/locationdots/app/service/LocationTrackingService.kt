@@ -75,6 +75,10 @@ class LocationTrackingService : LifecycleService() {
                 startedAt <= to && (endedAt ?: startedAt) >= from
         }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        return START_STICKY
+    }
+
     override fun onDestroy() {
         collectionJob?.cancel()
         (application as LocationDotsApplication).locationProvider.stop()
