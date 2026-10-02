@@ -30,8 +30,16 @@ interface TimelineEventDao {
 
     @Query("""
         DELETE FROM timeline_events
-        WHERE timestampEpochMillis >= :fromEpochMillis
-        AND timestampEpochMillis <= :toEpochMillis
+        WHERE (
+            type = 'visit'
+            AND timestampEpochMillis <= :toEpochMillis
+            AND COALESCE(departureEpochMillis, timestampEpochMillis) >= :fromEpochMillis
+        )
+        OR (
+            type = 'journey'
+            AND COALESCE(startedAtEpochMillis, timestampEpochMillis) <= :toEpochMillis
+            AND COALESCE(endedAtEpochMillis, timestampEpochMillis) >= :fromEpochMillis
+        )
     """)
     suspend fun deleteRange(fromEpochMillis: Long, toEpochMillis: Long)
 
