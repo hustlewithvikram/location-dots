@@ -6,7 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.locationdots.app.domain.model.Place
@@ -25,7 +25,27 @@ fun PlaceDetailScreen(
     onBack: () -> Unit,
     onRename: (String?) -> Unit
 ) {
-    Scaffold(topBar = { TopAppBar(title = { Text(place?.name ?: "Place") }, navigationIcon = { IconButton(onBack) { Icon(Icons.Default.ArrowBack, "Back") } }) }) { padding ->
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var renameText by remember(place?.id) { mutableStateOf(place?.name.orEmpty()) }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(place?.name ?: "Place") },
+                navigationIcon = { IconButton(onBack) { Icon(Icons.Default.ArrowBack, "Back") } },
+                actions = {
+                    if (place != null) {
+                        IconButton(onClick = {
+                            renameText = place.name.orEmpty()
+                            showRenameDialog = true
+                        }) {
+                            Icon(Icons.Default.Edit, "Rename place")
+                        }
+                    }
+                }
+            )
+        }
+    ) { padding ->
         if (place == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = androidx.compose.ui.Alignment.Center) { CircularProgressIndicator() }
         } else {
@@ -61,5 +81,49 @@ fun PlaceDetailScreen(
             }
         }
     }
+
+    if (showRenameDialog && place != null) {
+        RenamePlaceDialog(
+            name = renameText,
+            onNameChange = { renameText = it },
+            onDismiss = { showRenameDialog = false },
+            onSave = {
+                onRename(renameText)
+                showRenameDialog = false
+            }
+        )
+    }
 }
+
+@Composable
+private fun RenamePlaceDialog(
+    name: String,
+    onNameChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onSave: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Name this place") },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = onNameChange,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                label = { Text("Location name") },
+                placeholder = { Text("e.g. Home, Office, Gym") }
+            )
+        },
+        confirmButton = {
+            Button(onClick = onSave, enabled = name.trim().isNotEmpty()) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
+
 private fun formatMinutes(minutes: Long): String = if (minutes < 60) minutes.toString() + " min" else (minutes / 60).toString() + "h " + (minutes % 60).toString() + "m"
