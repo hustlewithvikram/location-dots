@@ -53,16 +53,7 @@ class PlaceEngine(private val repository: PlaceRepository) {
             median(accuracies) * ACCURACY_RADIUS_MULTIPLIER
         }
 
-        val clusterSpread = points.maxOfOrNull { point ->
-            distanceMeters(
-                center.first,
-                center.second,
-                point.latitude,
-                point.longitude
-            )
-        } ?: 0.0
-
-        return maxOf(MIN_MERGE_RADIUS_METERS, accuracyRadius, clusterSpread + accuracyRadius)
+        return maxOf(MIN_MERGE_RADIUS_METERS, accuracyRadius)
             .coerceAtMost(MAX_MERGE_RADIUS_METERS)
     }
 
