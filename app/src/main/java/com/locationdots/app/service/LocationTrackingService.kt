@@ -15,8 +15,8 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.locationdots.app.LocationDotsApplication
 import com.locationdots.app.R
-import java.time.Duration
 import com.locationdots.app.domain.model.TimelineEvent
+import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
