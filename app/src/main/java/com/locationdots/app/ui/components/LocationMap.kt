@@ -139,7 +139,7 @@ fun LocationMap(
                 )
             )
 
-            readyMap.post {
+            mapView.post {
                 val bounds = org.maplibre.android.geometry.LatLngBounds.Builder().apply {
                     points.forEach { include(it) }
                 }.build()
