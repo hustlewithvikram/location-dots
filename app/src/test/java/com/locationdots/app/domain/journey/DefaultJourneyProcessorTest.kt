@@ -198,6 +198,48 @@ class DefaultJourneyProcessorTest {
         assertEquals(null, visit.departure)
     }
 
+    @Test
+    fun currentVisitDoesNotCreateJourney() = runBlocking {
+        val start = Instant.parse("2026-10-02T10:00:00Z")
+        val events = processor.process(
+            points(start, count = 17, secondsBetween = 30, latitudeStep = 0.00002)
+        )
+
+        assertEquals(1, events.size)
+        assertTrue(events.single() is TimelineEvent.Visit)
+    }
+
+    @Test
+    fun multipleEventsAreReturnedNewestFirstWithoutDuplicateIds() = runBlocking {
+        val start = Instant.parse("2026-10-02T10:00:00Z")
+        val firstStay = points(start, count = 17, secondsBetween = 30, latitudeStep = 0.00002)
+        val departureOne = LocationPoint(
+            latitude = 18.5230,
+            longitude = 73.8567,
+            accuracyMeters = 20f,
+            timestamp = start.plusSeconds(17 * 30L)
+        )
+        val departureTwo = LocationPoint(
+            latitude = 18.5240,
+            longitude = 73.8567,
+            accuracyMeters = 20f,
+            timestamp = start.plusSeconds(18 * 30L)
+        )
+        val secondStay = points(
+            departureTwo.timestamp.plusSeconds(30),
+            count = 17,
+            secondsBetween = 30,
+            latitudeStep = 0.00002
+        ).map { it.copy(latitude = 18.5400 + (it.latitude - 18.5200)) }
+
+        val events = processor.process(firstStay + departureOne + departureTwo + secondStay)
+
+        assertEquals(events.map { it.id }.distinct().size, events.size)
+        assertEquals(events, events.sortedByDescending { it.timestamp })
+        assertEquals(2, events.filterIsInstance<TimelineEvent.Visit>().size)
+        assertEquals(1, events.filterIsInstance<TimelineEvent.Journey>().size)
+    }
+
     private fun points(
         start: Instant,
         count: Int,
