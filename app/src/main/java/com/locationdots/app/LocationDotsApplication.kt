@@ -7,22 +7,22 @@ import com.locationdots.app.data.local.LocationDotsDatabase
 import com.locationdots.app.data.repository.RoomInsightsRepository
 import com.locationdots.app.data.repository.RoomLocationRepository
 import com.locationdots.app.data.repository.RoomPlaceRepository
-import com.locationdots.app.data.repository.RoomTimelineRepository
 import com.locationdots.app.data.repository.RoomSearchRepository
-import com.locationdots.app.domain.search.SearchRepository
+import com.locationdots.app.data.repository.RoomTimelineRepository
 import com.locationdots.app.domain.insights.InsightsRepository
 import com.locationdots.app.domain.journey.DefaultJourneyProcessor
 import com.locationdots.app.domain.journey.JourneyProcessor
 import com.locationdots.app.domain.location.LocationRepository
 import com.locationdots.app.domain.places.PlaceEngine
 import com.locationdots.app.domain.places.PlaceRepository
+import com.locationdots.app.domain.search.SearchRepository
 import com.locationdots.app.domain.timeline.TimelineRepository
-import org.maplibre.android.MapLibre
+import com.locationdots.app.logging.CrashLogger
 
 class LocationDotsApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        MapLibre.getInstance(this)
+        CrashLogger.install(this)
     }
 
     val database: LocationDotsDatabase by lazy { LocationDotsDatabase.create(this) }
