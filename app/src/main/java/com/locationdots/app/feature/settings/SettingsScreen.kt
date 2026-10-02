@@ -727,6 +727,7 @@ fun SettingsScreen(
             }
         }
     )
+    }
 
     if (showPlaceEditor) {
         PlaceEditorDialog(
