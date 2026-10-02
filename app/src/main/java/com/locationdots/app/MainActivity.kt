@@ -87,6 +87,9 @@ class MainActivity : ComponentActivity() {
     private var importError by mutableStateOf<String?>(null)
     private var pendingExportJson: String? = null
 
+    private enum class NavigationDirection { FORWARD, BACK }
+    private var navigationDirection by mutableStateOf(NavigationDirection.FORWARD)
+
     private val exportBackupLauncher =
         registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
             val json = pendingExportJson
@@ -237,16 +240,23 @@ class MainActivity : ComponentActivity() {
                         if (!animationsEnabled) {
                             EnterTransition.None togetherWith ExitTransition.None
                         } else {
-                            if (targetState > initialState) {
-                                (slideIntoContainer(
-                                    AnimatedContentTransitionScope.SlideDirection.Left,
-                                    spring(dampingRatio = 0.9f, stiffness = 520f)
-                                ) + fadeIn(tween(110))) togetherWith
-                                    (fadeOut(tween(100)))
+                            val direction = if (navigationDirection == NavigationDirection.FORWARD) {
+                                AnimatedContentTransitionScope.SlideDirection.Left
                             } else {
-                                fadeIn(tween(140)) togetherWith fadeOut(tween(110))
+                                AnimatedContentTransitionScope.SlideDirection.Right
                             }
-                        }.using(SizeTransform(clip = false))
+                            (
+                                slideIntoContainer(
+                                    direction,
+                                    animationSpec = spring(dampingRatio = 0.9f, stiffness = 420f)
+                                ) + fadeIn(tween(140))
+                            ) togetherWith (
+                                slideOutOfContainer(
+                                    direction,
+                                    animationSpec = spring(dampingRatio = 0.95f, stiffness = 380f)
+                                ) + fadeOut(tween(110))
+                            )
+                        }
                     },
                     label = "page-navigation"
                 ) { destination ->
@@ -429,6 +439,12 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun selectTab(tab: AppTab) {
+        if (tab == currentTab) return
+        navigationDirection = if (tab.ordinal >= currentTab.ordinal) {
+            NavigationDirection.FORWARD
+        } else {
+            NavigationDirection.BACK
+        }
         selectedPlaceId = null
         selectedJourneyId = null
         currentTab = tab
