@@ -5,7 +5,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.ksp)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.secrets.gradle)
 }
 
 extensions.configure<ApplicationExtension> {
@@ -55,11 +54,6 @@ extensions.configure<ApplicationExtension> {
     }
 }
 
-secrets {
-    propertiesFileName = "secrets.properties"
-    defaultPropertiesFileName = "local.defaults.properties"
-}
-
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -75,7 +69,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.service)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.play.services.location)
-    implementation(libs.google.maps.compose)
+    implementation(libs.maplibre.android)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
