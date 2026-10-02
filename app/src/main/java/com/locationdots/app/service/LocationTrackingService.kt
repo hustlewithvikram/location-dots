@@ -16,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import com.locationdots.app.LocationDotsApplication
 import com.locationdots.app.R
 import java.time.Duration
+import com.locationdots.app.domain.model.TimelineEvent
 import java.time.Instant
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -51,8 +52,10 @@ class LocationTrackingService : LifecycleService() {
 
                     val to = point.timestamp
                     val from = to.minus(PROCESSING_WINDOW)
-                    val points = app.locationRepository.getLocationPoints(from, to)
+                    val contextFrom = from.minus(PROCESSING_CONTEXT)
+                    val points = app.locationRepository.getLocationPoints(contextFrom, to)
                     val events = app.journeyProcessor.process(points)
+                        .filter { it.overlaps(from, to) }
 
                     app.timelineRepository.replaceRange(from, to, events)
                 }.onFailure { error ->
@@ -63,6 +66,14 @@ class LocationTrackingService : LifecycleService() {
 
         app.locationProvider.start()
     }
+
+    private fun TimelineEvent.overlaps(from: Instant, to: Instant): Boolean =
+        when (this) {
+            is TimelineEvent.Visit ->
+                timestamp <= to && (departure ?: timestamp) >= from
+            is TimelineEvent.Journey ->
+                startedAt <= to && (endedAt ?: startedAt) >= from
+        }
 
     override fun onDestroy() {
         collectionJob?.cancel()
@@ -120,5 +131,6 @@ class LocationTrackingService : LifecycleService() {
         const val PREFERENCES_NAME = "location_dots_ui"
         const val NOTIFICATION_ID = 1001
         val PROCESSING_WINDOW: Duration = Duration.ofHours(48)
+        val PROCESSING_CONTEXT: Duration = Duration.ofHours(2)
     }
 }
