@@ -129,29 +129,42 @@ private fun DayHeader(date: LocalDate) {
     onPlaceClick: (String) -> Unit,
     onJourneyClick: (String) -> Unit
 ) {
-    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), verticalAlignment = Alignment.Top) {
-        Box(Modifier.width(30.dp).fillMaxHeight()) {
-            Box(
-                Modifier.width(2.dp).fillMaxHeight()
-                    .align(Alignment.Center)
-                    .background(MaterialTheme.colorScheme.outlineVariant)
-            )
-            Box(
-                Modifier.size(12.dp).clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary)
-                    .align(Alignment.TopCenter)
-            )
-        }
-        Spacer(Modifier.width(6.dp))
-        EventCard(
-            event,
-            onPlaceClick,
-            onJourneyClick,
-            Modifier.weight(1f)
-        )
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+        TimelineRail(event = event, modifier = Modifier.width(36.dp))
+        Spacer(Modifier.width(8.dp))
+        EventCard(event, onPlaceClick, onJourneyClick, Modifier.weight(1f))
     }
 }
 
+
+@Composable
+private fun TimelineRail(event: TimelineEvent, modifier: Modifier = Modifier) {
+    val isJourney = event is TimelineEvent.Journey
+    val container = if (isJourney) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.primaryContainer
+    val content = if (isJourney) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onPrimaryContainer
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Surface(
+            modifier = Modifier.size(32.dp),
+            shape = CircleShape,
+            color = container,
+            tonalElevation = 1.dp
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = if (isJourney) Icons.Default.Route else Icons.Default.Place,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = content
+                )
+            }
+        }
+        Spacer(Modifier.height(6.dp))
+        Box(
+            Modifier.width(3.dp).height(74.dp).clip(MaterialTheme.shapes.extraLarge)
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+        )
+    }
+}
 
 @Composable
 private fun TodayCard(
@@ -265,23 +278,11 @@ private fun MiniStat(
     label: String,
     modifier: Modifier
 ) {
-    Surface(
-        modifier,
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surface.copy(alpha = .55f)
-    ) {
-        Column(
-            Modifier.padding(10.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            Text(value, style = MaterialTheme.typography.titleMedium)
-            Text(
-                label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
+    ExpressiveMetric(
+        value = value,
+        label = label,
+        modifier = modifier
+    )
 }
 
 @Composable
