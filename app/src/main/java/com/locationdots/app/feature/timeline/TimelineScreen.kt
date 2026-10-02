@@ -51,11 +51,7 @@ fun TimelineScreen(
         }
     }
 
-    Scaffold(bottomBar = {
-        AppBottomBar(AppTab.TIMELINE) { tab ->
-            when (tab) { AppTab.TIMELINE -> Unit; AppTab.MAP -> onPlacesClick(); AppTab.INSIGHTS -> onInsightsClick(); AppTab.SETTINGS -> onSettingsClick() }
-        }
-    }) { padding ->
+    Scaffold { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (items.isEmpty() && !isRefreshing) EmptyTimeline(isTracking)
             else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(18.dp, 4.dp, 18.dp, 28.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
