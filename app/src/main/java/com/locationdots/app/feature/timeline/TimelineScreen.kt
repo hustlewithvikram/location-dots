@@ -10,14 +10,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.Polyline
-import com.google.maps.android.compose.rememberCameraPositionState
+import com.locationdots.app.ui.components.LocationMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -434,58 +427,11 @@ private fun MiniMap(
     points: List<LatLng>,
     modifier: Modifier
 ) {
-    if (points.isEmpty()) return
-
-    val camera = rememberCameraPositionState()
-    LaunchedEffect(points) {
-        if (points.size == 1) {
-            camera.move(
-                com.google.android.gms.maps.CameraUpdateFactory
-                    .newLatLngZoom(points.first(), 14f)
-            )
-        } else {
-            val bounds = LatLngBounds.builder().apply {
-                points.forEach(::include)
-            }.build()
-            camera.move(
-                com.google.android.gms.maps.CameraUpdateFactory
-                    .newLatLngBounds(bounds, 55)
-            )
-        }
-    }
-
-    ExpressiveCard(modifier = modifier) {
-        GoogleMap(
-            modifier = Modifier.fillMaxSize(),
-            cameraPositionState = camera,
-            properties = MapProperties(
-                isBuildingEnabled = false,
-                isIndoorEnabled = false
-            ),
-            uiSettings = MapUiSettings(
-                zoomControlsEnabled = false,
-                mapToolbarEnabled = false,
-                scrollGesturesEnabled = false,
-                zoomGesturesEnabled = false,
-                rotationGesturesEnabled = false,
-                tiltGesturesEnabled = false
-            )
-        ) {
-            if (points.size > 1) {
-                Polyline(points = points, width = 7f)
-            }
-            Marker(
-                state = MarkerState(points.first()),
-                title = "Start"
-            )
-            if (points.size > 1) {
-                Marker(
-                    state = MarkerState(points.last()),
-                    title = "End"
-                )
-            }
-        }
-    }
+    LocationMap(
+        points = points,
+        modifier = modifier,
+        interactive = false
+    )
 }
 
 @Composable private fun EmptyTimeline(isTracking: Boolean) {
