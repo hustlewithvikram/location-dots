@@ -54,7 +54,11 @@ class LocationTrackingService : LifecycleService() {
                     val from = to.minus(PROCESSING_WINDOW)
                     val activeVisit = app.timelineRepository.getActiveVisit()
                     val processingFrom = minOf(from, activeVisit?.arrival ?: from)
-                    val contextFrom = processingFrom.minus(PROCESSING_CONTEXT)
+                    val contextFrom = if (activeVisit != null) {
+                        processingFrom
+                    } else {
+                        processingFrom.minus(PROCESSING_CONTEXT)
+                    }
                     val points = app.locationRepository.getLocationPoints(contextFrom, to)
                     val events = app.journeyProcessor.process(points)
                         .filter { it.overlaps(processingFrom, to) }
