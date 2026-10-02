@@ -25,8 +25,6 @@ class RoomLocationRepository(private val dao: LocationDao) : LocationRepository 
             append(point.latitude)
             append(':')
             append(point.longitude)
-            append(':')
-            append(point.accuracyMeters ?: "unknown")
         }
         dao.insert(point.toEntity(stableId))
     }
