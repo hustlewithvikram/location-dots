@@ -14,6 +14,7 @@ import com.locationdots.app.ui.components.LocationMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.locationdots.app.domain.model.JourneyMode
 import com.locationdots.app.domain.model.TimelineEvent
@@ -62,8 +63,7 @@ fun TimelineScreen(
                 }
                 item("activity-header") {
                     ExpressiveSectionHeader(
-                        title = "Activity",
-                        subtitle = "Your visits and journeys, newest first."
+                        title = "Activity"
                     )
                 }
                 items(items, key = { when (it) { is TimelineItem.Day -> "day-" + it.date; is TimelineItem.Event -> it.event.id } }) { item ->
@@ -203,27 +203,6 @@ private fun TodayCard(
                 icon = { Icon(Icons.Default.Search, "Search your timeline") },
                 emphasized = true
             )
-            Spacer(Modifier.width(8.dp))
-            ExpressiveIconBadge(
-                modifier = Modifier.size(48.dp),
-                containerColor = if (isTracking) {
-                    MaterialTheme.colorScheme.primaryContainer
-                } else {
-                    MaterialTheme.colorScheme.surfaceContainerHighest
-                },
-                icon = {
-                    Icon(
-                        if (isTracking) Icons.Default.MyLocation
-                        else Icons.Default.PauseCircleOutline,
-                        contentDescription = if (isTracking) "Tracking active" else "Tracking paused",
-                        tint = if (isTracking) {
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        }
-                    )
-                }
-            )
         }
 
         ExpressiveCard(emphasized = true) {
@@ -325,7 +304,9 @@ private fun VisitCard(
                 Column(Modifier.weight(1f)) {
                     Text(
                         event.place.name ?: "Unnamed place",
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         "Arrived " + time(event.arrival) + " · " + duration,
@@ -389,7 +370,9 @@ private fun JourneyCard(
                     Text(
                         (event.startPlace?.name ?: "Unknown") + " → " +
                             (event.endPlace?.name ?: "Unknown"),
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         event.mode.label() + " · " +
