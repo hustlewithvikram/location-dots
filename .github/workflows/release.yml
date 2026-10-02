@@ -40,6 +40,9 @@ jobs:
         with:
           gradle-version: "9.6.0"
 
+      - name: Generate Gradle wrapper
+        run: gradle wrapper --gradle-version 9.6.0 --distribution-type bin
+
       - name: Prepare Android SDK
         shell: bash
         run: |
