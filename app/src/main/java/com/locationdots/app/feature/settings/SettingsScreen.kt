@@ -243,11 +243,6 @@ fun SettingsScreen(
 
                 item {
                     ExpressiveCard {
-                        Column(Modifier.padding(8.dp)) {
-                item { SettingsGroupTitle("Location collection") }
-
-                item {
-                    ExpressiveCard {
                         Column(
                             Modifier.padding(18.dp),
                             verticalArrangement = Arrangement.spacedBy(14.dp)
