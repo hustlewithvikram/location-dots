@@ -10,4 +10,5 @@ interface PlaceRepository {
     suspend fun findNearby(latitude: Double, longitude: Double, radiusMeters: Double): Place?
     suspend fun savePlace(place: Place)
     suspend fun updatePlaceName(id: String, name: String?)
+    suspend fun saveNamedPlace(name: String, latitude: Double, longitude: Double): Place
 }
