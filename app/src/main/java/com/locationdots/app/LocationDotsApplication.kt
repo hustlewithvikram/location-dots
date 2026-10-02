@@ -17,8 +17,14 @@ import com.locationdots.app.domain.location.LocationRepository
 import com.locationdots.app.domain.places.PlaceEngine
 import com.locationdots.app.domain.places.PlaceRepository
 import com.locationdots.app.domain.timeline.TimelineRepository
+import org.maplibre.android.MapLibre
 
 class LocationDotsApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        MapLibre.getInstance(this)
+    }
+
     val database: LocationDotsDatabase by lazy { LocationDotsDatabase.create(this) }
 
     val locationRepository: LocationRepository by lazy {
