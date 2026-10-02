@@ -208,11 +208,11 @@ fun PlaceDetailScreen(
                         ExpressiveListRow(
                             title = DateTimeFormatter.ofPattern(
                                 "EEE, d MMM",
-                                Locale.getDefault()
+                                currentLocale
                             ).format(visit.arrival.atZone(zone)),
                             subtitle = DateTimeFormatter.ofPattern(
                                 "HH:mm",
-                                Locale.getDefault()
+                                currentLocale
                             ).format(visit.arrival.atZone(zone)) + " · " + duration,
                             icon = { Icon(Icons.Default.Place, null) }
                         )
