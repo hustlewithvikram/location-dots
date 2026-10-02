@@ -35,7 +35,11 @@ import org.maplibre.android.style.layers.PropertyFactory.lineColor
 import org.maplibre.android.style.layers.PropertyFactory.lineWidth
 import org.maplibre.android.style.sources.GeoJsonSource
 
-private const val OPEN_FREE_MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty"
+private const val LIBERTY_STYLE = "https://tiles.openfreemap.org/styles/liberty"
+private const val BRIGHT_STYLE = "https://tiles.openfreemap.org/styles/bright"
+private const val POSITRON_STYLE = "https://tiles.openfreemap.org/styles/positron"
+private const val DARK_STYLE = "https://tiles.openfreemap.org/styles/dark"
+private const val FIORD_STYLE = "https://tiles.openfreemap.org/styles/fiord"
 private const val ROUTE_SOURCE = "location-dots-route"
 private const val POINT_SOURCE = "location-dots-points"
 private const val ROUTE_LAYER = "location-dots-route-layer"
@@ -125,9 +129,16 @@ fun LocationMap(
         val preferences = context.getSharedPreferences("location_dots_ui", Context.MODE_PRIVATE)
         val showMarkers = preferences.getBoolean("show_place_markers", true)
         val showRoutes = preferences.getBoolean("show_route_lines", true)
+        val styleUrl = when (preferences.getString("map_style", "liberty")) {
+            "bright" -> BRIGHT_STYLE
+            "positron" -> POSITRON_STYLE
+            "dark" -> DARK_STYLE
+            "fiord" -> FIORD_STYLE
+            else -> LIBERTY_STYLE
+        }
         readyMap.uiSettings.setAllGesturesEnabled(interactive)
         readyMap.uiSettings.setLogoEnabled(true)
-        readyMap.setStyle(Style.Builder().fromUri(OPEN_FREE_MAP_STYLE)) { style ->
+        readyMap.setStyle(Style.Builder().fromUri(styleUrl)) { style ->
             val pointCoordinates = points.joinToString(",") { point ->
                 "[${point.longitude},${point.latitude}]"
             }
