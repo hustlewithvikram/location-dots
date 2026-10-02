@@ -4,6 +4,9 @@ import android.Manifest
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
+import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.core.view.WindowCompat
@@ -95,8 +98,40 @@ class MainActivity : ComponentActivity() {
                 val insightsLoading by insightsViewModel.isLoading.collectAsStateWithLifecycle()
                 val insightsError by insightsViewModel.error.collectAsStateWithLifecycle()
 
-                when {
-                    showSplash -> SplashScreen(
+                val destinationKey = when {
+                    showSplash -> -100
+                    !hasLocationPermission -> -90
+                    isAboutOpen -> -80
+                    isSearchOpen -> -70
+                    selectedJourneyId != null -> -60
+                    selectedPlaceId != null -> -50
+                    else -> when (currentTab) {
+                        AppTab.TIMELINE -> 0
+                        AppTab.MAP -> 1
+                        AppTab.INSIGHTS -> 2
+                        AppTab.SETTINGS -> 3
+                    }
+                }
+
+                AnimatedContent(
+                    targetState = destinationKey,
+                    transitionSpec = {
+                        if (!animationsEnabled) {
+                            EnterTransition.None togetherWith ExitTransition.None
+                        } else {
+                            val forward = targetState > initialState
+                            val direction = if (forward) AnimatedContentTransitionScope.SlideDirection.Left
+                            else AnimatedContentTransitionScope.SlideDirection.Right
+                            (slideIntoContainer(direction, tween(420, easing = FastOutSlowInEasing)) +
+                                fadeIn(tween(220))) togetherWith
+                                (slideOutOfContainer(direction, tween(360, easing = FastOutSlowInEasing)) +
+                                    fadeOut(tween(160)))
+                        }.using(SizeTransform(clip = false))
+                    },
+                    label = "page-navigation"
+                ) { destination ->
+                    when {
+                        destination == -100 -> SplashScreen(
                         onGetStarted = {
                             preferences.edit().putBoolean("splash_seen", true).apply()
                             if (hasLocationPermission) {
@@ -105,15 +140,15 @@ class MainActivity : ComponentActivity() {
                             showSplash = false
                         }
                     )
-                    !hasLocationPermission -> OnboardingScreen(
+                        destination == -90 -> OnboardingScreen(
                         hasLocationPermission = false,
                         isTracking = isTracking,
                         onRequestLocationPermission = ::requestLocationPermission,
                         onStartTracking = ::startTracking,
                         onStopTracking = ::stopTracking
                     )
-                    isAboutOpen -> AboutScreen { isAboutOpen = false }
-                    isSearchOpen -> SearchScreen(
+                        destination == -80 -> AboutScreen { isAboutOpen = false }
+                        destination == -70 -> SearchScreen(
                         query = searchState.query,
                         results = searchState.results,
                         isSearching = searchState.isSearching,
@@ -122,26 +157,26 @@ class MainActivity : ComponentActivity() {
                         onPlaceClick = { searchViewModel.clear(); isSearchOpen = false; selectedPlaceId = it },
                         onJourneyClick = { searchViewModel.clear(); isSearchOpen = false; selectedJourneyId = it }
                     )
-                    selectedJourneyId != null -> {
+                    destination == -60 -> {
                         val journey = timelineState.events.firstOrNull { it.id == selectedJourneyId } as? TimelineEvent.Journey
                         if (journey == null) {
                             LaunchedEffect(selectedJourneyId) { timelineViewModel.refresh() }
                             selectedJourneyId = null
                         } else JourneyDetailScreen(journey) { selectedJourneyId = null }
                     }
-                    selectedPlaceId != null -> {
+                    destination == -50 -> {
                         val placeVm = ViewModelProvider(this@MainActivity, PlaceDetailViewModelFactory(app.placeRepository, app.timelineRepository, selectedPlaceId!!))[PlaceDetailViewModel::class.java]
                         val place by placeVm.place.collectAsStateWithLifecycle()
                         val visits by placeVm.visits.collectAsStateWithLifecycle()
                         PlaceDetailScreen(place, visits, { selectedPlaceId = null }, placeVm::updateName)
                     }
-                    currentTab == AppTab.MAP -> PlacesOverviewScreen(
+                    destination == 1 -> PlacesOverviewScreen(
                         places = places,
                         onBack = { currentTab = AppTab.TIMELINE },
                         onPlaceClick = { selectedPlaceId = it },
                         onTabSelected = ::selectTab
                     )
-                    currentTab == AppTab.INSIGHTS -> InsightsScreen(
+                    destination == 2 -> InsightsScreen(
                         snapshot = insights,
                         isLoading = insightsLoading,
                         error = insightsError,
@@ -149,7 +184,7 @@ class MainActivity : ComponentActivity() {
                         onRefresh = insightsViewModel::refresh,
                         onTabSelected = ::selectTab
                     )
-                    currentTab == AppTab.SETTINGS -> SettingsScreen(
+                    destination == 3 -> SettingsScreen(
                         selectedTab = currentTab,
                         themeChoice = themeChoice,
                         isTracking = isTracking,
@@ -185,6 +220,7 @@ class MainActivity : ComponentActivity() {
                         onRetry = timelineViewModel::retry,
                         onClearError = timelineViewModel::clearError
                     )
+                    }
                 }
             }
         }
