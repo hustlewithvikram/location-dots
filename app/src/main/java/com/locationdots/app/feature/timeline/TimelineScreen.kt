@@ -9,7 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import com.google.android.gms.maps.model.LatLng
+import org.maplibre.android.geometry.LatLng
 import com.locationdots.app.ui.components.LocationMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
