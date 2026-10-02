@@ -1,21 +1,21 @@
-# Google Maps setup
+# Maps setup
 
-Location Dots uses Google Maps Compose 8.6.0 for the journey route map.
+Location Dots uses MapLibre Native with OpenFreeMap.
 
-1. Create or select a Google Cloud project.
-2. Enable Maps SDK for Android.
-3. Create an API key and restrict it to the Android app package and signing certificate.
-4. Create `secrets.properties` in the repository root. This file is ignored by Git.
-5. Add:
+No Google Maps SDK, Google Maps API key, or map API secret is required.
 
-```properties
-MAPS_API_KEY=YOUR_REAL_KEY
-```
+## Map style
 
-The app reads the key through the Google Secrets Gradle Plugin and exposes it to the manifest as `MAPS_API_KEY`.
+The app uses:
 
-If `secrets.properties` is absent, `local.defaults.properties` provides a build-time placeholder. The map itself requires a valid key at runtime.
+`https://tiles.openfreemap.org/styles/liberty`
 
-References:
-- https://developers.google.com/maps/documentation/android-sdk/get-api-key
-- https://developers.google.com/maps/documentation/android-sdk/maps-compose
+OpenFreeMap provides the vector map style and OpenStreetMap-based data. Attribution is handled by MapLibre's built-in map attribution UI.
+
+## Production note
+
+OpenFreeMap's public instance is free and supports commercial use, but it does not provide an SLA. If Location Dots grows enough to need guaranteed availability, the map layer is isolated in `ui/components/LocationMap.kt` so the style URL can be switched to a self-hosted or commercial MapLibre-compatible provider without changing the app's location data model.
+
+## Development
+
+No `secrets.properties` entry is needed for maps.
