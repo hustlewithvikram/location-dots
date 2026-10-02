@@ -19,11 +19,12 @@ class RoomInsightsRepository(
         val visits = events.filterIsInstance<TimelineEvent.Visit>()
         val journeys = events.filterIsInstance<TimelineEvent.Journey>()
 
-        val totalTime = visits.sumOf { visit ->
+        val visitDurations = visits.mapNotNull { visit ->
             visit.departure?.let {
                 Duration.between(visit.arrival, it).toMinutes().coerceAtLeast(0)
-            } ?: 0
+            }
         }
+        val totalTime = visitDurations.sum()
         val totalDistance = journeys.sumOf { it.distanceMeters ?: 0.0 }
 
         val topPlaces = visits
@@ -54,6 +55,7 @@ class RoomInsightsRepository(
                 journeys = journeys.count { it.timestamp.atZone(zone).toLocalDate() == date }
             )
         }
+        val busiest = daily.maxByOrNull { it.visits }
 
         return InsightsSnapshot(
             totalPlaces = visits.map { it.place.id }.distinct().size,
@@ -61,6 +63,10 @@ class RoomInsightsRepository(
             totalTimeMinutes = totalTime,
             totalDistanceMeters = totalDistance,
             journeyCount = journeys.size,
+            averageVisitMinutes = if (visitDurations.isEmpty()) 0 else totalTime / visitDurations.size,
+            longestVisitMinutes = visitDurations.maxOrNull() ?: 0,
+            busiestDayLabel = busiest?.takeIf { it.visits > 0 }?.label,
+            busiestDayVisits = busiest?.visits ?: 0,
             modeBreakdown = journeys.groupingBy { it.mode }.eachCount(),
             topPlaces = topPlaces,
             dailyVisits = daily
