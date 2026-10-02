@@ -65,6 +65,7 @@ class MainActivity : ComponentActivity() {
     private var showSplash by mutableStateOf(true)
     private var themeChoice by mutableStateOf(ThemeChoice.SYSTEM)
     private var animationsEnabled by mutableStateOf(true)
+    private var mapStyle by mutableStateOf("liberty")
     private var showRouteLines by mutableStateOf(true)
     private var showPlaceMarkers by mutableStateOf(true)
 
@@ -100,6 +101,7 @@ class MainActivity : ComponentActivity() {
         trackingController = LocationTrackingController(this)
         themeChoice = runCatching { ThemeChoice.valueOf(preferences.getString("theme", ThemeChoice.SYSTEM.name)!!) }.getOrDefault(ThemeChoice.SYSTEM)
         animationsEnabled = preferences.getBoolean("animations", true)
+        mapStyle = preferences.getString("map_style", "liberty") ?: "liberty"
         showRouteLines = preferences.getBoolean("show_route_lines", true)
         showPlaceMarkers = preferences.getBoolean("show_place_markers", true)
         showSplash = !preferences.getBoolean("splash_seen", false)
@@ -263,6 +265,7 @@ class MainActivity : ComponentActivity() {
                         themeChoice = themeChoice,
                         isTracking = isTracking,
                         animationsEnabled = animationsEnabled,
+                        mapStyle = mapStyle,
                         showRouteLines = showRouteLines,
                         showPlaceMarkers = showPlaceMarkers,
                         places = places,
@@ -275,6 +278,10 @@ class MainActivity : ComponentActivity() {
                         onAnimationsChange = {
                             animationsEnabled = it
                             preferences.edit().putBoolean("animations", it).apply()
+                        },
+                        onMapStyleChange = {
+                            mapStyle = it
+                            preferences.edit().putString("map_style", it).apply()
                         },
                         onRouteLinesChange = {
                             showRouteLines = it
@@ -462,11 +469,13 @@ class MainActivity : ComponentActivity() {
         preferences.edit()
             .putString("theme", ThemeChoice.SYSTEM.name)
             .putBoolean("animations", true)
+            .putString("map_style", "liberty")
             .putBoolean("show_route_lines", true)
             .putBoolean("show_place_markers", true)
             .apply()
         themeChoice = ThemeChoice.SYSTEM
         animationsEnabled = true
+        mapStyle = "liberty"
         showRouteLines = true
         showPlaceMarkers = true
     }
