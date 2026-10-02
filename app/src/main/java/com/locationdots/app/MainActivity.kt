@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
@@ -14,6 +15,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -114,6 +117,9 @@ class MainActivity : ComponentActivity() {
                 }
 
                 AnimatedContent(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = if (destinationKey in 0..3) 88.dp else 0.dp),
                     targetState = destinationKey,
                     transitionSpec = {
                         if (!animationsEnabled) {
@@ -122,10 +128,14 @@ class MainActivity : ComponentActivity() {
                             val forward = targetState > initialState
                             val direction = if (forward) AnimatedContentTransitionScope.SlideDirection.Left
                             else AnimatedContentTransitionScope.SlideDirection.Right
-                            (slideIntoContainer(direction, tween(420, easing = FastOutSlowInEasing)) +
-                                fadeIn(tween(220))) togetherWith
-                                (slideOutOfContainer(direction, tween(360, easing = FastOutSlowInEasing)) +
-                                    fadeOut(tween(160)))
+                            (slideIntoContainer(
+                                    direction,
+                                    spring(dampingRatio = 0.9f, stiffness = 520f)
+                                ) + fadeIn(tween(110))) togetherWith
+                                (slideOutOfContainer(
+                                    direction,
+                                    spring(dampingRatio = 1f, stiffness = 520f)
+                                ) + fadeOut(tween(90)))
                         }.using(SizeTransform(clip = false))
                     },
                     label = "page-navigation"
@@ -221,6 +231,10 @@ class MainActivity : ComponentActivity() {
                         onClearError = timelineViewModel::clearError
                     )
                     }
+                }
+
+                if (destinationKey in 0..3) {
+                    AppBottomBar(currentTab, ::selectTab)
                 }
             }
         }
