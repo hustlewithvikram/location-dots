@@ -8,7 +8,6 @@ import com.locationdots.app.domain.model.LocationPoint
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.Instant
-import java.util.UUID
 
 class RoomLocationRepository(private val dao: LocationDao) : LocationRepository {
     override fun observeLocationPoints(): Flow<List<LocationPoint>> =
