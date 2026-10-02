@@ -11,10 +11,12 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.SystemBarStyle
 import androidx.core.view.WindowCompat
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -77,12 +79,27 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        // Keep system bars transparent and prevent Android from adding a contrast scrim
-        // behind the edge-to-edge content. Compose owns the insets for the app shell.
+        val appUsesDarkTheme = when (themeChoice) {
+            ThemeChoice.DARK -> true
+            ThemeChoice.LIGHT -> false
+            ThemeChoice.SYSTEM -> isSystemInDarkTheme()
+        }
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.auto(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT
+            ) { appUsesDarkTheme },
+            navigationBarStyle = SystemBarStyle.auto(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT
+            ) { appUsesDarkTheme }
+        )
+        // Keep the Android navigation surface transparent. The Compose root below owns
+        // the background so uncovered transition/system-bar areas always use the theme.
         window.navigationBarColor = android.graphics.Color.TRANSPARENT
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             window.isNavigationBarContrastEnforced = false
+            window.navigationBarDividerColor = android.graphics.Color.TRANSPARENT
         }
         permissionManager = LocationPermissionManager(this)
         trackingController = LocationTrackingController(this)
@@ -105,7 +122,11 @@ class MainActivity : ComponentActivity() {
             }
             SideEffect { WindowCompat.getInsetsController(window, window.decorView).apply { isAppearanceLightStatusBars = !darkTheme; isAppearanceLightNavigationBars = !darkTheme } }
             LocationDotsTheme(darkTheme = darkTheme) {
-                val timelineState by timelineViewModel.uiState.collectAsStateWithLifecycle()
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    val timelineState by timelineViewModel.uiState.collectAsStateWithLifecycle()
                 val places by placesViewModel.places.collectAsStateWithLifecycle()
                 val searchState by searchViewModel.uiState.collectAsStateWithLifecycle()
                 val insights by insightsViewModel.snapshot.collectAsStateWithLifecycle()
@@ -246,9 +267,6 @@ class MainActivity : ComponentActivity() {
 
                 if (destinationKey in 0..3) {
                     // Keep the navigation shell spatially anchored to the bottom.
-                    // The destination content owns the area above it; the pill is an overlay
-                    // aligned explicitly to the bottom so edge-to-edge layout cannot place it
-                    // at the top when the parent has no vertical alignment constraint.
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = androidx.compose.ui.Alignment.BottomCenter
@@ -257,6 +275,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
         }
     }
 
