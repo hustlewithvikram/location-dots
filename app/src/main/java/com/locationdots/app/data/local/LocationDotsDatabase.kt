@@ -9,7 +9,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [LocationEntity::class, PlaceEntity::class, TimelineEventEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class LocationDotsDatabase : RoomDatabase() {
@@ -54,13 +54,27 @@ abstract class LocationDotsDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_location_points_timestampEpochMillis ON location_points(timestampEpochMillis)"
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_timeline_events_timestampEpochMillis ON timeline_events(timestampEpochMillis)"
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_timeline_events_type_placeId ON timeline_events(type, placeId)"
+                )
+            }
+        }
+
         fun create(context: Context): LocationDotsDatabase =
             Room.databaseBuilder(
                 context,
                 LocationDotsDatabase::class.java,
                 "location_dots.db"
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build()
     }
 }
