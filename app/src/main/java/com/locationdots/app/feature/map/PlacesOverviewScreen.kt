@@ -14,6 +14,8 @@ import org.maplibre.android.geometry.LatLng
 import com.locationdots.app.domain.model.Place
 import com.locationdots.app.ui.components.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 
 @Composable
 fun PlacesOverviewScreen(
@@ -23,6 +25,7 @@ fun PlacesOverviewScreen(
     onTabSelected: (AppTab) -> Unit = {}
 ) {
     val points = remember(places) { places.map { LatLng(it.latitude, it.longitude) } }
+    var isMapFullscreen by remember { mutableStateOf(false) }
 
     Scaffold { padding ->
         LazyColumn(
@@ -43,7 +46,11 @@ fun PlacesOverviewScreen(
             }
             item {
                 ExpressiveCard(modifier = Modifier.fillMaxWidth()) {
-                    Box(Modifier.fillMaxWidth().height(330.dp)) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(330.dp)
+                    ) {
                         if (points.isNotEmpty()) {
                             LocationMap(
                                 points = points,
@@ -56,23 +63,42 @@ fun PlacesOverviewScreen(
                                 Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    "No saved places yet",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    ExpressiveIconBadge(icon = { Icon(Icons.Default.Place, null) })
+                                    Text("No saved places yet", style = MaterialTheme.typography.titleMedium)
+                                    Text(
+                                        "Saved locations will appear here.",
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
                         }
 
                         Surface(
                             Modifier.align(Alignment.TopStart).padding(12.dp),
                             shape = RoundedCornerShape(16.dp),
-                            color = MaterialTheme.colorScheme.surface.copy(alpha = .9f)
+                            color = MaterialTheme.colorScheme.surface.copy(alpha = .92f)
                         ) {
                             Text(
                                 places.size.toString() + " saved places",
                                 Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                                 style = MaterialTheme.typography.labelLarge
                             )
+                        }
+
+                        if (points.isNotEmpty()) {
+                            FilledTonalIconButton(
+                                onClick = { isMapFullscreen = true },
+                                modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
+                                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = .92f)
+                                )
+                            ) {
+                                Icon(Icons.Default.Fullscreen, "Open map fullscreen")
+                            }
                         }
                     }
                 }
@@ -113,6 +139,48 @@ fun PlacesOverviewScreen(
                         icon = { Icon(Icons.Default.Place, null) },
                         onClick = { onPlaceClick(place.id) }
                     )
+                }
+            }
+        }
+    }
+
+    if (isMapFullscreen && points.isNotEmpty()) {
+        Dialog(
+            onDismissRequest = { isMapFullscreen = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                Box(Modifier.fillMaxSize()) {
+                    LocationMap(
+                        points = points,
+                        modifier = Modifier.fillMaxSize(),
+                        interactive = true,
+                        drawRoute = false
+                    )
+                    Row(
+                        Modifier
+                            .align(Alignment.TopStart)
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        FilledTonalIconButton(onClick = { isMapFullscreen = false }) {
+                            Icon(Icons.Default.Close, "Close fullscreen map")
+                        }
+                        Spacer(Modifier.width(10.dp))
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.surface.copy(alpha = .92f)
+                        ) {
+                            Text(
+                                places.size.toString() + " saved places",
+                                Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
                 }
             }
         }
