@@ -80,6 +80,8 @@ class MainActivity : ComponentActivity() {
     private var mapStyle by mutableStateOf("liberty")
     private var showRouteLines by mutableStateOf(true)
     private var showPlaceMarkers by mutableStateOf(true)
+    private var trackingAccuracy by mutableStateOf(TrackingAccuracy.HIGH)
+    private var trackingInterval by mutableStateOf(TrackingInterval.THIRTY_SECONDS)
     private var importPreview by mutableStateOf<ImportPreview?>(null)
     private var importError by mutableStateOf<String?>(null)
     private var pendingExportJson: String? = null
@@ -153,6 +155,14 @@ class MainActivity : ComponentActivity() {
         mapStyle = preferences.getString("map_style", "liberty") ?: "liberty"
         showRouteLines = preferences.getBoolean("show_route_lines", true)
         showPlaceMarkers = preferences.getBoolean("show_place_markers", true)
+        trackingAccuracy = runCatching {
+            TrackingAccuracy.valueOf(
+                preferences.getString("tracking_accuracy", TrackingAccuracy.HIGH.name) ?: TrackingAccuracy.HIGH.name
+            )
+        }.getOrDefault(TrackingAccuracy.HIGH)
+        trackingInterval = TrackingInterval.entries.firstOrNull {
+            it.millis == preferences.getLong("tracking_interval_millis", TrackingInterval.THIRTY_SECONDS.millis)
+        } ?: TrackingInterval.THIRTY_SECONDS
         showSplash = !preferences.getBoolean("splash_seen", false)
 
         val app = application as LocationDotsApplication
@@ -319,11 +329,23 @@ class MainActivity : ComponentActivity() {
                         showPlaceMarkers = showPlaceMarkers,
                         places = places,
                         locationPermissionGranted = hasLocationPermission,
+                        trackingAccuracy = trackingAccuracy,
+                        trackingInterval = trackingInterval,
                         onThemeChange = {
                             themeChoice = it
                             preferences.edit().putString("theme", it.name).apply()
                         },
                         onTrackingChange = { enabled -> if (enabled) startTracking() else stopTracking() },
+                        onTrackingAccuracyChange = { accuracy ->
+                            trackingAccuracy = accuracy
+                            preferences.edit().putString("tracking_accuracy", accuracy.name).apply()
+                            restartTrackingIfNeeded()
+                        },
+                        onTrackingIntervalChange = { interval ->
+                            trackingInterval = interval
+                            preferences.edit().putLong("tracking_interval_millis", interval.millis).apply()
+                            restartTrackingIfNeeded()
+                        },
                         onAnimationsChange = {
                             animationsEnabled = it
                             preferences.edit().putBoolean("animations", it).apply()
@@ -426,6 +448,13 @@ class MainActivity : ComponentActivity() {
     private fun stopTracking() {
         trackingController.stop()
         isTracking = false
+    }
+
+    private fun restartTrackingIfNeeded() {
+        if (!isTracking) return
+        trackingController.stop()
+        trackingController.start()
+        isTracking = true
     }
 
     private fun saveNamedPlace(name: String, latitude: Double, longitude: Double) {
@@ -655,12 +684,16 @@ class MainActivity : ComponentActivity() {
             .putString("map_style", "liberty")
             .putBoolean("show_route_lines", true)
             .putBoolean("show_place_markers", true)
+            .putString("tracking_accuracy", TrackingAccuracy.HIGH.name)
+            .putLong("tracking_interval_millis", TrackingInterval.THIRTY_SECONDS.millis)
             .apply()
         themeChoice = ThemeChoice.SYSTEM
         animationsEnabled = true
         mapStyle = "liberty"
         showRouteLines = true
         showPlaceMarkers = true
+        trackingAccuracy = TrackingAccuracy.HIGH
+        trackingInterval = TrackingInterval.THIRTY_SECONDS
     }
 
     private fun exportSummary(snapshot: com.locationdots.app.domain.insights.InsightsSnapshot) {
