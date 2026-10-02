@@ -8,6 +8,8 @@ import com.locationdots.app.domain.places.PlaceRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlin.math.*
+import java.time.Instant
+import java.util.UUID
 
 class RoomPlaceRepository(private val dao: PlaceDao) : PlaceRepository {
     override fun observePlaces(): Flow<List<Place>> =
@@ -39,6 +41,36 @@ class RoomPlaceRepository(private val dao: PlaceDao) : PlaceRepository {
             name = name,
             updatedAtEpochMillis = System.currentTimeMillis()
         ))
+    }
+
+    override suspend fun saveNamedPlace(name: String, latitude: Double, longitude: Double): Place {
+        val cleanName = name.trim()
+        require(cleanName.isNotEmpty())
+
+        val now = Instant.now()
+        val existing = findNearby(latitude, longitude, NAMED_PLACE_MERGE_RADIUS_METERS)
+        val place = if (existing != null) {
+            existing.copy(
+                name = cleanName,
+                updatedAt = maxOf(existing.updatedAt, now)
+            )
+        } else {
+            Place(
+                id = "place:manual:${UUID.randomUUID()}",
+                name = cleanName,
+                latitude = latitude,
+                longitude = longitude,
+                createdAt = now,
+                updatedAt = now
+            )
+        }
+
+        savePlace(place)
+        return place
+    }
+
+    private companion object {
+        const val NAMED_PLACE_MERGE_RADIUS_METERS = 150.0
     }
 
     private fun distanceMeters(latitude1: Double, longitude1: Double, latitude2: Double, longitude2: Double): Double {
