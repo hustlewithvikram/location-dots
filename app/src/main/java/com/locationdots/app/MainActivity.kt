@@ -534,7 +534,7 @@ class MainActivity : ComponentActivity() {
             return
         }
         trackingController.start()
-        isTracking = true
+        isTracking = trackingController.isTracking.value
     }
 
     private fun stopTracking() {
