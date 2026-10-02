@@ -9,7 +9,7 @@ A passive Android timeline that automatically turns your everyday movement into 
 [![Android](https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white)](https://www.android.com/)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.x-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/compose)
-[![Status](https://img.shields.io/badge/Status-Functional%20Prototype-blue)](#status)
+[![Status](https://img.shields.io/badge/Status-Pre--release%20Hardening-blue)](#status)
 
 <img src="assets/location-dots-hero-banner.svg" alt="Location Dots hero banner" width="100%" />
 
@@ -151,8 +151,8 @@ Location history can reveal sensitive information about where someone lives, wor
 
 ## Status
 
-**Functional prototype**
+**Pre-release hardening**
 
-The first milestone:
+The core prototype is implemented; the current milestone is focused on reliability, edge cases, and release validation:
 
 > **Install → grant permission → live your day → come back and see your day as a timeline.**
