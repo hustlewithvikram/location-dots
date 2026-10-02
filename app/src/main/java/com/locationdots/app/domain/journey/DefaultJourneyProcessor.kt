@@ -117,13 +117,21 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
                 }
 
                 else -> {
-                    departureCandidates.add(point)
+                    if (!isConfirmedVisit(current)) {
+                        // We are still in transit after a confirmed departure. Keep
+                        // replacing the transit seed until points begin clustering.
+                        current = mutableListOf(point)
+                        departureCandidates.clear()
+                        departureTimestamp = null
+                    } else {
+                        departureCandidates.add(point)
 
-                    if (departureCandidates.size >= DEPARTURE_CONFIRMATION_POINTS) {
-                        departureTimestamp = departureCandidates.first().timestamp
-                        val newClusterStart = departureCandidates.last()
-                        finishCurrent()
-                        current.add(newClusterStart)
+                        if (departureCandidates.size >= DEPARTURE_CONFIRMATION_POINTS) {
+                            departureTimestamp = departureCandidates.first().timestamp
+                            val newClusterStart = departureCandidates.last()
+                            finishCurrent()
+                            current.add(newClusterStart)
+                        }
                     }
                 }
             }
