@@ -402,6 +402,7 @@ fun PlaceEditorDialog(
                                         modifier = Modifier.fillMaxWidth().height(220.dp),
                                         interactive = true,
                                         fitRequest = mapPoint,
+                                        drawRoute = false,
                                         onMapClick = { point ->
                                             setCoordinates(point.latitude, point.longitude)
                                         }
