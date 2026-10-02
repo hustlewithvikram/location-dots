@@ -242,7 +242,7 @@ private fun TodayCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     MiniStat(visits.size.toString(), "stops", Modifier.weight(1f))
-                    MiniStat(journeys.size.toString(), "journeys", Modifier.weight(1f))
+                    MiniStat(journeys.size.toString(), "trips", Modifier.weight(1f))
                     MiniStat(formatMinutes(minutes), "stayed", Modifier.weight(1f))
                     MiniStat(formatDistance(distance), "distance", Modifier.weight(1f))
                 }
@@ -257,11 +257,32 @@ private fun MiniStat(
     label: String,
     modifier: Modifier
 ) {
-    ExpressiveMetric(
-        value = value,
-        label = label,
-        modifier = modifier
-    )
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.extraLarge,
+        color = MaterialTheme.colorScheme.surfaceContainer
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                value,
+                style = MaterialTheme.typography.headlineSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
 }
 
 @Composable
