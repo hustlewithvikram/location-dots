@@ -726,7 +726,7 @@ fun SettingsScreen(
                 }
             }
         }
-    )
+    }
     }
 
     if (showPlaceEditor) {
@@ -900,6 +900,8 @@ fun SettingsScreen(
             dismissButton = { TextButton(onClick = { showClearDialog = false }) { Text("Cancel") } }
         )
     }
+}
+
 }
 
 @Composable
