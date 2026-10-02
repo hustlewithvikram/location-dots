@@ -2,6 +2,8 @@ package com.locationdots.app.ui.components
 
 import android.graphics.Color
 import android.os.Bundle
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -9,12 +11,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
@@ -47,11 +51,32 @@ fun LocationMap(
 
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    var mapInitializationFailed by remember { mutableStateOf(false) }
+
+    if (mapInitializationFailed) {
+        Box(modifier = modifier, contentAlignment = Alignment.Center) {
+            Text("Map unavailable")
+        }
+        return
+    }
+
     val mapView = remember {
-        MapView(context).apply {
-            onCreate(Bundle())
+        try {
+            MapLibre.getInstance(context)
+            MapView(context).apply { onCreate(Bundle()) }
+        } catch (_: Throwable) {
+            mapInitializationFailed = true
+            null
         }
     }
+
+    if (mapView == null) {
+        Box(modifier = modifier, contentAlignment = Alignment.Center) {
+            Text("Map unavailable")
+        }
+        return
+    }
+
     var map by remember { mutableStateOf<MapLibreMap?>(null) }
 
     DisposableEffect(lifecycleOwner, mapView) {
@@ -76,15 +101,11 @@ fun LocationMap(
         modifier = modifier,
         factory = {
             mapView.apply {
-                getMapAsync { readyMap ->
-                    map = readyMap
-                }
+                getMapAsync { readyMap -> map = readyMap }
             }
         },
         update = { view ->
-            view.getMapAsync { readyMap ->
-                map = readyMap
-            }
+            view.getMapAsync { readyMap -> map = readyMap }
         }
     )
 
@@ -99,16 +120,14 @@ fun LocationMap(
             val pointGeoJson = """
                 {
                   "type": "FeatureCollection",
-                  "features": [
-                    {
-                      "type": "Feature",
-                      "geometry": {
-                        "type": "MultiPoint",
-                        "coordinates": [$pointCoordinates]
-                      },
-                      "properties": {}
-                    }
-                  ]
+                  "features": [{
+                    "type": "Feature",
+                    "geometry": {
+                      "type": "MultiPoint",
+                      "coordinates": [$pointCoordinates]
+                    },
+                    "properties": {}
+                  }]
                 }
             """.trimIndent()
 
