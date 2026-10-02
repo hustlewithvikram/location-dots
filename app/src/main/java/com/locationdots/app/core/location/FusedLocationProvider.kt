@@ -28,14 +28,6 @@ class FusedLocationProvider(
 
     override val locations: Flow<LocationPoint> = _locations.asSharedFlow()
 
-    private val request = LocationRequest.Builder(
-        Priority.PRIORITY_HIGH_ACCURACY,
-        UPDATE_INTERVAL_MILLIS
-    )
-        .setMinUpdateIntervalMillis(MIN_UPDATE_INTERVAL_MILLIS)
-        .setWaitForAccurateLocation(false)
-        .build()
-
     private val callback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             result.locations.forEach { location ->
@@ -55,6 +47,19 @@ class FusedLocationProvider(
     override fun start() {
         if (!hasLocationPermission()) return
 
+        val preferences = context.getSharedPreferences("location_dots_ui", Context.MODE_PRIVATE)
+        val interval = preferences.getLong("tracking_interval_millis", DEFAULT_UPDATE_INTERVAL_MILLIS)
+        val accuracy = preferences.getString("tracking_accuracy", "HIGH")
+        val priority = if (accuracy == "BALANCED") {
+            Priority.PRIORITY_BALANCED_POWER_ACCURACY
+        } else {
+            Priority.PRIORITY_HIGH_ACCURACY
+        }
+        val request = LocationRequest.Builder(priority, interval)
+            .setMinUpdateIntervalMillis((interval / 2).coerceAtLeast(5_000L))
+            .setWaitForAccurateLocation(accuracy != "BALANCED")
+            .build()
+
         client.requestLocationUpdates(request, callback, context.mainLooper)
     }
 
@@ -73,7 +78,6 @@ class FusedLocationProvider(
             ) == PackageManager.PERMISSION_GRANTED
 
     private companion object {
-        const val UPDATE_INTERVAL_MILLIS = 30_000L
-        const val MIN_UPDATE_INTERVAL_MILLIS = 10_000L
+        const val DEFAULT_UPDATE_INTERVAL_MILLIS = 30_000L
     }
 }
