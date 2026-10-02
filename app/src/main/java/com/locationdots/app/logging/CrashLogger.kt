@@ -79,6 +79,7 @@ object CrashLogger {
         }
     }
 
+    @android.annotation.TargetApi(Build.VERSION_CODES.Q)
     private fun saveToDownloadsWithMediaStore(
         context: Context,
         fileName: String,
