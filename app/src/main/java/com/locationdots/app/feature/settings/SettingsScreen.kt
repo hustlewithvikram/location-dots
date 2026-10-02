@@ -239,28 +239,109 @@ fun SettingsScreen(
             }
             SettingsPage.PRIVACY_DATA -> SettingsSubPage(
                 Modifier.padding(padding), "Privacy & data",
-                "Understand and control information stored on this device.",
+                "",
                 onBack = { page = SettingsPage.HOME }
             ) {
                 item {
                     ExpressiveCard(emphasized = true) {
-                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            ExpressiveSectionHeader("Private by design", "Location history and saved places are stored locally in the app database.")
-                            ExpressiveListRow(
-                                "Local storage",
-                                "No account is required for your timeline.",
-                                { Icon(Icons.Default.Lock, null) },
-                                trailing = { Icon(Icons.Default.VerifiedUser, null, tint = MaterialTheme.colorScheme.primary) }
+                        Row(
+                            Modifier.fillMaxWidth().padding(18.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ExpressiveIconBadge(
+                                icon = { Icon(Icons.Default.Lock, null) },
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                            Spacer(Modifier.width(14.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text("Stored on this device", style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    "No account or cloud history is required.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Icon(
+                                Icons.Default.VerifiedUser,
+                                null,
+                                tint = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
                 }
+
+                item { SettingsGroupTitle("Data") }
+
                 item {
                     ExpressiveCard {
-                        Column(Modifier.padding(10.dp)) {
-                            ExpressiveListRow("Export summary", "Share a readable overview of your activity.", { Icon(Icons.Default.Share, null) }, onClick = onExport)
-                            ExpressiveListRow("Clear local history", "Delete recorded locations, saved places and timeline events.", { Icon(Icons.Default.DeleteOutline, null) }, onClick = { showClearDialog = true })
+                        Column(Modifier.padding(8.dp)) {
+                            ExpressiveListRow(
+                                "Location history",
+                                icon = { Icon(Icons.Default.History, null) },
+                                onClick = { showClearDialog = true }
+                            )
+                            ExpressiveListRow(
+                                "Saved places",
+                                icon = { Icon(Icons.Default.Place, null) },
+                                onClick = { page = SettingsPage.SAVED_PLACES }
+                            )
+                            ExpressiveListRow(
+                                "Export your data",
+                                icon = { Icon(Icons.Default.FileUpload, null) },
+                                onClick = onExportData
+                            )
                         }
+                    }
+                }
+
+                item { SettingsGroupTitle("Permissions") }
+
+                item {
+                    ExpressiveCard {
+                        Column(Modifier.padding(8.dp)) {
+                            ExpressiveListRow(
+                                "Location permission",
+                                icon = { Icon(Icons.Default.LocationOn, null) },
+                                trailing = {
+                                    if (locationPermissionGranted) {
+                                        Icon(
+                                            Icons.Default.CheckCircle,
+                                            null,
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    } else {
+                                        TextButton(onClick = onRequestLocationPermission) {
+                                            Text("Allow")
+                                        }
+                                    }
+                                },
+                                onClick = if (locationPermissionGranted) null else onRequestLocationPermission
+                            )
+                            ExpressiveListRow(
+                                "Android location settings",
+                                icon = { Icon(Icons.Default.GpsFixed, null) },
+                                onClick = onOpenLocationSettings
+                            )
+                        }
+                    }
+                }
+
+                item { SettingsGroupTitle("Danger zone") }
+
+                item {
+                    ExpressiveCard {
+                        ExpressiveListRow(
+                            "Delete all local data",
+                            icon = { Icon(Icons.Default.DeleteForever, null) },
+                            trailing = {
+                                Text(
+                                    "Delete",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            },
+                            onClick = { showClearDialog = true }
+                        )
                     }
                 }
             }
@@ -375,14 +456,14 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { showClearDialog = false },
             icon = { Icon(Icons.Default.DeleteForever, null) },
-            title = { Text("Clear local history?") },
-            text = { Text("This permanently removes recorded locations, saved places and timeline events from this device.") },
+            title = { Text("Delete all local data?") },
+            text = { Text("This permanently removes recorded locations, saved places and timeline events from this device. This cannot be undone.") },
             confirmButton = {
                 Button(onClick = {
                     showClearDialog = false
                     onClearHistory()
                     page = SettingsPage.HOME
-                }) { Text("Clear data") }
+                }) { Text("Delete all data") }
             },
             dismissButton = { TextButton(onClick = { showClearDialog = false }) { Text("Cancel") } }
         )
@@ -474,7 +555,7 @@ private fun SettingsSubPage(
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(title, style = MaterialTheme.typography.headlineSmall)
-                    Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    // Keep sub-page headers intentionally compact; the page title carries the context.
                 }
             }
         }
