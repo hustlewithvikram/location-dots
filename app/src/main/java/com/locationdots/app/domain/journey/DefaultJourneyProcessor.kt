@@ -5,6 +5,7 @@ import com.locationdots.app.domain.model.LocationPoint
 import com.locationdots.app.domain.model.TimelineEvent
 import com.locationdots.app.domain.places.PlaceEngine
 import java.time.Duration
+import java.time.Instant
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
@@ -22,7 +23,7 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
         if (sorted.size < MIN_POINTS_PER_VISIT) return emptyList()
 
         val clusters = buildClusters(sorted)
-            .filter(::isConfirmedVisit)
+            .filter { isConfirmedVisit(it.points) }
 
         if (clusters.isEmpty()) return emptyList()
 
@@ -72,15 +73,22 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
         }.sortedByDescending { it.timestamp }
     }
 
-    private fun buildClusters(points: List<LocationPoint>): List<List<LocationPoint>> {
-        val clusters = mutableListOf<MutableList<LocationPoint>>()
+    private fun buildClusters(points: List<LocationPoint>): List<VisitCluster> {
+        val clusters = mutableListOf<VisitCluster>()
         var current = mutableListOf<LocationPoint>()
-        var outsidePoints = mutableListOf<LocationPoint>()
+        var departureCandidates = mutableListOf<LocationPoint>()
+        var departureTimestamp: Instant? = null
 
         fun finishCurrent() {
-            if (current.isNotEmpty()) clusters += current
+            if (current.isNotEmpty()) {
+                clusters += VisitCluster(
+                    points = current,
+                    departureTimestamp = departureTimestamp
+                )
+            }
             current = mutableListOf()
-            outsidePoints = mutableListOf()
+            departureCandidates = mutableListOf()
+            departureTimestamp = null
         }
 
         for (point in points) {
@@ -99,19 +107,21 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
 
             when {
                 distance <= STAY_RADIUS_METERS -> {
-                    current.addAll(outsidePoints)
-                    outsidePoints.clear()
+                    departureCandidates.clear()
+                    departureTimestamp = null
                     current.add(point)
                 }
 
                 distance <= DEPARTURE_RADIUS_METERS -> {
-                    outsidePoints.add(point)
+                    departureCandidates.clear()
                 }
 
                 else -> {
-                    outsidePoints.add(point)
-                    if (outsidePoints.size >= DEPARTURE_CONFIRMATION_POINTS) {
-                        val newClusterStart = outsidePoints.last()
+                    departureCandidates.add(point)
+
+                    if (departureCandidates.size >= DEPARTURE_CONFIRMATION_POINTS) {
+                        departureTimestamp = departureCandidates.first().timestamp
+                        val newClusterStart = departureCandidates.last()
                         finishCurrent()
                         current.add(newClusterStart)
                     }
@@ -119,7 +129,13 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
             }
         }
 
-        if (current.isNotEmpty()) clusters += current
+        if (current.isNotEmpty()) {
+            clusters += VisitCluster(
+                points = current,
+                departureTimestamp = departureTimestamp
+            )
+        }
+
         return clusters
     }
 
@@ -182,8 +198,7 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
             return false
         }
 
-        val accuracy = point.accuracyMeters
-        return accuracy == null || accuracy <= MAX_ACCURACY_METERS
+        return point.accuracyMeters == null || point.accuracyMeters <= MAX_ACCURACY_METERS
     }
 
     private fun centroid(points: List<LocationPoint>): Pair<Double, Double> =
@@ -206,9 +221,13 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
         return earthRadius * 2 * atan2(sqrt(a), sqrt(1 - a))
     }
 
+    private data class VisitCluster(
+        val points: List<LocationPoint>,
+        val departureTimestamp: Instant?
+    )
+
     private companion object {
         val MIN_DWELL: Duration = Duration.ofMinutes(8)
-        val ACTIVE_VISIT_WINDOW: Duration = Duration.ofMinutes(15)
 
         const val STAY_RADIUS_METERS = 100.0
         const val DEPARTURE_RADIUS_METERS = 150.0
