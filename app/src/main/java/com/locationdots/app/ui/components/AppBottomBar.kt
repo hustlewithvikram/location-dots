@@ -53,7 +53,7 @@ fun AppBottomBar(selected: AppTab, onSelected: (AppTab) -> Unit) {
             shape = RoundedCornerShape(32.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 3.dp,
-            shadowElevation = 8.dp
+            shadowElevation = 0.dp
         ) {
             BoxWithConstraints(Modifier.fillMaxSize().padding(6.dp)) {
                 val itemWidth = maxWidth / tabs.size
