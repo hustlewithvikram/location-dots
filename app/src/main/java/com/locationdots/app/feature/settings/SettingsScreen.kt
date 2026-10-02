@@ -82,6 +82,9 @@ fun SettingsScreen(
     onResetSettings: () -> Unit,
     onAbout: () -> Unit,
     onOpenLocationSettings: () -> Unit,
+    batteryOptimizationIgnored: Boolean,
+    onOpenBatterySettings: () -> Unit,
+    onShareDiagnostics: () -> Unit,
     onRequestLocationPermission: () -> Unit,
     onSaveNamedPlace: (String, Double, Double) -> Unit,
     onRequestCurrentLocation: ((onLocation: (Double, Double) -> Unit) -> Unit)
@@ -564,23 +567,112 @@ fun SettingsScreen(
             }
             SettingsPage.DIAGNOSTICS -> SettingsSubPage(
                 Modifier.padding(padding), "Diagnostics",
-                "Useful runtime information for troubleshooting.",
+                "",
                 onBack = { page = SettingsPage.HOME }
             ) {
                 item {
-                    ExpressiveCard {
-                        Column(Modifier.padding(10.dp)) {
-                            DiagnosticRow("Tracking service", if (isTracking) "Running" else "Stopped", Icons.Default.LocationOn)
-                            DiagnosticRow("Location permission", if (locationPermissionGranted) "Granted" else "Not granted", Icons.Default.Security)
-                            DiagnosticRow("Storage", "Room · on device", Icons.Default.Storage)
-                            DiagnosticRow("Maps", "MapLibre · OpenFreeMap", Icons.Default.Map)
-                            DiagnosticRow("Saved places", places.size.toString(), Icons.Default.Place)
+                    ExpressiveCard(emphasized = isTracking && locationPermissionGranted) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(18.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ExpressiveIconBadge(
+                                icon = {
+                                    Icon(
+                                        if (isTracking) Icons.Default.CheckCircle else Icons.Default.PauseCircleOutline,
+                                        null
+                                    )
+                                },
+                                containerColor = if (isTracking) {
+                                    MaterialTheme.colorScheme.primaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceContainerHighest
+                                }
+                            )
+                            Spacer(Modifier.width(14.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    if (isTracking) "Tracking is running" else "Tracking is stopped",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(
+                                    if (!locationPermissionGranted) "Location permission is required"
+                                    else if (isTracking) "Location updates can be collected"
+                                    else "No location updates are being collected",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
+
+                item { SettingsGroupTitle("System checks") }
+
                 item {
-                    InfoCard(Icons.Default.Build, "Troubleshooting", "If tracking is not recording, verify location permission, Android location services, and that tracking is enabled.")
+                    ExpressiveCard {
+                        Column(Modifier.padding(8.dp)) {
+                            DiagnosticRow(
+                                "Location permission",
+                                if (locationPermissionGranted) "Ready" else "Needs permission",
+                                if (locationPermissionGranted) Icons.Default.CheckCircle else Icons.Default.Warning
+                            )
+                            DiagnosticRow(
+                                "Location services",
+                                "Android setting",
+                                Icons.Default.GpsFixed
+                            )
+                            DiagnosticRow(
+                                "Battery optimization",
+                                if (batteryOptimizationIgnored) "Unrestricted" else "May limit background tracking",
+                                if (batteryOptimizationIgnored) Icons.Default.BatteryFull else Icons.Default.BatteryAlert
+                            )
+                        }
+                    }
                 }
+
+                item {
+                    ExpressiveCard {
+                        Column(Modifier.padding(8.dp)) {
+                            ExpressiveListRow(
+                                "Location settings",
+                                icon = { Icon(Icons.Default.GpsFixed, null) },
+                                trailing = { Icon(Icons.Default.ChevronRight, null) },
+                                onClick = onOpenLocationSettings
+                            )
+                            ExpressiveListRow(
+                                "Battery optimization",
+                                icon = { Icon(Icons.Default.BatterySaver, null) },
+                                trailing = { Icon(Icons.Default.ChevronRight, null) },
+                                onClick = onOpenBatterySettings
+                            )
+                            ExpressiveListRow(
+                                "Share diagnostic report",
+                                icon = { Icon(Icons.Default.Share, null) },
+                                trailing = { Icon(Icons.Default.ChevronRight, null) },
+                                onClick = onShareDiagnostics
+                            )
+                        }
+                    }
+                }
+
+                item { SettingsGroupTitle("App status") }
+
+                item {
+                    ExpressiveCard {
+                        Column(Modifier.padding(8.dp)) {
+                            DiagnosticRow("Storage", "Local Room database", Icons.Default.Storage)
+                            DiagnosticRow("Maps", "MapLibre + OpenFreeMap", Icons.Default.Map)
+                            DiagnosticRow("Saved places", places.size.toString(), Icons.Default.Place)
+                            DiagnosticRow(
+                                "Tracking profile",
+                                trackingAccuracy.name.lowercase().replaceFirstChar { it.uppercase() } + " · " + trackingInterval.label,
+                                Icons.Default.Tune
+                            )
+                        }
+                    }
+                }
+
                 item {
                     OutlinedButton(
                         onClick = onResetSettings,
@@ -592,8 +684,7 @@ fun SettingsScreen(
                         Text("Reset app settings")
                     }
                 }
-            }
-        }
+            }        }
     }
 
     if (showPlaceEditor) {
