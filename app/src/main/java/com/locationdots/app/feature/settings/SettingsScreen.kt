@@ -90,6 +90,8 @@ fun SettingsScreen(
     var showClearDialog by remember { mutableStateOf(false) }
     var showPlaceEditor by remember { mutableStateOf(false) }
     var showMapStyleDialog by remember { mutableStateOf(false) }
+    var previewMapStyle by remember { mutableStateOf(mapStyle) }
+    var showAttributionDialog by remember { mutableStateOf(false) }
     var editingPlace by remember { mutableStateOf<Place?>(null) }
 
     BackHandler(enabled = page != SettingsPage.HOME) { page = SettingsPage.HOME }
@@ -292,13 +294,13 @@ fun SettingsScreen(
             }
             SettingsPage.MAP_APPEARANCE -> SettingsSubPage(
                 Modifier.padding(padding), "Map & appearance",
-                "Tune the visual experience without changing your data.",
+                "",
                 onBack = { page = SettingsPage.HOME }
             ) {
                 item {
                     ExpressiveCard {
                         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            ExpressiveSectionHeader("Theme", "Choose how Location Dots follows your device.")
+                            Text("Theme", style = MaterialTheme.typography.titleMedium)
                             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                                 ThemeChoice.entries.forEachIndexed { index, choice ->
                                     SegmentedButton(
@@ -311,7 +313,7 @@ fun SettingsScreen(
                             }
                             ExpressiveListRow(
                                 "Motion & transitions",
-                                if (animationsEnabled) "Expressive animations are enabled." else "Animations are reduced.",
+                                null,
                                 { Icon(Icons.Default.Animation, null) },
                                 trailing = { Switch(animationsEnabled, onAnimationsChange) }
                             )
@@ -329,13 +331,13 @@ fun SettingsScreen(
                             )
                             ExpressiveListRow(
                                 "Route lines",
-                                "Show movement paths on timeline and journey maps.",
+                                null,
                                 { Icon(Icons.Default.Timeline, null) },
                                 trailing = { Switch(showRouteLines, onRouteLinesChange) }
                             )
                             ExpressiveListRow(
                                 "Place markers",
-                                "Show locations as markers on maps.",
+                                null,
                                 { Icon(Icons.Default.Place, null) },
                                 trailing = { Switch(showPlaceMarkers, onPlaceMarkersChange) }
                             )
@@ -343,7 +345,14 @@ fun SettingsScreen(
                     }
                 }
                 item {
-                    InfoCard(Icons.Default.Public, "Map attribution", "MapLibre displays the required attribution for OpenFreeMap, OpenMapTiles and OpenStreetMap.")
+                    ExpressiveCard {
+                        ExpressiveListRow(
+                            "Map credits",
+                            icon = { Icon(Icons.Default.Public, null) },
+                            trailing = { Icon(Icons.Default.InfoOutline, null) },
+                            onClick = { showAttributionDialog = true }
+                        )
+                    }
                 }
             }
             SettingsPage.PRIVACY_DATA -> SettingsSubPage(
@@ -673,6 +682,67 @@ fun SettingsScreen(
                         Text("Cancel")
                     }
                 }
+            }
+        )
+    }
+
+    if (showMapStyleDialog) {
+        AlertDialog(
+            onDismissRequest = { showMapStyleDialog = false },
+            title = { Text("Map style") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Card(
+                        shape = MaterialTheme.shapes.extraLarge,
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                    ) {
+                        LocationMap(
+                            points = listOf(
+                                org.maplibre.android.geometry.LatLng(18.5204, 73.8567),
+                                org.maplibre.android.geometry.LatLng(18.5314, 73.8446),
+                                org.maplibre.android.geometry.LatLng(18.5089, 73.8077)
+                            ),
+                            modifier = Modifier.fillMaxWidth().height(190.dp),
+                            interactive = false,
+                            fitRequest = previewMapStyle,
+                            mapStyle = previewMapStyle,
+                            showRouteLines = true,
+                            showPlaceMarkers = true
+                        )
+                    }
+                    MapStyleChoice.entries.forEach { style ->
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            RadioButton(
+                                selected = previewMapStyle == style.key,
+                                onClick = { previewMapStyle = style.key }
+                            )
+                            Text(style.label, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    onMapStyleChange(previewMapStyle)
+                    showMapStyleDialog = false
+                }) { Text("Apply") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMapStyleDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    if (showAttributionDialog) {
+        AlertDialog(
+            onDismissRequest = { showAttributionDialog = false },
+            icon = { Icon(Icons.Default.Public, null) },
+            title = { Text("Map credits") },
+            text = {
+                Text("Location Dots uses OpenFreeMap map tiles with OpenStreetMap data. These credits are required by the map providers.")
+            },
+            confirmButton = {
+                TextButton(onClick = { showAttributionDialog = false }) { Text("Done") }
             }
         )
     }
