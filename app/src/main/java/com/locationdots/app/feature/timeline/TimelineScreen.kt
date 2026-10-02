@@ -1,6 +1,8 @@
 package com.locationdots.app.feature.timeline
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.material.icons.Icons
@@ -60,8 +62,8 @@ fun TimelineScreen(
                 item("summary") { TodayCard(events, isTracking, onSearchClick) }
                 items(items, key = { when (it) { is TimelineItem.Day -> "day-" + it.date; is TimelineItem.Event -> it.event.id } }) { item ->
                     when (item) {
-                        is TimelineItem.Day -> Text(DateTimeFormatter.ofPattern("EEEE, d MMM", Locale.getDefault()).format(item.date), Modifier.padding(top = 8.dp, start = 4.dp), style = MaterialTheme.typography.titleMedium)
-                        is TimelineItem.Event -> EventCard(item.event, onPlaceClick, onJourneyClick)
+                        is TimelineItem.Day -> DayHeader(item.date)
+                        is TimelineItem.Event -> TimelineEventRow(item.event, onPlaceClick, onJourneyClick)
                     }
                 }
                 if (isRefreshing) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
@@ -78,6 +80,50 @@ fun TimelineScreen(
                 }
             }
         }
+    }
+}
+
+@Composable private fun DayHeader(date: LocalDate) {
+    Row(
+        Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Surface(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(100.dp),
+            color = MaterialTheme.colorScheme.secondaryContainer
+        ) {
+            Text(
+                DateTimeFormatter.ofPattern("EEE, d MMM", Locale.getDefault()).format(date),
+                Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+        Spacer(Modifier.width(10.dp))
+        HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
+    }
+}
+
+@Composable private fun TimelineEventRow(
+    event: TimelineEvent,
+    onPlaceClick: (String) -> Unit,
+    onJourneyClick: (String) -> Unit
+) {
+    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), verticalAlignment = Alignment.Top) {
+        Box(Modifier.width(30.dp).fillMaxHeight()) {
+            Box(
+                Modifier.width(2.dp).fillMaxHeight()
+                    .align(Alignment.Center)
+                    .background(MaterialTheme.colorScheme.outlineVariant)
+            )
+            Box(
+                Modifier.size(12.dp).clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+                    .align(Alignment.TopCenter)
+            )
+        }
+        Spacer(Modifier.width(4.dp))
+        EventCard(event, onPlaceClick, onJourneyClick, Modifier.weight(1f))
     }
 }
 
@@ -119,10 +165,10 @@ fun TimelineScreen(
         Column(Modifier.padding(12.dp)) { Text(value, style = MaterialTheme.typography.titleMedium); Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }
-@Composable private fun EventCard(event: TimelineEvent, onPlaceClick: (String) -> Unit, onJourneyClick: (String) -> Unit) {
+@Composable private fun EventCard(event: TimelineEvent, onPlaceClick: (String) -> Unit, onJourneyClick: (String) -> Unit, modifier: Modifier = Modifier) {
     when (event) {
-        is TimelineEvent.Visit -> ExpressiveListRow(event.place.name ?: "Unnamed place", "Arrived " + time(event.arrival) + " · " + (event.departure?.let { formatMinutes(Duration.between(event.arrival, it).toMinutes()) } ?: "Still here"), { Icon(Icons.Default.Place, null) }, onClick = { onPlaceClick(event.place.id) })
-        is TimelineEvent.Journey -> ExpressiveListRow((event.startPlace?.name ?: "Unknown") + " → " + (event.endPlace?.name ?: "Unknown"), event.mode.label() + " · " + formatDistance(event.distanceMeters ?: 0.0) + " · " + time(event.startedAt), { Icon(modeIcon(event.mode), null) }, onClick = { onJourneyClick(event.id) })
+        is TimelineEvent.Visit -> ExpressiveListRow(event.place.name ?: "Unnamed place", "Arrived " + time(event.arrival) + " · " + (event.departure?.let { formatMinutes(Duration.between(event.arrival, it).toMinutes()) } ?: "Still here"), { Icon(Icons.Default.Place, null) }, modifier = modifier, onClick = { onPlaceClick(event.place.id) })
+        is TimelineEvent.Journey -> ExpressiveListRow((event.startPlace?.name ?: "Unknown") + " → " + (event.endPlace?.name ?: "Unknown"), event.mode.label() + " · " + formatDistance(event.distanceMeters ?: 0.0) + " · " + time(event.startedAt), { Icon(modeIcon(event.mode), null) }, modifier = modifier, onClick = { onJourneyClick(event.id) })
     }
 }
 @Composable private fun EmptyTimeline(isTracking: Boolean) {
