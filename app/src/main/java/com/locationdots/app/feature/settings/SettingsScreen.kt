@@ -19,6 +19,13 @@ import com.locationdots.app.ui.components.*
 
 enum class ThemeChoice { SYSTEM, LIGHT, DARK }
 
+enum class TrackingAccuracy { HIGH, BALANCED }
+enum class TrackingInterval(val millis: Long, val label: String) {
+    THIRTY_SECONDS(30_000L, "30 seconds"),
+    ONE_MINUTE(60_000L, "1 minute"),
+    FIVE_MINUTES(300_000L, "5 minutes")
+}
+
 data class ImportPreview(
     val uri: Uri,
     val locations: Int,
@@ -54,8 +61,12 @@ fun SettingsScreen(
     showPlaceMarkers: Boolean,
     places: List<Place>,
     locationPermissionGranted: Boolean,
+    trackingAccuracy: TrackingAccuracy,
+    trackingInterval: TrackingInterval,
     onThemeChange: (ThemeChoice) -> Unit,
     onTrackingChange: (Boolean) -> Unit,
+    onTrackingAccuracyChange: (TrackingAccuracy) -> Unit,
+    onTrackingIntervalChange: (TrackingInterval) -> Unit,
     onAnimationsChange: (Boolean) -> Unit,
     onMapStyleChange: (String) -> Unit,
     onRouteLinesChange: (Boolean) -> Unit,
@@ -148,51 +159,154 @@ fun SettingsScreen(
             }
             SettingsPage.TRACKING -> SettingsSubPage(
                 Modifier.padding(padding), "Tracking",
-                "Control when Location Dots records your movement.",
+                "",
                 onBack = { page = SettingsPage.HOME }
             ) {
                 item {
                     ExpressiveCard(emphasized = isTracking) {
-                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            ExpressiveSectionHeader(
-                                "Automatic tracking",
-                                if (isTracking) "Location Dots is recording in the background." else "Tracking is paused."
+                        Row(
+                            Modifier.fillMaxWidth().padding(18.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ExpressiveIconBadge(
+                                icon = {
+                                    Icon(
+                                        if (isTracking) Icons.Default.MyLocation else Icons.Default.LocationOff,
+                                        null
+                                    )
+                                },
+                                containerColor = if (isTracking) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceContainerHighest
+                                }
                             )
-                            ExpressiveListRow(
-                                "Location tracking",
-                                if (isTracking) "Active now" else "Paused",
-                                { Icon(Icons.Default.LocationOn, null) },
-                                trailing = { Switch(isTracking, onTrackingChange) }
+                            Spacer(Modifier.width(14.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    if (isTracking) "Tracking active" else "Tracking paused",
+                                    style = MaterialTheme.typography.titleLarge
+                                )
+                                Text(
+                                    if (isTracking) "Recording location in the background"
+                                    else "No new location points are being recorded",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Switch(
+                                checked = isTracking,
+                                onCheckedChange = onTrackingChange
                             )
                         }
                     }
                 }
+
+                item { SettingsGroupTitle("Required") }
+
                 item {
                     ExpressiveCard {
-                        Column(Modifier.padding(10.dp)) {
+                        Column(Modifier.padding(8.dp)) {
                             ExpressiveListRow(
                                 "Location permission",
-                                if (locationPermissionGranted) "Granted" else "Permission is required to record locations.",
-                                { Icon(Icons.Default.Security, null) },
+                                if (locationPermissionGranted) "Allowed" else "Not allowed",
+                                { Icon(Icons.Default.LocationOn, null) },
                                 trailing = {
                                     if (locationPermissionGranted) {
-                                        Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
+                                        Icon(
+                                            Icons.Default.CheckCircle,
+                                            null,
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
                                     } else {
-                                        TextButton(onClick = onRequestLocationPermission) { Text("Allow") }
+                                        TextButton(onClick = onRequestLocationPermission) {
+                                            Text("Allow")
+                                        }
                                     }
-                                }
+                                },
+                                onClick = if (locationPermissionGranted) null else onRequestLocationPermission
                             )
                             ExpressiveListRow(
-                                "System location",
-                                "Open Android location settings if tracking cannot start.",
+                                "Location services",
+                                "Android system setting",
                                 { Icon(Icons.Default.GpsFixed, null) },
+                                trailing = {
+                                    Icon(Icons.Default.ChevronRight, null)
+                                },
                                 onClick = onOpenLocationSettings
                             )
                         }
                     }
                 }
+
+                item { SettingsGroupTitle("Location collection") }
+
                 item {
-                    InfoCard(Icons.Default.BatterySaver, "Designed for background use", "Location Dots uses Android's foreground location service while tracking is enabled.")
+                    ExpressiveCard {
+                        Column(Modifier.padding(8.dp)) {
+                            ExpressiveListRow(
+                                "Accuracy",
+                                if (trackingAccuracy == TrackingAccuracy.HIGH) "High" else "Balanced",
+                                { Icon(Icons.Default.GpsFixed, null) },
+                                trailing = { Icon(Icons.Default.ChevronRight, null) },
+                                onClick = {
+                                    onTrackingAccuracyChange(
+                                        if (trackingAccuracy == TrackingAccuracy.HIGH) {
+                                            TrackingAccuracy.BALANCED
+                                        } else {
+                                            TrackingAccuracy.HIGH
+                                        }
+                                    )
+                                }
+                            )
+                            ExpressiveListRow(
+                                "Update frequency",
+                                trackingInterval.label,
+                                { Icon(Icons.Default.Timer, null) },
+                                trailing = { Icon(Icons.Default.ChevronRight, null) },
+                                onClick = {
+                                    val next = when (trackingInterval) {
+                                        TrackingInterval.THIRTY_SECONDS -> TrackingInterval.ONE_MINUTE
+                                        TrackingInterval.ONE_MINUTE -> TrackingInterval.FIVE_MINUTES
+                                        TrackingInterval.FIVE_MINUTES -> TrackingInterval.THIRTY_SECONDS
+                                    }
+                                    onTrackingIntervalChange(next)
+                                }
+                            )
+                        }
+                    }
+                }
+
+                item {
+                    ExpressiveCard {
+                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("Collection profile", style = MaterialTheme.typography.titleMedium)
+                            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                                val options = TrackingInterval.entries
+                                options.forEachIndexed { index, option ->
+                                    SegmentedButton(
+                                        selected = trackingInterval == option,
+                                        onClick = { onTrackingIntervalChange(option) },
+                                        shape = SegmentedButtonDefaults.itemShape(index, options.size),
+                                        icon = {}
+                                    ) {
+                                        Text(
+                                            when (option) {
+                                                TrackingInterval.THIRTY_SECONDS -> "30s"
+                                                TrackingInterval.ONE_MINUTE -> "1m"
+                                                TrackingInterval.FIVE_MINUTES -> "5m"
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                            Text(
+                                "Shorter intervals use more battery.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
             SettingsPage.MAP_APPEARANCE -> SettingsSubPage(
