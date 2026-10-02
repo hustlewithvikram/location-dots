@@ -170,17 +170,15 @@ class MainActivity : ComponentActivity() {
                         if (!animationsEnabled) {
                             EnterTransition.None togetherWith ExitTransition.None
                         } else {
-                            val forward = targetState > initialState
-                            val direction = if (forward) AnimatedContentTransitionScope.SlideDirection.Left
-                            else AnimatedContentTransitionScope.SlideDirection.Right
-                            (slideIntoContainer(
-                                    direction,
+                            if (targetState > initialState) {
+                                (slideIntoContainer(
+                                    AnimatedContentTransitionScope.SlideDirection.Left,
                                     spring(dampingRatio = 0.9f, stiffness = 520f)
                                 ) + fadeIn(tween(110))) togetherWith
-                                (slideOutOfContainer(
-                                    direction,
-                                    spring(dampingRatio = 1f, stiffness = 520f)
-                                ) + fadeOut(tween(90)))
+                                    (fadeOut(tween(100)))
+                            } else {
+                                fadeIn(tween(140)) togetherWith fadeOut(tween(110))
+                            }
                         }.using(SizeTransform(clip = false))
                     },
                     label = "page-navigation"
