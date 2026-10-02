@@ -38,6 +38,8 @@ private enum class SettingsPage {
     HOME, SAVED_PLACES, TRACKING, MAP_APPEARANCE, PRIVACY_DATA, EXPORT_BACKUP, DIAGNOSTICS
 }
 
+private enum class NavigationDirection { FORWARD, BACK }
+
 private enum class MapStyleChoice(val key: String, val label: String) {
     LIBERTY("liberty", "Liberty"),
     BRIGHT("bright", "Bright"),
@@ -90,6 +92,7 @@ fun SettingsScreen(
     onRequestCurrentLocation: ((onLocation: (Double, Double) -> Unit) -> Unit)
 ) {
     var page by rememberSaveable { mutableStateOf(SettingsPage.HOME) }
+    var settingsNavigationDirection by remember { mutableStateOf(NavigationDirection.FORWARD) }
     var showClearDialog by remember { mutableStateOf(false) }
     var showPlaceEditor by remember { mutableStateOf(false) }
     var showMapStyleDialog by remember { mutableStateOf(false) }
@@ -97,23 +100,59 @@ fun SettingsScreen(
     var showAttributionDialog by remember { mutableStateOf(false) }
     var editingPlace by remember { mutableStateOf<Place?>(null) }
 
-    BackHandler(enabled = page != SettingsPage.HOME) { page = SettingsPage.HOME }
+    BackHandler(enabled = page != SettingsPage.HOME) {
+        settingsNavigationDirection = NavigationDirection.BACK
+        closeSettingsPage()
+    }
 
     fun openPlaceEditor(place: Place?) {
         editingPlace = place
         showPlaceEditor = true
     }
 
+    fun openSettingsPage(target: SettingsPage) {
+        if (target == page) return
+        settingsNavigationDirection = NavigationDirection.FORWARD
+        page = target
+    }
+
+    fun closeSettingsPage() {
+        settingsNavigationDirection = NavigationDirection.BACK
+        page = SettingsPage.HOME
+    }
+
     Scaffold { padding ->
-        when (page) {
+        AnimatedContent(
+            targetState = page,
+            transitionSpec = {
+                if (!animationsEnabled) {
+                    EnterTransition.None togetherWith ExitTransition.None
+                } else {
+                    val direction = if (settingsNavigationDirection == NavigationDirection.FORWARD) {
+                        AnimatedContentTransitionScope.SlideDirection.Left
+                    } else {
+                        AnimatedContentTransitionScope.SlideDirection.Right
+                    }
+                    slideIntoContainer(
+                        direction,
+                        animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+                    ) togetherWith slideOutOfContainer(
+                        direction,
+                        animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+                    )
+                }
+            },
+            label = "settings-page-navigation"
+        ) { currentPage ->
+        when (currentPage) {
             SettingsPage.HOME -> SettingsHome(
                 Modifier.padding(padding), places.size, isTracking,
-                onOpen = { page = it }, onAbout = onAbout
+                onOpen = ::openSettingsPage, onAbout = onAbout
             )
             SettingsPage.SAVED_PLACES -> SettingsSubPage(
                 Modifier.padding(padding), "Saved places",
                 "Places Location Dots should recognize automatically.",
-                onBack = { page = SettingsPage.HOME }
+                onBack = ::closeSettingsPage
             ) {
                 item {
                     ExpressiveCard(emphasized = true) {
@@ -408,7 +447,7 @@ fun SettingsScreen(
                             ExpressiveListRow(
                                 "Saved places",
                                 icon = { Icon(Icons.Default.Place, null) },
-                                onClick = { page = SettingsPage.SAVED_PLACES }
+                                onClick = { openSettingsPage(SettingsPage.SAVED_PLACES) }
                             )
                             ExpressiveListRow(
                                 "Export your data",
