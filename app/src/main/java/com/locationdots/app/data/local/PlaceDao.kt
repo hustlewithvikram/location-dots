@@ -20,6 +20,9 @@ interface PlaceDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(place: PlaceEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(places: List<PlaceEntity>)
+
     @Query("DELETE FROM places")
     suspend fun deleteAll()
 }
