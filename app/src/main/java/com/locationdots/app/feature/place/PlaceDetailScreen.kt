@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import org.maplibre.android.geometry.LatLng
@@ -179,11 +180,21 @@ fun PlaceDetailScreen(
 
                 if (sortedVisits.isEmpty()) {
                     item {
-                        EmptySettingsCard(
-                            icon = Icons.Default.History,
-                            title = "No visits yet",
-                            body = "Visits to this saved place will appear here as tracking records them."
-                        )
+                        ExpressiveCard {
+                            Column(
+                                Modifier.fillMaxWidth().padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                ExpressiveIconBadge(icon = { Icon(Icons.Default.History, null) })
+                                Text("No visits yet", style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    "Visits to this saved place will appear here as tracking records them.",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
                     }
                 } else {
                     items(sortedVisits, key = { it.id }) { visit ->
