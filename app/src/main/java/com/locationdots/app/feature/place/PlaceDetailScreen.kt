@@ -14,6 +14,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.platform.LocalConfiguration
 import org.maplibre.android.geometry.LatLng
 import androidx.compose.ui.unit.dp
 import com.locationdots.app.domain.model.Place
@@ -35,6 +36,7 @@ fun PlaceDetailScreen(
     var showRenameDialog by remember { mutableStateOf(false) }
     var renameText by remember(place?.id) { mutableStateOf(place?.name.orEmpty()) }
     var showMapFullscreen by remember { mutableStateOf(false) }
+    val currentLocale = LocalConfiguration.current.locales[0]
 
     Scaffold { padding ->
         if (place == null) {
@@ -135,7 +137,7 @@ fun PlaceDetailScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                "Saved " + DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())
+                                "Saved " + DateTimeFormatter.ofPattern("d MMM yyyy", currentLocale)
                                     .format(place.createdAt.atZone(zone)),
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
