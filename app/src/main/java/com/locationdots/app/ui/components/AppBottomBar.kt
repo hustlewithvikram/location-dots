@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.selected as semanticsSelected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
@@ -87,7 +87,7 @@ fun AppBottomBar(selected: AppTab, onSelected: (AppTab) -> Unit) {
                                 .clip(RoundedCornerShape(26.dp))
                                 .clickable { onSelected(tab) }
                                 .semantics {
-                                    selected = isSelected
+                                    semanticsSelected = isSelected
                                     role = Role.Tab
                                 },
                             contentAlignment = Alignment.Center
