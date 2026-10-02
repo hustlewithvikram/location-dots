@@ -23,6 +23,7 @@ fun ExpressiveCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     emphasized: Boolean = false,
+    containerColor: Color? = null,
     content: @Composable () -> Unit
 ) {
     Card(
@@ -31,7 +32,7 @@ fun ExpressiveCard(
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         shape = if (emphasized) MaterialTheme.shapes.extraLarge else MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = if (emphasized) {
+            containerColor = containerColor ?: if (emphasized) {
                 MaterialTheme.colorScheme.primaryContainer
             } else {
                 MaterialTheme.colorScheme.surfaceContainerLow
