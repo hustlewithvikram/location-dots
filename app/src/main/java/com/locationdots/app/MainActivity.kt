@@ -308,6 +308,7 @@ class MainActivity : ComponentActivity() {
                         isSearching = searchState.isSearching,
                         onQueryChange = searchViewModel::search,
                         onBack = {
+                            pendingNavigationDirection = NavigationDirection.BACK
                             searchViewModel.clear()
                             isSearchOpen = false
                         },
@@ -372,7 +373,10 @@ class MainActivity : ComponentActivity() {
                         snapshot = insights,
                         isLoading = insightsLoading,
                         error = insightsError,
-                        onBack = { currentTab = AppTab.TIMELINE },
+                        onBack = {
+                            pendingNavigationDirection = NavigationDirection.BACK
+                            currentTab = AppTab.TIMELINE
+                        },
                         onRefresh = insightsViewModel::refresh,
                         onTabSelected = ::selectTab
                     )
