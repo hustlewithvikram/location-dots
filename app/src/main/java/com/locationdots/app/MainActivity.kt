@@ -268,13 +268,13 @@ class MainActivity : ComponentActivity() {
                             (
                                 slideIntoContainer(
                                     direction,
-                                    animationSpec = spring(dampingRatio = 0.9f, stiffness = 420f)
-                                ) + fadeIn(tween(140))
+                                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                                ) + fadeIn(tween(90))
                             ) togetherWith (
                                 slideOutOfContainer(
                                     direction,
-                                    animationSpec = spring(dampingRatio = 0.95f, stiffness = 380f)
-                                ) + fadeOut(tween(110))
+                                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                                ) + fadeOut(tween(90))
                             )
                         }
                     },
