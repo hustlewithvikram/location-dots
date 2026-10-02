@@ -2,7 +2,6 @@ package com.locationdots.app.ui.components
 
 import android.graphics.Color
 import android.os.Bundle
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -18,22 +17,18 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
-import org.maplibre.android.geojson.Feature
-import org.maplibre.android.geojson.FeatureCollection
-import org.maplibre.android.geojson.LineString
-import org.maplibre.android.geojson.Point
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.LineLayer
-import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.android.style.layers.PropertyFactory.circleColor
 import org.maplibre.android.style.layers.PropertyFactory.circleRadius
 import org.maplibre.android.style.layers.PropertyFactory.circleStrokeColor
 import org.maplibre.android.style.layers.PropertyFactory.circleStrokeWidth
 import org.maplibre.android.style.layers.PropertyFactory.lineColor
 import org.maplibre.android.style.layers.PropertyFactory.lineWidth
+import org.maplibre.android.style.sources.GeoJsonSource
 
 private const val OPEN_FREE_MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty"
 private const val ROUTE_SOURCE = "location-dots-route"
@@ -97,39 +92,27 @@ fun LocationMap(
         val readyMap = map ?: return@LaunchedEffect
         readyMap.uiSettings.setAllGesturesEnabled(interactive)
         readyMap.uiSettings.setLogoEnabled(true)
-        readyMap.setStyle(
-            Style.Builder().fromUri(OPEN_FREE_MAP_STYLE)
-        ) { style ->
-            val route = points
-                .takeIf { it.size >= 2 }
-                ?.let { coordinates ->
-                    GeoJsonSource(
-                        ROUTE_SOURCE,
-                        Feature.fromGeometry(
-                            LineString.fromLngLats(
-                                coordinates.map { Point.fromLngLat(it.longitude, it.latitude) }
-                            )
-                        )
-                    )
-                }
-
-            val pointFeatures = FeatureCollection.fromFeatures(
-                points.map { coordinate ->
-                    Feature.fromGeometry(Point.fromLngLat(coordinate.longitude, coordinate.latitude))
-                }.toTypedArray()
-            )
-
-            route?.let {
-                style.addSource(it)
-                style.addLayer(
-                    LineLayer(ROUTE_LAYER, ROUTE_SOURCE).withProperties(
-                        lineColor(Color.parseColor("#6750A4")),
-                        lineWidth(5f)
-                    )
-                )
+        readyMap.setStyle(Style.Builder().fromUri(OPEN_FREE_MAP_STYLE)) { style ->
+            val pointCoordinates = points.joinToString(",") { point ->
+                "[${point.longitude},${point.latitude}]"
             }
+            val pointGeoJson = """
+                {
+                  "type": "FeatureCollection",
+                  "features": [
+                    {
+                      "type": "Feature",
+                      "geometry": {
+                        "type": "MultiPoint",
+                        "coordinates": [$pointCoordinates]
+                      },
+                      "properties": {}
+                    }
+                  ]
+                }
+            """.trimIndent()
 
-            style.addSource(GeoJsonSource(POINT_SOURCE, pointFeatures))
+            style.addSource(GeoJsonSource(POINT_SOURCE, pointGeoJson))
             style.addLayer(
                 CircleLayer(POINT_LAYER, POINT_SOURCE).withProperties(
                     circleColor(Color.parseColor("#6750A4")),
@@ -138,6 +121,27 @@ fun LocationMap(
                     circleStrokeWidth(2.5f)
                 )
             )
+
+            if (points.size >= 2) {
+                val routeGeoJson = """
+                    {
+                      "type": "Feature",
+                      "geometry": {
+                        "type": "LineString",
+                        "coordinates": [$pointCoordinates]
+                      },
+                      "properties": {}
+                    }
+                """.trimIndent()
+
+                style.addSource(GeoJsonSource(ROUTE_SOURCE, routeGeoJson))
+                style.addLayer(
+                    LineLayer(ROUTE_LAYER, ROUTE_SOURCE).withProperties(
+                        lineColor(Color.parseColor("#6750A4")),
+                        lineWidth(5f)
+                    )
+                )
+            }
 
             mapView.post {
                 val bounds = org.maplibre.android.geometry.LatLngBounds.Builder().apply {
