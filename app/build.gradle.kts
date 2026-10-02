@@ -1,3 +1,4 @@
+import java.util.Properties
 import com.android.build.api.dsl.ApplicationExtension
 import org.gradle.kotlin.dsl.configure
 
@@ -28,10 +29,10 @@ extensions.configure<ApplicationExtension> {
             .get()
     }
 
-    val releaseSigningProperties = java.util.Properties().apply {
+    val releaseSigningProperties = Properties().apply {
         val file = rootProject.file("secrets.properties")
         if (file.isFile) {
-            file.inputStream().use(::load)
+            file.inputStream().use { load(it) }
         }
     }
 
@@ -67,13 +68,6 @@ extensions.configure<ApplicationExtension> {
             isShrinkResources = false
             if (hasReleaseSigning) {
                 signingConfig = signingConfigs.getByName("locationDotsRelease")
-            } else {
-                doFirst {
-                    throw GradleException(
-                        "Production release signing is not configured. " +
-                            "Create secrets.properties with release signing values before building a release APK/AAB."
-                    )
-                }
             }
         }
     }
