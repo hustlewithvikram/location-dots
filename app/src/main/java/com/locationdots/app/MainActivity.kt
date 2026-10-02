@@ -2,7 +2,6 @@ package com.locationdots.app
 
 import android.Manifest
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.compose.animation.*
@@ -16,7 +15,6 @@ import androidx.core.view.WindowCompat
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -79,28 +77,19 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val appUsesDarkTheme = when (themeChoice) {
-            ThemeChoice.DARK -> true
-            ThemeChoice.LIGHT -> false
-            ThemeChoice.SYSTEM -> isSystemInDarkTheme()
-        }
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.auto(
                 android.graphics.Color.TRANSPARENT,
                 android.graphics.Color.TRANSPARENT
-            ) { appUsesDarkTheme },
+            ),
             navigationBarStyle = SystemBarStyle.auto(
                 android.graphics.Color.TRANSPARENT,
                 android.graphics.Color.TRANSPARENT
-            ) { appUsesDarkTheme }
+            )
         )
         // Keep the Android navigation surface transparent. The Compose root below owns
         // the background so uncovered transition/system-bar areas always use the theme.
         window.navigationBarColor = android.graphics.Color.TRANSPARENT
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            window.isNavigationBarContrastEnforced = false
-            window.navigationBarDividerColor = android.graphics.Color.TRANSPARENT
-        }
         permissionManager = LocationPermissionManager(this)
         trackingController = LocationTrackingController(this)
         themeChoice = runCatching { ThemeChoice.valueOf(preferences.getString("theme", ThemeChoice.SYSTEM.name)!!) }.getOrDefault(ThemeChoice.SYSTEM)
