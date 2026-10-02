@@ -88,7 +88,11 @@ class MainActivity : ComponentActivity() {
     private var pendingExportJson: String? = null
 
     private enum class NavigationDirection { FORWARD, BACK }
-    private var navigationDirection by mutableStateOf(NavigationDirection.FORWARD)
+    private data class AppDestination(
+        val key: Int,
+        val direction: NavigationDirection
+    )
+    private var pendingNavigationDirection by mutableStateOf(NavigationDirection.FORWARD)
 
     private val exportBackupLauncher =
         registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
@@ -210,6 +214,9 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                val destination = remember(destinationKey, pendingNavigationDirection) {
+                    AppDestination(destinationKey, pendingNavigationDirection)
+                }
                 // One app-level back handler keeps every manually-managed destination
                 // consistent with its visible navigation hierarchy.
                 val canNavigateBack = isAboutOpen ||
@@ -221,24 +228,28 @@ class MainActivity : ComponentActivity() {
                 BackHandler(enabled = canNavigateBack) {
                     when {
                         isAboutOpen -> {
-                            navigationDirection = NavigationDirection.BACK
+                            pendingNavigationDirection = NavigationDirection.BACK
                             isAboutOpen = false
                         }
                         selectedJourneyId != null -> {
                             navigationDirection = NavigationDirection.BACK
+                            pendingNavigationDirection = NavigationDirection.BACK
                             selectedJourneyId = null
                         }
                         selectedPlaceId != null -> {
                             navigationDirection = NavigationDirection.BACK
+                            pendingNavigationDirection = NavigationDirection.BACK
                             selectedPlaceId = null
                         }
                         isSearchOpen -> {
                             navigationDirection = NavigationDirection.BACK
                             searchViewModel.clear()
+                            pendingNavigationDirection = NavigationDirection.BACK
                             isSearchOpen = false
                         }
                         currentTab != AppTab.TIMELINE -> {
                             navigationDirection = NavigationDirection.BACK
+                            pendingNavigationDirection = NavigationDirection.BACK
                             currentTab = AppTab.TIMELINE
                         }
                     }
@@ -247,13 +258,13 @@ class MainActivity : ComponentActivity() {
                 AnimatedContent(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(bottom = if (destinationKey in 0..3) 88.dp else 0.dp),
-                    targetState = destinationKey,
+                        .padding(bottom = if (destination.key in 0..3) 88.dp else 0.dp),
+                    targetState = destination,
                     transitionSpec = {
                         if (!animationsEnabled) {
                             EnterTransition.None togetherWith ExitTransition.None
                         } else {
-                            val direction = if (navigationDirection == NavigationDirection.FORWARD) {
+                            val direction = if (targetState.direction == NavigationDirection.FORWARD) {
                                 AnimatedContentTransitionScope.SlideDirection.Left
                             } else {
                                 AnimatedContentTransitionScope.SlideDirection.Right
@@ -274,7 +285,7 @@ class MainActivity : ComponentActivity() {
                     label = "page-navigation"
                 ) { destination ->
                     when {
-                        destination == -100 -> SplashScreen(
+                        destination.key == -100 -> SplashScreen(
                         onGetStarted = {
                             preferences.edit().putBoolean("splash_seen", true).apply()
                             if (hasLocationPermission) {
@@ -283,15 +294,17 @@ class MainActivity : ComponentActivity() {
                             showSplash = false
                         }
                     )
-                        destination == -90 -> OnboardingScreen(
+                        destination.key == -90 -> OnboardingScreen(
                         hasLocationPermission = false,
                         isTracking = isTracking,
                         onRequestLocationPermission = ::requestLocationPermission,
                         onStartTracking = ::startTracking,
                         onStopTracking = ::stopTracking
                     )
-                        destination == -80 -> AboutScreen { isAboutOpen = false }
-                        destination == -70 -> SearchScreen(
+                        destination.key == -80 -> AboutScreen {
+                            onBack = { isAboutOpen = false }
+                        }
+                        destination.key == -70 -> SearchScreen(
                         query = searchState.query,
                         results = searchState.results,
                         isSearching = searchState.isSearching,
@@ -304,19 +317,21 @@ class MainActivity : ComponentActivity() {
                         // Keep Search in the navigation hierarchy while opening details.
                         // Back from the detail screen will reveal the existing search state.
                         onPlaceClick = {
-                            navigationDirection = NavigationDirection.FORWARD
+                            pendingNavigationDirection = NavigationDirection.FORWARD
                             selectedPlaceId = it
                         },
-                        onJourneyClick = { selectedJourneyId = it }
+                        onJourneyClick = {
+                            selectedJourneyId = it
+                        }
                     )
-                    destination == -60 -> {
+                    destination.key == -60 -> {
                         val journey = timelineState.events.firstOrNull { it.id == selectedJourneyId } as? TimelineEvent.Journey
                         if (journey == null) {
                             LaunchedEffect(selectedJourneyId) { timelineViewModel.refresh() }
                             selectedJourneyId = null
                         } else JourneyDetailScreen(journey) { navigationDirection = NavigationDirection.BACK; selectedJourneyId = null }
                     }
-                    destination == -50 -> {
+                    destination.key == -50 -> {
                         val placeId = selectedPlaceId
                         if (placeId != null) {
                             val placeVm = ViewModelProvider(
@@ -337,13 +352,13 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
-                    destination == 1 -> PlacesOverviewScreen(
+                    destination.key == 1 -> PlacesOverviewScreen(
                         places = places,
                         onBack = { currentTab = AppTab.TIMELINE },
                         onPlaceClick = { selectedPlaceId = it },
                         onTabSelected = ::selectTab
                     )
-                    destination == 2 -> InsightsScreen(
+                    destination.key == 2 -> InsightsScreen(
                         snapshot = insights,
                         isLoading = insightsLoading,
                         error = insightsError,
@@ -351,7 +366,7 @@ class MainActivity : ComponentActivity() {
                         onRefresh = insightsViewModel::refresh,
                         onTabSelected = ::selectTab
                     )
-                    destination == 3 -> SettingsScreen(
+                    destination.key == 3 -> SettingsScreen(
                         themeChoice = themeChoice,
                         isTracking = isTracking,
                         animationsEnabled = animationsEnabled,
@@ -406,6 +421,7 @@ class MainActivity : ComponentActivity() {
                         onResetSettings = ::resetAppSettings,
                         onAbout = {
                             navigationDirection = NavigationDirection.FORWARD
+                            pendingNavigationDirection = NavigationDirection.FORWARD
                             isAboutOpen = true
                         },
                         onOpenLocationSettings = {
@@ -430,10 +446,12 @@ class MainActivity : ComponentActivity() {
                         onPlaceClick = { selectedPlaceId = it },
                         onJourneyClick = {
                             navigationDirection = NavigationDirection.FORWARD
+                            pendingNavigationDirection = NavigationDirection.FORWARD
                             selectedJourneyId = it
                         },
                         onSearchClick = {
                             navigationDirection = NavigationDirection.FORWARD
+                            pendingNavigationDirection = NavigationDirection.FORWARD
                             isSearchOpen = true
                         },
                         onPlacesClick = { currentTab = AppTab.MAP },
@@ -469,7 +487,7 @@ class MainActivity : ComponentActivity() {
 
     private fun selectTab(tab: AppTab) {
         if (tab == currentTab) return
-        navigationDirection = if (tab.ordinal >= currentTab.ordinal) {
+        pendingNavigationDirection = if (tab.ordinal >= currentTab.ordinal) {
             NavigationDirection.FORWARD
         } else {
             NavigationDirection.BACK
