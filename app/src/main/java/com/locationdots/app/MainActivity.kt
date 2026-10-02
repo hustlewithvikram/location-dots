@@ -220,14 +220,27 @@ class MainActivity : ComponentActivity() {
 
                 BackHandler(enabled = canNavigateBack) {
                     when {
-                        isAboutOpen -> isAboutOpen = false
-                        selectedJourneyId != null -> selectedJourneyId = null
-                        selectedPlaceId != null -> selectedPlaceId = null
+                        isAboutOpen -> {
+                            navigationDirection = NavigationDirection.BACK
+                            isAboutOpen = false
+                        }
+                        selectedJourneyId != null -> {
+                            navigationDirection = NavigationDirection.BACK
+                            selectedJourneyId = null
+                        }
+                        selectedPlaceId != null -> {
+                            navigationDirection = NavigationDirection.BACK
+                            selectedPlaceId = null
+                        }
                         isSearchOpen -> {
+                            navigationDirection = NavigationDirection.BACK
                             searchViewModel.clear()
                             isSearchOpen = false
                         }
-                        currentTab != AppTab.TIMELINE -> currentTab = AppTab.TIMELINE
+                        currentTab != AppTab.TIMELINE -> {
+                            navigationDirection = NavigationDirection.BACK
+                            currentTab = AppTab.TIMELINE
+                        }
                     }
                 }
 
@@ -283,10 +296,17 @@ class MainActivity : ComponentActivity() {
                         results = searchState.results,
                         isSearching = searchState.isSearching,
                         onQueryChange = searchViewModel::search,
-                        onBack = { searchViewModel.clear(); isSearchOpen = false },
+                        onBack = {
+                            navigationDirection = NavigationDirection.BACK
+                            searchViewModel.clear()
+                            isSearchOpen = false
+                        },
                         // Keep Search in the navigation hierarchy while opening details.
                         // Back from the detail screen will reveal the existing search state.
-                        onPlaceClick = { selectedPlaceId = it },
+                        onPlaceClick = {
+                            navigationDirection = NavigationDirection.FORWARD
+                            selectedPlaceId = it
+                        },
                         onJourneyClick = { selectedJourneyId = it }
                     )
                     destination == -60 -> {
@@ -294,7 +314,7 @@ class MainActivity : ComponentActivity() {
                         if (journey == null) {
                             LaunchedEffect(selectedJourneyId) { timelineViewModel.refresh() }
                             selectedJourneyId = null
-                        } else JourneyDetailScreen(journey) { selectedJourneyId = null }
+                        } else JourneyDetailScreen(journey) { navigationDirection = NavigationDirection.BACK; selectedJourneyId = null }
                     }
                     destination == -50 -> {
                         val placeId = selectedPlaceId
@@ -312,7 +332,7 @@ class MainActivity : ComponentActivity() {
                             PlaceDetailScreen(
                                 place,
                                 visits,
-                                { selectedPlaceId = null },
+                                { navigationDirection = NavigationDirection.BACK; selectedPlaceId = null },
                                 placeVm::updateName
                             )
                         }
@@ -384,7 +404,10 @@ class MainActivity : ComponentActivity() {
                         },
                         onClearHistory = ::clearHistory,
                         onResetSettings = ::resetAppSettings,
-                        onAbout = { isAboutOpen = true },
+                        onAbout = {
+                            navigationDirection = NavigationDirection.FORWARD
+                            isAboutOpen = true
+                        },
                         onOpenLocationSettings = {
                             startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
                         },
@@ -405,8 +428,14 @@ class MainActivity : ComponentActivity() {
                         hasMore = timelineState.hasMore,
                         errorMessage = timelineState.errorMessage,
                         onPlaceClick = { selectedPlaceId = it },
-                        onJourneyClick = { selectedJourneyId = it },
-                        onSearchClick = { isSearchOpen = true },
+                        onJourneyClick = {
+                            navigationDirection = NavigationDirection.FORWARD
+                            selectedJourneyId = it
+                        },
+                        onSearchClick = {
+                            navigationDirection = NavigationDirection.FORWARD
+                            isSearchOpen = true
+                        },
                         onPlacesClick = { currentTab = AppTab.MAP },
                         onInsightsClick = { currentTab = AppTab.INSIGHTS },
                         onSettingsClick = { currentTab = AppTab.SETTINGS },
