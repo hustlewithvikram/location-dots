@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.locationdots.app.domain.model.JourneyMode
@@ -32,8 +33,9 @@ fun SearchScreen(
     onPlaceClick: (String) -> Unit,
     onJourneyClick: (String) -> Unit
 ) {
-    val formatter = remember {
-        DateTimeFormatter.ofPattern("d MMM · HH:mm", Locale.getDefault())
+    val currentLocale = LocalConfiguration.current.locales[0]
+    val formatter = remember(currentLocale) {
+        DateTimeFormatter.ofPattern("d MMM · HH:mm", currentLocale)
             .withZone(ZoneId.systemDefault())
     }
 
