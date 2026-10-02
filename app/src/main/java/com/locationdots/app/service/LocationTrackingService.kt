@@ -52,12 +52,14 @@ class LocationTrackingService : LifecycleService() {
 
                     val to = point.timestamp
                     val from = to.minus(PROCESSING_WINDOW)
-                    val contextFrom = from.minus(PROCESSING_CONTEXT)
+                    val activeVisit = app.timelineRepository.getActiveVisit()
+                    val processingFrom = minOf(from, activeVisit?.arrival ?: from)
+                    val contextFrom = processingFrom.minus(PROCESSING_CONTEXT)
                     val points = app.locationRepository.getLocationPoints(contextFrom, to)
                     val events = app.journeyProcessor.process(points)
-                        .filter { it.overlaps(from, to) }
+                        .filter { it.overlaps(processingFrom, to) }
 
-                    app.timelineRepository.replaceRange(from, to, events)
+                    app.timelineRepository.replaceRange(processingFrom, to, events)
                 }.onFailure { error ->
                     Log.e(TAG, "Failed to process location update; continuing tracking.", error)
                 }
