@@ -91,7 +91,8 @@ private fun JourneyMap(
     LocationMap(
         points = coordinates,
         modifier = Modifier.fillMaxWidth().height(300.dp),
-        interactive = true
+        interactive = true,
+        drawRoute = true
     )
 }
 
