@@ -22,10 +22,7 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
         if (sorted.size < MIN_POINTS_PER_VISIT) return emptyList()
 
         val clusters = buildClusters(sorted)
-            .filter { cluster ->
-                cluster.size >= MIN_POINTS_PER_VISIT &&
-                    Duration.between(cluster.first().timestamp, cluster.last().timestamp) >= MIN_DWELL
-            }
+            .filter(::isConfirmedVisit)
 
         if (clusters.isEmpty()) return emptyList()
 
@@ -82,6 +79,13 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
     private fun buildClusters(points: List<LocationPoint>): List<List<LocationPoint>> {
         val clusters = mutableListOf<MutableList<LocationPoint>>()
         var current = mutableListOf<LocationPoint>()
+        var outsidePoints = mutableListOf<LocationPoint>()
+
+        fun finishCurrent() {
+            if (current.isNotEmpty()) clusters += current
+            current = mutableListOf()
+            outsidePoints = mutableListOf()
+        }
 
         for (point in points) {
             if (current.isEmpty()) {
@@ -97,16 +101,58 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
                 point.longitude
             )
 
-            if (distance <= PLACE_RADIUS_METERS) {
-                current.add(point)
-            } else {
-                clusters += current
-                current = mutableListOf(point)
+            when {
+                distance <= STAY_RADIUS_METERS -> {
+                    current.addAll(outsidePoints)
+                    outsidePoints.clear()
+                    current.add(point)
+                }
+
+                distance <= DEPARTURE_RADIUS_METERS -> {
+                    outsidePoints.add(point)
+                }
+
+                else -> {
+                    outsidePoints.add(point)
+                    if (outsidePoints.size >= DEPARTURE_CONFIRMATION_POINTS) {
+                        val newClusterStart = outsidePoints.last()
+                        finishCurrent()
+                        current.add(newClusterStart)
+                    }
+                }
             }
         }
 
         if (current.isNotEmpty()) clusters += current
         return clusters
+    }
+
+    private fun isConfirmedVisit(cluster: List<LocationPoint>): Boolean {
+        if (cluster.size < MIN_POINTS_PER_VISIT) return false
+
+        val dwell = Duration.between(cluster.first().timestamp, cluster.last().timestamp)
+        if (dwell < MIN_DWELL) return false
+
+        val transitions = cluster.zipWithNext()
+        if (transitions.isEmpty()) return false
+
+        val stationaryTransitions = transitions.count { (from, to) ->
+            speedKmh(from, to) <= STATIONARY_MAX_KMH
+        }
+
+        return stationaryTransitions.toDouble() / transitions.size >= STATIONARY_RATIO
+    }
+
+    private fun speedKmh(from: LocationPoint, to: LocationPoint): Double {
+        val seconds = Duration.between(from.timestamp, to.timestamp).toMillis() / 1000.0
+        if (seconds <= 0.0) return Double.POSITIVE_INFINITY
+
+        return distanceMeters(
+            from.latitude,
+            from.longitude,
+            to.latitude,
+            to.longitude
+        ) / seconds * 3.6
     }
 
     private fun pathDistance(points: List<LocationPoint>): Double {
@@ -165,14 +211,18 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
     }
 
     private companion object {
-        val MIN_DWELL: Duration = Duration.ofMinutes(5)
+        val MIN_DWELL: Duration = Duration.ofMinutes(8)
         val ACTIVE_VISIT_WINDOW: Duration = Duration.ofMinutes(15)
 
-        const val PLACE_RADIUS_METERS = 150.0
-        const val MAX_ACCURACY_METERS = 200.0
-        const val MIN_POINTS_PER_VISIT = 3
-        const val MIN_JOURNEY_DISTANCE_METERS = 100.0
+        const val STAY_RADIUS_METERS = 100.0
+        const val DEPARTURE_RADIUS_METERS = 150.0
+        const val DEPARTURE_CONFIRMATION_POINTS = 2
+        const val MAX_ACCURACY_METERS = 100.0
+        const val MIN_POINTS_PER_VISIT = 5
+        const val STATIONARY_MAX_KMH = 3.0
+        const val STATIONARY_RATIO = 0.70
 
+        const val MIN_JOURNEY_DISTANCE_METERS = 100.0
         const val WALKING_MAX_KMH = 7.0
         const val CYCLING_MAX_KMH = 25.0
         const val VEHICLE_MIN_KMH = 35.0
