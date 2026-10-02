@@ -1,8 +1,9 @@
 package com.locationdots.app.feature.settings
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -16,27 +17,40 @@ import com.locationdots.app.ui.components.*
 
 enum class ThemeChoice { SYSTEM, LIGHT, DARK }
 
-@OptIn(ExperimentalMaterial3Api::class)
+private enum class SettingsPage {
+    HOME, SAVED_PLACES, TRACKING, MAP_APPEARANCE, PRIVACY_DATA, EXPORT_BACKUP, DIAGNOSTICS
+}
+
 @Composable
 fun SettingsScreen(
-    selectedTab: AppTab,
     themeChoice: ThemeChoice,
     isTracking: Boolean,
     animationsEnabled: Boolean,
+    showRouteLines: Boolean,
+    showPlaceMarkers: Boolean,
     places: List<Place>,
-    onTabSelected: (AppTab) -> Unit,
+    locationPermissionGranted: Boolean,
     onThemeChange: (ThemeChoice) -> Unit,
     onTrackingChange: (Boolean) -> Unit,
     onAnimationsChange: (Boolean) -> Unit,
+    onRouteLinesChange: (Boolean) -> Unit,
+    onPlaceMarkersChange: (Boolean) -> Unit,
     onExport: () -> Unit,
+    onExportData: () -> Unit,
     onClearHistory: () -> Unit,
+    onResetSettings: () -> Unit,
     onAbout: () -> Unit,
+    onOpenLocationSettings: () -> Unit,
+    onRequestLocationPermission: () -> Unit,
     onSaveNamedPlace: (String, Double, Double) -> Unit,
     onRequestCurrentLocation: ((onLocation: (Double, Double) -> Unit) -> Unit)
 ) {
+    var page by rememberSaveable { mutableStateOf(SettingsPage.HOME) }
     var showClearDialog by remember { mutableStateOf(false) }
     var showPlaceEditor by remember { mutableStateOf(false) }
     var editingPlace by remember { mutableStateOf<Place?>(null) }
+
+    BackHandler(enabled = page != SettingsPage.HOME) { page = SettingsPage.HOME }
 
     fun openPlaceEditor(place: Place?) {
         editingPlace = place
@@ -44,120 +58,244 @@ fun SettingsScreen(
     }
 
     Scaffold { padding ->
-        LazyColumn(
-            Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(18.dp, 18.dp, 18.dp, 28.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
-        ) {
-            item {
-                Column {
-                    Text("Settings", style = MaterialTheme.typography.headlineLarge)
-                    Text("Personalize tracking, saved places, appearance and local data.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            item {
-                ExpressiveCard(emphasized = true) {
-                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ExpressiveSectionHeader("Automatic tracking", "Capture places and journeys in the background.")
-                        ExpressiveListRow(
-                            "Location tracking",
-                            if (isTracking) "Active now" else "Paused",
-                            { Icon(Icons.Default.LocationOn, null) },
-                            trailing = { Switch(checked = isTracking, onCheckedChange = onTrackingChange) }
-                        )
+        when (page) {
+            SettingsPage.HOME -> SettingsHome(
+                Modifier.padding(padding), places.size, isTracking,
+                onOpen = { page = it }, onAbout = onAbout
+            )
+            SettingsPage.SAVED_PLACES -> SettingsSubPage(
+                Modifier.padding(padding), "Saved places",
+                "Places Location Dots should recognize automatically.",
+                onBack = { page = SettingsPage.HOME }
+            ) {
+                item {
+                    ExpressiveCard(emphasized = true) {
+                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            ExpressiveSectionHeader("Your places", "${places.size} saved ${if (places.size == 1) "place" else "places"}")
+                            ExpressiveButton("Add place", { openPlaceEditor(null) }, Modifier.fillMaxWidth())
+                        }
                     }
                 }
-            }
-            item {
-                ExpressiveCard(emphasized = true) {
-                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        ExpressiveSectionHeader(
-                            "Saved locations",
-                            "${places.size} saved ${if (places.size == 1) "place" else "places"} · Search an address, pick on the map, or use your current location."
-                        )
-                        Button(
-                            onClick = { openPlaceEditor(null) },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.AddLocationAlt, contentDescription = null)
-                            Spacer(Modifier.width(8.dp))
-                            Text("Add place")
-                        }
-                        if (places.isEmpty()) {
-                            Text(
-                                "No saved places yet. Add Home, Office, Gym or any place you want Location Dots to recognize.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        } else {
-                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                places.forEach { place ->
+                if (places.isEmpty()) {
+                    item {
+                        EmptySettingsCard(Icons.Default.Place, "No saved places", "Add Home, Office, Gym or any place you want Location Dots to recognize.")
+                    }
+                } else {
+                    item {
+                        ExpressiveCard {
+                            Column(Modifier.padding(8.dp)) {
+                                places.forEachIndexed { index, place ->
                                     ExpressiveListRow(
                                         title = place.name ?: "Unnamed place",
                                         subtitle = String.format(java.util.Locale.US, "%.5f, %.5f", place.latitude, place.longitude),
                                         icon = {
                                             Icon(
                                                 when {
-                                                    place.name.equals("Home", ignoreCase = true) -> Icons.Default.Home
-                                                    place.name.equals("Office", ignoreCase = true) ||
-                                                        place.name.equals("Work", ignoreCase = true) -> Icons.Default.Business
+                                                    place.name.equals("Home", true) -> Icons.Default.Home
+                                                    place.name.equals("Office", true) || place.name.equals("Work", true) -> Icons.Default.Business
                                                     else -> Icons.Default.Place
-                                                },
-                                                null
+                                                }, null
                                             )
                                         },
                                         trailing = {
                                             IconButton(onClick = { openPlaceEditor(place) }) {
-                                                Icon(Icons.Default.Edit, "Edit location")
+                                                Icon(Icons.Default.Edit, "Edit place")
                                             }
                                         }
                                     )
+                                    if (index != places.lastIndex) {
+                                        HorizontalDivider(
+                                            Modifier.padding(horizontal = 14.dp),
+                                            color = MaterialTheme.colorScheme.outlineVariant
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-            item {
-                ExpressiveCard {
-                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        ExpressiveSectionHeader("Appearance", "Material 3 Expressive design with control over theme and motion.")
-                        Text("Theme", style = MaterialTheme.typography.labelLarge)
-                        SingleChoiceSegmentedButtonRow {
-                            ThemeChoice.entries.forEachIndexed { index, choice ->
-                                SegmentedButton(
-                                    selected = themeChoice == choice,
-                                    onClick = { onThemeChange(choice) },
-                                    shape = SegmentedButtonDefaults.itemShape(index, ThemeChoice.entries.size),
-                                    icon = {}
-                                ) { Text(choice.name.lowercase().replaceFirstChar { it.uppercase() }) }
+            SettingsPage.TRACKING -> SettingsSubPage(
+                Modifier.padding(padding), "Tracking",
+                "Control when Location Dots records your movement.",
+                onBack = { page = SettingsPage.HOME }
+            ) {
+                item {
+                    ExpressiveCard(emphasized = isTracking) {
+                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            ExpressiveSectionHeader(
+                                "Automatic tracking",
+                                if (isTracking) "Location Dots is recording in the background." else "Tracking is paused."
+                            )
+                            ExpressiveListRow(
+                                "Location tracking",
+                                if (isTracking) "Active now" else "Paused",
+                                { Icon(Icons.Default.LocationOn, null) },
+                                trailing = { Switch(isTracking, onTrackingChange) }
+                            )
+                        }
+                    }
+                }
+                item {
+                    ExpressiveCard {
+                        Column(Modifier.padding(10.dp)) {
+                            ExpressiveListRow(
+                                "Location permission",
+                                if (locationPermissionGranted) "Granted" else "Permission is required to record locations.",
+                                { Icon(Icons.Default.Security, null) },
+                                trailing = {
+                                    if (locationPermissionGranted) {
+                                        Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
+                                    } else {
+                                        TextButton(onClick = onRequestLocationPermission) { Text("Allow") }
+                                    }
+                                }
+                            )
+                            ExpressiveListRow(
+                                "System location",
+                                "Open Android location settings if tracking cannot start.",
+                                { Icon(Icons.Default.GpsFixed, null) },
+                                onClick = onOpenLocationSettings
+                            )
+                        }
+                    }
+                }
+                item {
+                    InfoCard(Icons.Default.BatterySaver, "Designed for background use", "Location Dots uses Android's foreground location service while tracking is enabled.")
+                }
+            }
+            SettingsPage.MAP_APPEARANCE -> SettingsSubPage(
+                Modifier.padding(padding), "Map & appearance",
+                "Tune the visual experience without changing your data.",
+                onBack = { page = SettingsPage.HOME }
+            ) {
+                item {
+                    ExpressiveCard {
+                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            ExpressiveSectionHeader("Theme", "Choose how Location Dots follows your device.")
+                            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                                ThemeChoice.entries.forEachIndexed { index, choice ->
+                                    SegmentedButton(
+                                        selected = themeChoice == choice,
+                                        onClick = { onThemeChange(choice) },
+                                        shape = SegmentedButtonDefaults.itemShape(index, ThemeChoice.entries.size),
+                                        icon = {}
+                                    ) { Text(choice.label()) }
+                                }
+                            }
+                            ExpressiveListRow(
+                                "Motion & transitions",
+                                if (animationsEnabled) "Expressive animations are enabled." else "Animations are reduced.",
+                                { Icon(Icons.Default.Animation, null) },
+                                trailing = { Switch(animationsEnabled, onAnimationsChange) }
+                            )
+                        }
+                    }
+                }
+                item {
+                    ExpressiveCard {
+                        Column(Modifier.padding(10.dp)) {
+                            ExpressiveListRow("Map style", "Liberty · OpenFreeMap", { Icon(Icons.Default.Map, null) })
+                            ExpressiveListRow(
+                                "Route lines",
+                                "Show movement paths on timeline and journey maps.",
+                                { Icon(Icons.Default.Timeline, null) },
+                                trailing = { Switch(showRouteLines, onRouteLinesChange) }
+                            )
+                            ExpressiveListRow(
+                                "Place markers",
+                                "Show locations as markers on maps.",
+                                { Icon(Icons.Default.LocationPin, null) },
+                                trailing = { Switch(showPlaceMarkers, onPlaceMarkersChange) }
+                            )
+                        }
+                    }
+                }
+                item {
+                    InfoCard(Icons.Default.Public, "Map attribution", "MapLibre displays the required attribution for OpenFreeMap, OpenMapTiles and OpenStreetMap.")
+                }
+            }
+            SettingsPage.PRIVACY_DATA -> SettingsSubPage(
+                Modifier.padding(padding), "Privacy & data",
+                "Understand and control information stored on this device.",
+                onBack = { page = SettingsPage.HOME }
+            ) {
+                item {
+                    ExpressiveCard(emphasized = true) {
+                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ExpressiveSectionHeader("Private by design", "Location history and saved places are stored locally in the app database.")
+                            ExpressiveListRow(
+                                "Local storage",
+                                "No account is required for your timeline.",
+                                { Icon(Icons.Default.Lock, null) },
+                                trailing = { Icon(Icons.Default.VerifiedUser, null, tint = MaterialTheme.colorScheme.primary) }
+                            )
+                        }
+                    }
+                }
+                item {
+                    ExpressiveCard {
+                        Column(Modifier.padding(10.dp)) {
+                            ExpressiveListRow("Export summary", "Share a readable overview of your activity.", { Icon(Icons.Default.Share, null) }, onClick = onExport)
+                            ExpressiveListRow("Clear local history", "Delete recorded locations, saved places and timeline events.", { Icon(Icons.Default.DeleteOutline, null) }, onClick = { showClearDialog = true })
+                        }
+                    }
+                }
+            }
+            SettingsPage.EXPORT_BACKUP -> SettingsSubPage(
+                Modifier.padding(padding), "Export & backup",
+                "Take your local data with you when you need it.",
+                onBack = { page = SettingsPage.HOME }
+            ) {
+                item {
+                    ExpressiveCard(emphasized = true) {
+                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            ExpressiveSectionHeader("Export", "Nothing is uploaded automatically. You choose when to share data.")
+                            ExpressiveButton("Export activity summary", onExport, Modifier.fillMaxWidth())
+                            OutlinedButton(
+                                onClick = onExportData,
+                                modifier = Modifier.fillMaxWidth().height(56.dp),
+                                shape = MaterialTheme.shapes.large
+                            ) {
+                                Icon(Icons.Default.DataObject, null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Export local data")
                             }
                         }
-                        ExpressiveListRow(
-                            "Motion & transitions",
-                            "Use expressive screen transitions and animated surfaces.",
-                            { Icon(Icons.Default.Speed, null) },
-                            trailing = { Switch(checked = animationsEnabled, onCheckedChange = onAnimationsChange) }
-                        )
                     }
                 }
-            }
-            item {
-                ExpressiveCard {
-                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        ExpressiveSectionHeader("Privacy & data", "Location history and saved places remain on this device.")
-                        ExpressiveListRow("Private by design", "Your location history stays on this device.", { Icon(Icons.Default.PrivacyTip, null) }, trailing = { Icon(Icons.Default.VerifiedUser, null) })
-                        ExpressiveListRow("Export summary", "Share a readable summary of your activity.", { Icon(Icons.Default.Share, null) }, onClick = onExport)
-                        ExpressiveListRow("Clear local history", "Delete recorded locations, places and timeline events.", { Icon(Icons.Default.DeleteOutline, null) }, onClick = { showClearDialog = true })
-                    }
+                item {
+                    InfoCard(Icons.Default.Backup, "Local-first backup", "The exported data is generated on-device. Location Dots does not maintain a cloud backup account.")
                 }
             }
-            item {
-                ExpressiveCard {
-                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        ExpressiveSectionHeader("More")
-                        ExpressiveListRow("Storage", "Local database and cached timeline data.", { Icon(Icons.Default.Storage, null) })
-                        ExpressiveListRow("About Location Dots", "Version, architecture and open-source information.", { Icon(Icons.Default.Info, null) }, onClick = onAbout)
+            SettingsPage.DIAGNOSTICS -> SettingsSubPage(
+                Modifier.padding(padding), "Diagnostics",
+                "Useful runtime information for troubleshooting.",
+                onBack = { page = SettingsPage.HOME }
+            ) {
+                item {
+                    ExpressiveCard {
+                        Column(Modifier.padding(10.dp)) {
+                            DiagnosticRow("Tracking service", if (isTracking) "Running" else "Stopped", Icons.Default.LocationOn)
+                            DiagnosticRow("Location permission", if (locationPermissionGranted) "Granted" else "Not granted", Icons.Default.Security)
+                            DiagnosticRow("Storage", "Room · on device", Icons.Default.Storage)
+                            DiagnosticRow("Maps", "MapLibre · OpenFreeMap", Icons.Default.Map)
+                            DiagnosticRow("Saved places", places.size.toString(), Icons.Default.Place)
+                        }
+                    }
+                }
+                item {
+                    InfoCard(Icons.Default.Build, "Troubleshooting", "If tracking is not recording, verify location permission, Android location services, and that tracking is enabled.")
+                }
+                item {
+                    OutlinedButton(
+                        onClick = onResetSettings,
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        shape = MaterialTheme.shapes.large
+                    ) {
+                        Icon(Icons.Default.Restore, null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Reset app settings")
                     }
                 }
             }
@@ -167,10 +305,7 @@ fun SettingsScreen(
     if (showPlaceEditor) {
         PlaceEditorDialog(
             initialPlace = editingPlace,
-            onDismiss = {
-                showPlaceEditor = false
-                editingPlace = null
-            },
+            onDismiss = { showPlaceEditor = false; editingPlace = null },
             onSave = { name, latitude, longitude ->
                 onSaveNamedPlace(name, latitude, longitude)
                 showPlaceEditor = false
@@ -183,10 +318,151 @@ fun SettingsScreen(
     if (showClearDialog) {
         AlertDialog(
             onDismissRequest = { showClearDialog = false },
+            icon = { Icon(Icons.Default.DeleteForever, null) },
             title = { Text("Clear local history?") },
-            text = { Text("This removes recorded locations, places and timeline events from this device.") },
-            confirmButton = { TextButton(onClick = { showClearDialog = false; onClearHistory() }) { Text("Clear") } },
+            text = { Text("This permanently removes recorded locations, saved places and timeline events from this device.") },
+            confirmButton = {
+                Button(onClick = {
+                    showClearDialog = false
+                    onClearHistory()
+                    page = SettingsPage.HOME
+                }) { Text("Clear data") }
+            },
             dismissButton = { TextButton(onClick = { showClearDialog = false }) { Text("Cancel") } }
         )
     }
+}
+
+@Composable
+private fun SettingsHome(
+    modifier: Modifier,
+    placesCount: Int,
+    isTracking: Boolean,
+    onOpen: (SettingsPage) -> Unit,
+    onAbout: () -> Unit
+) {
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(18.dp, 18.dp, 18.dp, 28.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        item {
+            Column(Modifier.padding(horizontal = 2.dp)) {
+                Text("Settings", style = MaterialTheme.typography.headlineLarge)
+                Spacer(Modifier.height(4.dp))
+                Text("Make Location Dots work the way you want.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        item {
+            ExpressiveCard(emphasized = true) {
+                Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+                    ExpressiveIconBadge(containerColor = MaterialTheme.colorScheme.primary) {
+                        Icon(Icons.Default.LocationOn, null, tint = MaterialTheme.colorScheme.onPrimary)
+                    }
+                    Spacer(Modifier.width(14.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text("Location Dots", style = MaterialTheme.typography.titleLarge)
+                        Text(if (isTracking) "Tracking is active" else "Tracking is paused", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+        }
+        item { SettingsGroupTitle("Your data") }
+        item {
+            ExpressiveCard {
+                Column(Modifier.padding(8.dp)) {
+                    ExpressiveListRow("Saved places", "${placesCount} saved ${if (placesCount == 1) "place" else "places"}", { Icon(Icons.Default.Place, null) }, onClick = { onOpen(SettingsPage.SAVED_PLACES) })
+                    ExpressiveListRow("Privacy & data", "Local history, sharing and clearing", { Icon(Icons.Default.Lock, null) }, onClick = { onOpen(SettingsPage.PRIVACY_DATA) })
+                    ExpressiveListRow("Export & backup", "Export summaries and local data", { Icon(Icons.Default.FileUpload, null) }, onClick = { onOpen(SettingsPage.EXPORT_BACKUP) })
+                }
+            }
+        }
+        item { SettingsGroupTitle("Experience") }
+        item {
+            ExpressiveCard {
+                Column(Modifier.padding(8.dp)) {
+                    ExpressiveListRow("Tracking", if (isTracking) "Active" else "Paused", { Icon(Icons.Default.LocationOn, null) }, onClick = { onOpen(SettingsPage.TRACKING) })
+                    ExpressiveListRow("Map & appearance", "Theme, motion and map presentation", { Icon(Icons.Default.Palette, null) }, onClick = { onOpen(SettingsPage.MAP_APPEARANCE) })
+                }
+            }
+        }
+        item { SettingsGroupTitle("Support") }
+        item {
+            ExpressiveCard {
+                Column(Modifier.padding(8.dp)) {
+                    ExpressiveListRow("Diagnostics", "Runtime status and troubleshooting", { Icon(Icons.Default.Build, null) }, onClick = { onOpen(SettingsPage.DIAGNOSTICS) })
+                    ExpressiveListRow("About Location Dots", "Version, architecture and open-source information", { Icon(Icons.Default.Info, null) }, onClick = onAbout)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsSubPage(
+    modifier: Modifier,
+    title: String,
+    subtitle: String,
+    onBack: () -> Unit,
+    content: LazyListScope.() -> Unit
+) {
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(18.dp, 10.dp, 18.dp, 28.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        item {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                FilledTonalIconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(title, style = MaterialTheme.typography.headlineSmall)
+                    Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+        content()
+    }
+}
+
+@Composable
+private fun SettingsGroupTitle(text: String) {
+    Text(text, Modifier.padding(horizontal = 4.dp, vertical = 2.dp), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+@Composable
+private fun EmptySettingsCard(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, body: String) {
+    ExpressiveCard {
+        Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            ExpressiveIconBadge(icon = { Icon(icon, null) })
+            Text(title, style = MaterialTheme.typography.titleLarge)
+            Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun InfoCard(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, body: String) {
+    ExpressiveCard {
+        Row(Modifier.padding(18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.Top) {
+            ExpressiveIconBadge(icon = { Icon(icon, null) })
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+@Composable
+private fun DiagnosticRow(title: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
+    ExpressiveListRow(title, null, { Icon(icon, null) }, trailing = {
+        Text(value, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    })
+}
+
+private fun ThemeChoice.label(): String = when (this) {
+    ThemeChoice.SYSTEM -> "System"
+    ThemeChoice.LIGHT -> "Light"
+    ThemeChoice.DARK -> "Dark"
 }
