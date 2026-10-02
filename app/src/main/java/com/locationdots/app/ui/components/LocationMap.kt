@@ -3,6 +3,7 @@ package com.locationdots.app.ui.components
 import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
+import android.view.MotionEvent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,7 +56,8 @@ fun LocationMap(
     mapStyle: String? = null,
     showRouteLines: Boolean? = null,
     showPlaceMarkers: Boolean? = null,
-    drawRoute: Boolean = points.size >= 2
+    drawRoute: Boolean = points.size >= 2,
+    onMapInteractionChanged: ((Boolean) -> Unit)? = null
 ) {
     if (points.isEmpty()) return
 
@@ -120,6 +122,22 @@ fun LocationMap(
         modifier = modifier,
         factory = {
             mapView.apply {
+                setOnTouchListener { view, event ->
+                    when (event.actionMasked) {
+                        MotionEvent.ACTION_DOWN -> {
+                            view.parent?.requestDisallowInterceptTouchEvent(true)
+                            onMapInteractionChanged?.invoke(true)
+                        }
+                        MotionEvent.ACTION_MOVE -> {
+                            view.parent?.requestDisallowInterceptTouchEvent(true)
+                        }
+                        MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                            view.parent?.requestDisallowInterceptTouchEvent(false)
+                            onMapInteractionChanged?.invoke(false)
+                        }
+                    }
+                    false
+                }
                 getMapAsync { readyMap -> map = readyMap }
             }
         },
@@ -127,6 +145,13 @@ fun LocationMap(
             view.getMapAsync { readyMap -> map = readyMap }
         }
     )
+
+    DisposableEffect(mapView, onMapInteractionChanged) {
+        onDispose {
+            mapView.setOnTouchListener(null)
+            mapView.parent?.requestDisallowInterceptTouchEvent(false)
+        }
+    }
 
     LaunchedEffect(map, points, interactive, fitRequest, mapStyle, showRouteLines, showPlaceMarkers, drawRoute) {
         val readyMap = map ?: return@LaunchedEffect
