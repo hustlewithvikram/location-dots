@@ -11,23 +11,28 @@ import kotlinx.coroutines.flow.asStateFlow
 class LocationTrackingController(
     private val context: Context
 ) {
-    private val _isTracking = MutableStateFlow(false)
+    private val preferences = context.getSharedPreferences("location_dots_ui", Context.MODE_PRIVATE)
+    private val _isTracking = MutableStateFlow(preferences.getBoolean(KEY_TRACKING_ACTIVE, false))
     val isTracking: StateFlow<Boolean> = _isTracking.asStateFlow()
 
     fun start() {
         val intent = Intent(context, LocationTrackingService::class.java)
         ContextCompat.startForegroundService(context, intent)
         _isTracking.value = true
+        preferences.edit().putBoolean(KEY_TRACKING_ACTIVE, true).apply()
     }
 
     fun stop() {
-        context.stopService(
-            Intent(context, LocationTrackingService::class.java)
-        )
-        _isTracking.value = false
+        context.stopService(Intent(context, LocationTrackingService::class.java))
+        markStopped()
     }
 
     fun markStopped() {
         _isTracking.value = false
+        preferences.edit().putBoolean(KEY_TRACKING_ACTIVE, false).apply()
+    }
+
+    companion object {
+        const val KEY_TRACKING_ACTIVE = "tracking_active"
     }
 }
