@@ -126,7 +126,7 @@ class PlaceEngineTest {
         )
 
         assertTrue(resolved.id != "place:existing")
-        assertEquals(125.0, repository.lastRadiusMeters)
+        assertEquals(75.0, repository.lastRadiusMeters)
     }
 
     @Test
