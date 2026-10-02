@@ -126,7 +126,7 @@ private fun QuickActionsCard(
                 )
                 QuickAction(
                     modifier = Modifier.weight(1f),
-                    icon = Icons.Default.Insights,
+                    icon = Icons.Default.BarChart,
                     label = "Insights",
                     onClick = onInsightsClick
                 )
