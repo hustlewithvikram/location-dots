@@ -26,19 +26,15 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
 
         if (clusters.isEmpty()) return emptyList()
 
-        val lastPoint = sorted.last()
-        val visits = clusters.mapIndexed { index, cluster ->
-            val isActive = index == clusters.lastIndex &&
-                Duration.between(cluster.last().timestamp, lastPoint.timestamp) <= ACTIVE_VISIT_WINDOW
-
-            val place = placeEngine.resolve(cluster)
+        val visits = clusters.map { cluster ->
+            val place = placeEngine.resolve(cluster.points)
 
             TimelineEvent.Visit(
                 id = "visit:" + place.id + ":" + cluster.points.first().timestamp.toEpochMilli(),
-                timestamp = cluster.first().timestamp,
+                timestamp = cluster.points.first().timestamp,
                 place = place,
-                arrival = cluster.first().timestamp,
-                departure = if (isActive) null else cluster.last().timestamp
+                arrival = cluster.points.first().timestamp,
+                departure = cluster.departureTimestamp
             )
         }
 
