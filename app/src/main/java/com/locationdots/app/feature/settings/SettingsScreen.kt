@@ -509,9 +509,9 @@ private fun SettingsHome(
         item {
             ExpressiveCard {
                 Column(Modifier.padding(8.dp)) {
-                    ExpressiveListRow("Saved places", "${placesCount} saved ${if (placesCount == 1) "place" else "places"}", { Icon(Icons.Default.Place, null) }, onClick = { onOpen(SettingsPage.SAVED_PLACES) })
-                    ExpressiveListRow("Privacy & data", "Local history, sharing and clearing", { Icon(Icons.Default.Lock, null) }, onClick = { onOpen(SettingsPage.PRIVACY_DATA) })
-                    ExpressiveListRow("Export & backup", "Export summaries and local data", { Icon(Icons.Default.FileUpload, null) }, onClick = { onOpen(SettingsPage.EXPORT_BACKUP) })
+                    ExpressiveListRow("Saved places", icon = { Icon(Icons.Default.Place, null) }, onClick = { onOpen(SettingsPage.SAVED_PLACES) })
+                    ExpressiveListRow("Privacy & data", icon = { Icon(Icons.Default.Lock, null) }, onClick = { onOpen(SettingsPage.PRIVACY_DATA) })
+                    ExpressiveListRow("Export & backup", icon = { Icon(Icons.Default.FileUpload, null) }, onClick = { onOpen(SettingsPage.EXPORT_BACKUP) })
                 }
             }
         }
@@ -519,8 +519,8 @@ private fun SettingsHome(
         item {
             ExpressiveCard {
                 Column(Modifier.padding(8.dp)) {
-                    ExpressiveListRow("Tracking", if (isTracking) "Active" else "Paused", { Icon(Icons.Default.LocationOn, null) }, onClick = { onOpen(SettingsPage.TRACKING) })
-                    ExpressiveListRow("Map & appearance", "Theme, motion and map presentation", { Icon(Icons.Default.Palette, null) }, onClick = { onOpen(SettingsPage.MAP_APPEARANCE) })
+                    ExpressiveListRow("Tracking", icon = { Icon(Icons.Default.LocationOn, null) }, onClick = { onOpen(SettingsPage.TRACKING) })
+                    ExpressiveListRow("Map & appearance", icon = { Icon(Icons.Default.Palette, null) }, onClick = { onOpen(SettingsPage.MAP_APPEARANCE) })
                 }
             }
         }
@@ -528,8 +528,8 @@ private fun SettingsHome(
         item {
             ExpressiveCard {
                 Column(Modifier.padding(8.dp)) {
-                    ExpressiveListRow("Diagnostics", "Runtime status and troubleshooting", { Icon(Icons.Default.Build, null) }, onClick = { onOpen(SettingsPage.DIAGNOSTICS) })
-                    ExpressiveListRow("About Location Dots", "Version, architecture and open-source information", { Icon(Icons.Default.Info, null) }, onClick = onAbout)
+                    ExpressiveListRow("Diagnostics", icon = { Icon(Icons.Default.Build, null) }, onClick = { onOpen(SettingsPage.DIAGNOSTICS) })
+                    ExpressiveListRow("About Location Dots", icon = { Icon(Icons.Default.Info, null) }, onClick = onAbout)
                 }
             }
         }
