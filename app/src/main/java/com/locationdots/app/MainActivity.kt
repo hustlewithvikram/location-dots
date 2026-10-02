@@ -562,13 +562,18 @@ class MainActivity : ComponentActivity() {
             requestLocationPermission()
             return
         }
-        LocationServices.getFusedLocationProviderClient(this)
-            .lastLocation
-            .addOnSuccessListener { location ->
-                if (location != null) {
-                    onLocation(location.latitude, location.longitude)
+        try {
+            LocationServices.getFusedLocationProviderClient(this)
+                .lastLocation
+                .addOnSuccessListener { location ->
+                    if (location != null) {
+                        onLocation(location.latitude, location.longitude)
+                    }
                 }
-            }
+        } catch (_: SecurityException) {
+            // Permission can be revoked between the explicit check and this API call.
+            hasLocationPermission = false
+        }
     }
 
     private fun isBatteryOptimizationIgnored(): Boolean {
