@@ -54,7 +54,8 @@ fun LocationMap(
     onMapClick: ((LatLng) -> Unit)? = null,
     mapStyle: String? = null,
     showRouteLines: Boolean? = null,
-    showPlaceMarkers: Boolean? = null
+    showPlaceMarkers: Boolean? = null,
+    drawRoute: Boolean = points.size >= 2
 ) {
     if (points.isEmpty()) return
 
@@ -127,7 +128,7 @@ fun LocationMap(
         }
     )
 
-    LaunchedEffect(map, points, interactive, fitRequest, mapStyle, showRouteLines, showPlaceMarkers) {
+    LaunchedEffect(map, points, interactive, fitRequest, mapStyle, showRouteLines, showPlaceMarkers, drawRoute) {
         val readyMap = map ?: return@LaunchedEffect
         val preferences = context.getSharedPreferences("location_dots_ui", Context.MODE_PRIVATE)
         val showMarkers = showPlaceMarkers ?: preferences.getBoolean("show_place_markers", true)
@@ -172,7 +173,7 @@ fun LocationMap(
                 )
             }
 
-            if (showRoutes && points.size >= 2) {
+            if (showRoutes && drawRoute && points.size >= 2) {
                 val routeGeoJson = """
                     {
                       "type": "Feature",
