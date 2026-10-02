@@ -35,7 +35,7 @@ fun PlacesOverviewScreen(
         }
     }
 
-    Scaffold(bottomBar = { AppBottomBar(AppTab.MAP, onTabSelected) }) { padding ->
+    Scaffold { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(18.dp, 12.dp, 18.dp, 28.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             item {
                 Row(verticalAlignment = Alignment.CenterVertically) {
