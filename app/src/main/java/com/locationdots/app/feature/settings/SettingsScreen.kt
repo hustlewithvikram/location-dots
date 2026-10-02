@@ -353,7 +353,7 @@ fun SettingsScreen(
                         ExpressiveListRow(
                             "Map credits",
                             icon = { Icon(Icons.Default.Public, null) },
-                            trailing = { Icon(Icons.Default.InfoOutline, null) },
+                            trailing = { Icon(Icons.Default.Info, null) },
                             onClick = { showAttributionDialog = true }
                         )
                     }
