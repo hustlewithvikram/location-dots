@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -205,7 +206,7 @@ fun SettingsScreen(
                             ExpressiveListRow(
                                 "Place markers",
                                 "Show locations as markers on maps.",
-                                { Icon(Icons.Default.LocationPin, null) },
+                                { Icon(Icons.Default.Place, null) },
                                 trailing = { Switch(showPlaceMarkers, onPlaceMarkersChange) }
                             )
                         }
@@ -356,9 +357,10 @@ private fun SettingsHome(
         item {
             ExpressiveCard(emphasized = true) {
                 Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                    ExpressiveIconBadge(containerColor = MaterialTheme.colorScheme.primary) {
-                        Icon(Icons.Default.LocationOn, null, tint = MaterialTheme.colorScheme.onPrimary)
-                    }
+                    ExpressiveIconBadge(
+                        icon = { Icon(Icons.Default.LocationOn, null, tint = MaterialTheme.colorScheme.onPrimary) },
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
                     Spacer(Modifier.width(14.dp))
                     Column(Modifier.weight(1f)) {
                         Text("Location Dots", style = MaterialTheme.typography.titleLarge)
