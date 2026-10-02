@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
 import androidx.compose.animation.*
+import com.google.android.gms.location.LocationServices
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -259,6 +260,7 @@ class MainActivity : ComponentActivity() {
                         themeChoice = themeChoice,
                         isTracking = isTracking,
                         animationsEnabled = animationsEnabled,
+                        places = places,
                         onTabSelected = ::selectTab,
                         onThemeChange = {
                             themeChoice = it
@@ -271,7 +273,9 @@ class MainActivity : ComponentActivity() {
                         },
                         onExport = { exportSummary(insights) },
                         onClearHistory = ::clearHistory,
-                        onAbout = { isAboutOpen = true }
+                        onAbout = { isAboutOpen = true },
+                        onSaveNamedPlace = ::saveNamedPlace,
+                        onRequestCurrentLocation = ::requestCurrentLocation
                     )
                     else -> TimelineScreen(
                         events = timelineState.events,
@@ -340,6 +344,29 @@ class MainActivity : ComponentActivity() {
     private fun stopTracking() {
         trackingController.stop()
         isTracking = false
+    }
+
+    private fun saveNamedPlace(name: String, latitude: Double, longitude: Double) {
+        lifecycleScope.launch {
+            application.let { (it as LocationDotsApplication).placeRepository.saveNamedPlace(name, latitude, longitude) }
+            placesViewModel.places
+            timelineViewModel.refresh()
+            insightsViewModel.refresh()
+        }
+    }
+
+    private fun requestCurrentLocation(onLocation: (Double, Double) -> Unit) {
+        if (!permissionManager.hasForegroundLocationPermission()) {
+            requestLocationPermission()
+            return
+        }
+        LocationServices.getFusedLocationProviderClient(this)
+            .lastLocation
+            .addOnSuccessListener { location ->
+                if (location != null) {
+                    onLocation(location.latitude, location.longitude)
+                }
+            }
     }
 
     private fun clearHistory() {
