@@ -84,7 +84,8 @@ extensions.configure<ApplicationExtension> {
 }
 
 dependencies {
-    testImplementation("org.jetbrains.kotlin:kotlin-test:2.4.10")
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlin.test.junit)
 
     implementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(platform(libs.androidx.compose.bom))
