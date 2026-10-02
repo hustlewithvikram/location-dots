@@ -117,6 +117,87 @@ class DefaultJourneyProcessorTest {
         assertTrue(events.none { it is TimelineEvent.Visit })
     }
 
+    @Test
+    fun singleGpsOutlierDoesNotCloseVisit() = runBlocking {
+        val start = Instant.parse("2026-10-02T10:00:00Z")
+        val stable = points(start, count = 17, secondsBetween = 30, latitudeStep = 0.00002)
+        val outlier = LocationPoint(
+            latitude = 18.5230,
+            longitude = 73.8567,
+            accuracyMeters = 20f,
+            timestamp = start.plusSeconds(17 * 30L)
+        )
+        val resumed = LocationPoint(
+            latitude = 18.5201,
+            longitude = 73.8567,
+            accuracyMeters = 20f,
+            timestamp = start.plusSeconds(18 * 30L)
+        )
+
+        val events = processor.process(stable + outlier + resumed)
+
+        val visit = events.filterIsInstance<TimelineEvent.Visit>().single()
+        assertEquals(null, visit.departure)
+    }
+
+    @Test
+    fun sustainedDepartureClosesVisitAtFirstConfirmedOutsidePoint() = runBlocking {
+        val start = Instant.parse("2026-10-02T10:00:00Z")
+        val firstStay = points(start, count = 17, secondsBetween = 30, latitudeStep = 0.00002)
+        val departureOne = LocationPoint(
+            latitude = 18.5230,
+            longitude = 73.8567,
+            accuracyMeters = 20f,
+            timestamp = start.plusSeconds(17 * 30L)
+        )
+        val departureTwo = LocationPoint(
+            latitude = 18.5240,
+            longitude = 73.8567,
+            accuracyMeters = 20f,
+            timestamp = start.plusSeconds(18 * 30L)
+        )
+        val secondStay = points(
+            departureTwo.timestamp.plusSeconds(30),
+            count = 17,
+            secondsBetween = 30,
+            latitudeStep = 0.00002
+        ).map { it.copy(latitude = 18.5400 + (it.latitude - 18.5200)) }
+
+        val events = processor.process(firstStay + departureOne + departureTwo + secondStay)
+
+        val visits = events.filterIsInstance<TimelineEvent.Visit>()
+        val journey = events.filterIsInstance<TimelineEvent.Journey>().single()
+
+        assertEquals(2, visits.size)
+        assertEquals(departureOne.timestamp, visits.first { it.arrival == start }.departure)
+        assertEquals(departureOne.timestamp, journey.startedAt)
+        assertEquals(secondStay.first().timestamp, journey.endedAt)
+    }
+
+    @Test
+    fun departureIsCancelledWhenUserReturnsBeforeConfirmation() = runBlocking {
+        val start = Instant.parse("2026-10-02T10:00:00Z")
+        val stable = points(start, count = 17, secondsBetween = 30, latitudeStep = 0.00002)
+        val outside = LocationPoint(
+            latitude = 18.5230,
+            longitude = 73.8567,
+            accuracyMeters = 20f,
+            timestamp = start.plusSeconds(17 * 30L)
+        )
+        val returned = LocationPoint(
+            latitude = 18.5201,
+            longitude = 73.8567,
+            accuracyMeters = 20f,
+            timestamp = start.plusSeconds(18 * 30L)
+        )
+
+        val visit = processor.process(stable + outside + returned)
+            .filterIsInstance<TimelineEvent.Visit>()
+            .single()
+
+        assertEquals(null, visit.departure)
+    }
+
     private fun points(
         start: Instant,
         count: Int,
