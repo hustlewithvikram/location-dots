@@ -1,9 +1,8 @@
 package com.locationdots.app.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,11 +18,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.selected as semanticsSelected
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
-enum class AppTab(val label: String) { TIMELINE("Timeline"), MAP("Places"), INSIGHTS("Insights"), SETTINGS("Settings") }
+enum class AppTab(val label: String) {
+    TIMELINE("Timeline"),
+    MAP("Places"),
+    INSIGHTS("Insights"),
+    SETTINGS("Settings")
+}
 
 @Composable
 fun AppBottomBar(selected: AppTab, onSelected: (AppTab) -> Unit) {
@@ -37,56 +41,62 @@ fun AppBottomBar(selected: AppTab, onSelected: (AppTab) -> Unit) {
     }
     val selectedIndex = tabs.indexOfFirst { it.first == selected }.coerceAtLeast(0)
 
-    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer, tonalElevation = 0.dp) {
-        BoxWithConstraints(Modifier.fillMaxWidth()) {
-            val itemWidth = maxWidth / tabs.size
-            val indicatorOffset by animateDpAsState(
-                targetValue = itemWidth * selectedIndex,
-                animationSpec = androidx.compose.animation.core.tween(
-                    420,
-                    easing = androidx.compose.animation.core.FastOutSlowInEasing
-                ),
-                label = "navigation-indicator"
-            )
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 10.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Surface(
+            Modifier.fillMaxWidth().height(64.dp),
+            shape = RoundedCornerShape(32.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 3.dp,
+            shadowElevation = 8.dp
+        ) {
+            BoxWithConstraints(Modifier.fillMaxSize().padding(6.dp)) {
+                val itemWidth = maxWidth / tabs.size
+                val indicatorOffset by animateDpAsState(
+                    targetValue = itemWidth * selectedIndex,
+                    animationSpec = spring(
+                        dampingRatio = 0.8f,
+                        stiffness = 700f,
+                        visibilityThreshold = 0.5.dp
+                    ),
+                    label = "navigation-pill"
+                )
 
-            Box(
-                Modifier
-                    .align(Alignment.CenterStart)
-                    .offset(x = indicatorOffset + 8.dp)
-                    .width(itemWidth - 16.dp)
-                    .height(48.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(MaterialTheme.colorScheme.secondaryContainer)
-            )
+                Box(
+                    Modifier
+                        .align(Alignment.CenterStart)
+                        .offset(x = indicatorOffset)
+                        .width(itemWidth)
+                        .height(52.dp)
+                        .clip(RoundedCornerShape(26.dp))
+                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                )
 
-            Row(Modifier.fillMaxWidth()) {
-                tabs.forEach { (tab, icon) ->
-                    val isSelected = tab == selected
-                    Box(
-                        Modifier
-                            .weight(1f)
-                            .height(64.dp)
-                            .clickable { onSelected(tab) }
-                            .semantics {
-                                semanticsSelected = isSelected
-                                role = Role.Tab
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(7.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                Row(Modifier.fillMaxSize()) {
+                    tabs.forEach { (tab, icon) ->
+                        val isSelected = tab == selected
+                        Box(
+                            Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .clip(RoundedCornerShape(26.dp))
+                                .clickable { onSelected(tab) }
+                                .semantics {
+                                    selected = isSelected
+                                    role = Role.Tab
+                                },
+                            contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 icon,
-                                contentDescription = null,
+                                contentDescription = tab.label,
+                                modifier = Modifier.size(25.dp),
                                 tint = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer
-                                else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                tab.label,
-                                style = MaterialTheme.typography.labelLarge,
-                                color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer
                                 else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
