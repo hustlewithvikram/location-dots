@@ -200,6 +200,39 @@ class DefaultJourneyProcessorTest {
     }
 
     @Test
+    fun journeyRequiresMeaningfulRecordedDistanceAndPersistsPath() = runBlocking {
+        val start = Instant.parse("2026-10-02T10:00:00Z")
+        val firstStay = points(start, count = 17, secondsBetween = 30, latitudeStep = 0.00002)
+        val departureOne = LocationPoint(
+            latitude = 18.5230,
+            longitude = 73.8567,
+            accuracyMeters = 20f,
+            timestamp = start.plusSeconds(17 * 30L)
+        )
+        val departureTwo = LocationPoint(
+            latitude = 18.5240,
+            longitude = 73.8567,
+            accuracyMeters = 20f,
+            timestamp = start.plusSeconds(18 * 30L)
+        )
+        val secondStay = points(
+            departureTwo.timestamp.plusSeconds(30),
+            count = 17,
+            secondsBetween = 30,
+            latitudeStep = 0.00002
+        ).map { it.copy(latitude = 18.5400 + (it.latitude - 18.5200)) }
+
+        val journey = processor.process(firstStay + departureOne + departureTwo + secondStay)
+            .filterIsInstance<TimelineEvent.Journey>()
+            .single()
+
+        assertTrue(journey.distanceMeters!! >= 100.0)
+        assertTrue(journey.path.isNotEmpty())
+        assertEquals(departureOne.timestamp, journey.path.first().timestamp)
+        assertEquals(secondStay.last().timestamp, journey.path.last().timestamp)
+    }
+
+    @Test
     fun departureIsCancelledWhenUserReturnsBeforeConfirmation() = runBlocking {
         val start = Instant.parse("2026-10-02T10:00:00Z")
         val stable = points(start, count = 17, secondsBetween = 30, latitudeStep = 0.00002)
