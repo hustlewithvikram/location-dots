@@ -26,7 +26,10 @@ class PlaceEngineTest {
             radiusMeters: Double
         ): Place? {
             lastRadiusMeters = radiusMeters
-            return place
+            val existing = place ?: return null
+            return existing.takeIf {
+                distanceMeters(latitude, longitude, it.latitude, it.longitude) <= radiusMeters
+            }
         }
 
         override suspend fun savePlace(place: Place) {
@@ -40,6 +43,22 @@ class PlaceEngineTest {
             latitude: Double,
             longitude: Double
         ): Place = error("Not used by this test")
+    }
+
+    private fun distanceMeters(
+        latitude1: Double,
+        longitude1: Double,
+        latitude2: Double,
+        longitude2: Double
+    ): Double {
+        val earthRadius = 6_371_000.0
+        val dLat = Math.toRadians(latitude2 - latitude1)
+        val dLon = Math.toRadians(longitude2 - longitude1)
+        val a = kotlin.math.sin(dLat / 2) * kotlin.math.sin(dLat / 2) +
+            kotlin.math.cos(Math.toRadians(latitude1)) *
+            kotlin.math.cos(Math.toRadians(latitude2)) *
+            kotlin.math.sin(dLon / 2) * kotlin.math.sin(dLon / 2)
+        return earthRadius * 2 * kotlin.math.atan2(kotlin.math.sqrt(a), kotlin.math.sqrt(1 - a))
     }
 
     @Test
