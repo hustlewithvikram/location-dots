@@ -8,6 +8,10 @@ data class InsightsSnapshot(
     val totalTimeMinutes: Long = 0,
     val totalDistanceMeters: Double = 0.0,
     val journeyCount: Int = 0,
+    val averageVisitMinutes: Long = 0,
+    val longestVisitMinutes: Long = 0,
+    val busiestDayLabel: String? = null,
+    val busiestDayVisits: Int = 0,
     val modeBreakdown: Map<JourneyMode, Int> = emptyMap(),
     val topPlaces: List<PlaceInsight> = emptyList(),
     val dailyVisits: List<DailyInsight> = emptyList()
