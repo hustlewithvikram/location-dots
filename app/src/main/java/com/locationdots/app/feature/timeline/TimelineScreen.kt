@@ -9,6 +9,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.Polyline
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -54,17 +62,9 @@ fun TimelineScreen(
     Scaffold { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (items.isEmpty() && !isRefreshing) EmptyTimeline(isTracking)
-            else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(18.dp, 10.dp, 18.dp, 108.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(18.dp, 14.dp, 18.dp, 108.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 item("summary") {
                     TodayCard(events, isTracking, onSearchClick)
-                }
-                item("quick-actions") {
-                    QuickActionsCard(
-                        onSearchClick = onSearchClick,
-                        onPlacesClick = onPlacesClick,
-                        onInsightsClick = onInsightsClick,
-                        onSettingsClick = onSettingsClick
-                    )
                 }
                 item("activity-header") {
                     ExpressiveSectionHeader(
@@ -96,80 +96,19 @@ fun TimelineScreen(
 }
 
 @Composable
-private fun QuickActionsCard(
-    onSearchClick: () -> Unit,
-    onPlacesClick: () -> Unit,
-    onInsightsClick: () -> Unit,
-    onSettingsClick: () -> Unit
-) {
-    ExpressiveCard {
-        Column(
-            Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text("Quick actions", style = MaterialTheme.typography.titleMedium)
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                QuickAction(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.Search,
-                    label = "Search",
-                    onClick = onSearchClick
-                )
-                QuickAction(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.Place,
-                    label = "Places",
-                    onClick = onPlacesClick
-                )
-                QuickAction(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.BarChart,
-                    label = "Insights",
-                    onClick = onInsightsClick
-                )
-                QuickAction(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.Settings,
-                    label = "Settings",
-                    onClick = onSettingsClick
-                )
-            }
-        }
+private fun DayHeader(date: LocalDate) {
+    val today = LocalDate.now(ZoneId.systemDefault())
+    val formatted = DateTimeFormatter.ofPattern("EEE, d MMM", Locale.getDefault()).format(date)
+    val label = when (date) {
+        today -> "Today · " + formatted
+        today.minusDays(1) -> "Yesterday · " + formatted
+        else -> formatted
     }
-}
 
-@Composable
-private fun QuickAction(
-    modifier: Modifier,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    onClick: () -> Unit
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        FilledTonalIconButton(
-            onClick = onClick,
-            modifier = Modifier.size(48.dp)
-        ) {
-            Icon(icon, contentDescription = label)
-        }
-        Spacer(Modifier.height(6.dp))
-        Text(
-            label,
-            style = MaterialTheme.typography.labelMedium,
-            maxLines = 1
-        )
-    }
-}
-
-@Composable private fun DayHeader(date: LocalDate) {
     Row(
-        Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 2.dp),
+        Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp, bottom = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Surface(
@@ -177,18 +116,17 @@ private fun QuickAction(
             color = MaterialTheme.colorScheme.secondaryContainer
         ) {
             Text(
-                when (date) {
-                    LocalDate.now(ZoneId.systemDefault()) -> "Today"
-                    LocalDate.now(ZoneId.systemDefault()).minusDays(1) -> "Yesterday"
-                    else -> DateTimeFormatter.ofPattern("EEE, d MMM", Locale.getDefault()).format(date)
-                },
-                Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                label,
+                Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSecondaryContainer
             )
         }
         Spacer(Modifier.width(10.dp))
-        HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
+        HorizontalDivider(
+            Modifier.weight(1f),
+            color = MaterialTheme.colorScheme.outlineVariant
+        )
     }
 }
 
@@ -220,6 +158,7 @@ private fun QuickAction(
     }
 }
 
+
 @Composable
 private fun TodayCard(
     events: List<TimelineEvent>,
@@ -238,60 +177,89 @@ private fun TodayCard(
     }
     val distance = journeys.sumOf { it.distanceMeters ?: 0.0 }
 
-    ExpressiveCard(emphasized = true) {
-        Column(
-            Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Today", style = MaterialTheme.typography.headlineSmall)
-                    Text(
-                        if (todayEvents.isEmpty()) "Your timeline is ready."
-                        else "Your movement at a glance.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                ExpressiveIconBadge(
-                    modifier = Modifier.size(48.dp),
-                    containerColor = if (isTracking) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.surfaceContainerHighest
-                    },
-                    icon = {
-                        Icon(
-                            if (isTracking) Icons.Default.MyLocation
-                            else Icons.Default.PauseCircleOutline,
-                            contentDescription = if (isTracking) "Tracking on" else "Tracking off",
-                            tint = if (isTracking) {
-                                MaterialTheme.colorScheme.onPrimary
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            }
-                        )
-                    }
+            Column(Modifier.weight(1f)) {
+                Text("Today", style = MaterialTheme.typography.headlineLarge)
+                Text(
+                    if (todayEvents.isEmpty()) "Your timeline is ready."
+                    else "A quick view of your day.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyLarge
                 )
             }
-
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                MiniStat(visits.size.toString(), "stops", Modifier.weight(1f))
-                MiniStat(journeys.size.toString(), "journeys", Modifier.weight(1f))
-                MiniStat(formatMinutes(minutes), "stayed", Modifier.weight(1f))
-                MiniStat(formatDistance(distance), "distance", Modifier.weight(1f))
-            }
-
-            OutlinedButton(
+            ExpressiveIconButton(
                 onClick = onSearchClick,
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.large
+                icon = { Icon(Icons.Default.Search, "Search your timeline") },
+                emphasized = true
+            )
+            Spacer(Modifier.width(8.dp))
+            ExpressiveIconBadge(
+                modifier = Modifier.size(48.dp),
+                containerColor = if (isTracking) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainerHighest
+                },
+                icon = {
+                    Icon(
+                        if (isTracking) Icons.Default.MyLocation
+                        else Icons.Default.PauseCircleOutline,
+                        contentDescription = if (isTracking) "Tracking active" else "Tracking paused",
+                        tint = if (isTracking) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
+                }
+            )
+        }
+
+        ExpressiveCard(emphasized = true) {
+            Column(
+                Modifier.padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Icon(Icons.Default.Search, null)
-                Spacer(Modifier.width(8.dp))
-                Text("Search your timeline")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    ExpressiveIconBadge(
+                        modifier = Modifier.size(44.dp),
+                        containerColor = if (isTracking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest,
+                        icon = {
+                            Icon(
+                                if (isTracking) Icons.Default.LocationOn else Icons.Default.LocationDisabled,
+                                contentDescription = null,
+                                tint = if (isTracking) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            if (isTracking) "Tracking active" else "Tracking paused",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            if (isTracking) "Location updates are being recorded."
+                            else "Turn tracking on to build your timeline.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    MiniStat(visits.size.toString(), "stops", Modifier.weight(1f))
+                    MiniStat(journeys.size.toString(), "journeys", Modifier.weight(1f))
+                    MiniStat(formatMinutes(minutes), "stayed", Modifier.weight(1f))
+                    MiniStat(formatDistance(distance), "distance", Modifier.weight(1f))
+                }
             }
         }
     }
@@ -321,6 +289,7 @@ private fun MiniStat(
         }
     }
 }
+
 @Composable
 private fun EventCard(
     event: TimelineEvent,
@@ -328,76 +297,196 @@ private fun EventCard(
     onJourneyClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val title: String
-    val subtitle: String
-    val icon: androidx.compose.ui.graphics.vector.ImageVector
-    val action: () -> Unit
-
     when (event) {
-        is TimelineEvent.Visit -> {
-            title = event.place.name ?: "Unnamed place"
-            subtitle = if (event.departure != null) {
-                "Visited for " + formatMinutes(
-                    Duration.between(event.arrival, event.departure).toMinutes().coerceAtLeast(0)
-                )
-            } else {
-                "Still here"
-            }
-            icon = Icons.Default.Place
-            action = { onPlaceClick(event.place.id) }
-        }
+        is TimelineEvent.Visit -> VisitCard(event, onPlaceClick, modifier)
+        is TimelineEvent.Journey -> JourneyCard(event, onJourneyClick, modifier)
+    }
+}
 
-        is TimelineEvent.Journey -> {
-            title = (event.startPlace?.name ?: "Unknown") + " → " +
-                (event.endPlace?.name ?: "Unknown")
-            subtitle = event.mode.label() + " · " +
-                formatDistance(event.distanceMeters ?: 0.0) +
-                (event.endedAt?.let {
-                    " · " + formatMinutes(
-                        Duration.between(event.startedAt, it).toMinutes().coerceAtLeast(0)
+@Composable
+private fun VisitCard(
+    event: TimelineEvent.Visit,
+    onPlaceClick: (String) -> Unit,
+    modifier: Modifier
+) {
+    val duration = event.departure?.let {
+        formatMinutes(Duration.between(event.arrival, it).toMinutes().coerceAtLeast(0))
+    } ?: "Still here"
+
+    ExpressiveCard(
+        modifier = modifier,
+        onClick = { onPlaceClick(event.place.id) }
+    ) {
+        Column {
+            Row(
+                Modifier.padding(start = 14.dp, top = 14.dp, end = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ExpressiveIconBadge(
+                    modifier = Modifier.size(46.dp),
+                    icon = { Icon(Icons.Default.Place, null) }
+                )
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        event.place.name ?: "Unnamed place",
+                        style = MaterialTheme.typography.titleMedium
                     )
-                } ?: "")
-            icon = modeIcon(event.mode)
-            action = { onJourneyClick(event.id) }
+                    Text(
+                        "Arrived " + time(event.arrival) + " · " + duration,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(
+                    Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            MiniMap(
+                points = listOf(LatLng(event.place.latitude, event.place.longitude)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(126.dp)
+                    .padding(12.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun JourneyCard(
+    event: TimelineEvent.Journey,
+    onJourneyClick: (String) -> Unit,
+    modifier: Modifier
+) {
+    val points = event.path.map { LatLng(it.latitude, it.longitude) }.let { path ->
+        when {
+            path.isNotEmpty() -> path
+            event.startPlace != null && event.endPlace != null -> listOf(
+                LatLng(event.startPlace.latitude, event.startPlace.longitude),
+                LatLng(event.endPlace.latitude, event.endPlace.longitude)
+            )
+            event.startPlace != null -> listOf(
+                LatLng(event.startPlace.latitude, event.startPlace.longitude)
+            )
+            else -> emptyList()
         }
     }
 
     ExpressiveCard(
         modifier = modifier,
-        onClick = action
+        onClick = { onJourneyClick(event.id) }
     ) {
-        Row(
-            Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            ExpressiveIconBadge(
-                modifier = Modifier.size(48.dp),
-                icon = { Icon(icon, contentDescription = null) }
-            )
-            Column(Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(3.dp))
-                Text(
-                    subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+        Column {
+            Row(
+                Modifier.padding(start = 14.dp, top = 14.dp, end = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ExpressiveIconBadge(
+                    modifier = Modifier.size(46.dp),
+                    icon = { Icon(modeIcon(event.mode), null) }
                 )
-                Spacer(Modifier.height(7.dp))
-                Text(
-                    time(event.timestamp),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        (event.startPlace?.name ?: "Unknown") + " → " +
+                            (event.endPlace?.name ?: "Unknown"),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        event.mode.label() + " · " +
+                            (event.endedAt?.let {
+                                formatMinutes(
+                                    Duration.between(event.startedAt, it).toMinutes().coerceAtLeast(0)
+                                )
+                            } ?: "In progress") +
+                            " · " + formatDistance(event.distanceMeters ?: 0.0),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(
+                    Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Icon(
-                Icons.Default.ChevronRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+
+            if (points.isNotEmpty()) {
+                MiniMap(
+                    points = points,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(126.dp)
+                        .padding(12.dp)
+                )
+            }
         }
     }
 }
+
+@Composable
+private fun MiniMap(
+    points: List<LatLng>,
+    modifier: Modifier
+) {
+    if (points.isEmpty()) return
+
+    val camera = rememberCameraPositionState()
+    LaunchedEffect(points) {
+        if (points.size == 1) {
+            camera.move(
+                com.google.android.gms.maps.CameraUpdateFactory
+                    .newLatLngZoom(points.first(), 14f)
+            )
+        } else {
+            val bounds = LatLngBounds.builder().apply {
+                points.forEach(::include)
+            }.build()
+            camera.move(
+                com.google.android.gms.maps.CameraUpdateFactory
+                    .newLatLngBounds(bounds, 55)
+            )
+        }
+    }
+
+    ExpressiveCard(modifier = modifier) {
+        GoogleMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPositionState = camera,
+            properties = MapProperties(
+                isBuildingEnabled = false,
+                isIndoorEnabled = false
+            ),
+            uiSettings = MapUiSettings(
+                zoomControlsEnabled = false,
+                mapToolbarEnabled = false,
+                scrollGesturesEnabled = false,
+                zoomGesturesEnabled = false,
+                rotationGesturesEnabled = false,
+                tiltGesturesEnabled = false
+            )
+        ) {
+            if (points.size > 1) {
+                Polyline(points = points, width = 7f)
+            }
+            Marker(
+                state = MarkerState(points.first()),
+                title = "Start"
+            )
+            if (points.size > 1) {
+                Marker(
+                    state = MarkerState(points.last()),
+                    title = "End"
+                )
+            }
+        }
+    }
+}
+
 @Composable private fun EmptyTimeline(isTracking: Boolean) {
     Column(Modifier.fillMaxSize().padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         ExpressiveIconBadge(Modifier.size(72.dp), { Icon(Icons.Default.Timeline, null, Modifier.size(34.dp)) })
