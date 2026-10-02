@@ -244,43 +244,27 @@ fun SettingsScreen(
                 item {
                     ExpressiveCard {
                         Column(Modifier.padding(8.dp)) {
-                            ExpressiveListRow(
-                                "Accuracy",
-                                if (trackingAccuracy == TrackingAccuracy.HIGH) "High" else "Balanced",
-                                { Icon(Icons.Default.GpsFixed, null) },
-                                trailing = { Icon(Icons.Default.ChevronRight, null) },
-                                onClick = {
-                                    onTrackingAccuracyChange(
-                                        if (trackingAccuracy == TrackingAccuracy.HIGH) {
-                                            TrackingAccuracy.BALANCED
-                                        } else {
-                                            TrackingAccuracy.HIGH
-                                        }
-                                    )
-                                }
-                            )
-                            ExpressiveListRow(
-                                "Update frequency",
-                                trackingInterval.label,
-                                { Icon(Icons.Default.Timer, null) },
-                                trailing = { Icon(Icons.Default.ChevronRight, null) },
-                                onClick = {
-                                    val next = when (trackingInterval) {
-                                        TrackingInterval.THIRTY_SECONDS -> TrackingInterval.ONE_MINUTE
-                                        TrackingInterval.ONE_MINUTE -> TrackingInterval.FIVE_MINUTES
-                                        TrackingInterval.FIVE_MINUTES -> TrackingInterval.THIRTY_SECONDS
-                                    }
-                                    onTrackingIntervalChange(next)
-                                }
-                            )
-                        }
-                    }
-                }
-
                 item {
                     ExpressiveCard {
-                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text("Collection profile", style = MaterialTheme.typography.titleMedium)
+                        Column(
+                            Modifier.padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Text("Accuracy", style = MaterialTheme.typography.titleMedium)
+                            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                                val options = TrackingAccuracy.entries
+                                options.forEachIndexed { index, option ->
+                                    SegmentedButton(
+                                        selected = trackingAccuracy == option,
+                                        onClick = { onTrackingAccuracyChange(option) },
+                                        shape = SegmentedButtonDefaults.itemShape(index, options.size),
+                                        icon = {}
+                                    ) {
+                                        Text(if (option == TrackingAccuracy.HIGH) "High" else "Balanced")
+                                    }
+                                }
+                            }
+                            Text("Update frequency", style = MaterialTheme.typography.titleMedium)
                             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                                 val options = TrackingInterval.entries
                                 options.forEachIndexed { index, option ->
@@ -307,6 +291,7 @@ fun SettingsScreen(
                             )
                         }
                     }
+                }
                 }
             }
             SettingsPage.MAP_APPEARANCE -> SettingsSubPage(
