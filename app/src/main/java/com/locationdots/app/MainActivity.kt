@@ -65,6 +65,8 @@ class MainActivity : ComponentActivity() {
     private var showSplash by mutableStateOf(true)
     private var themeChoice by mutableStateOf(ThemeChoice.SYSTEM)
     private var animationsEnabled by mutableStateOf(true)
+    private var showRouteLines by mutableStateOf(true)
+    private var showPlaceMarkers by mutableStateOf(true)
 
     private val preferences by lazy { getSharedPreferences("location_dots_ui", MODE_PRIVATE) }
 
@@ -98,6 +100,8 @@ class MainActivity : ComponentActivity() {
         trackingController = LocationTrackingController(this)
         themeChoice = runCatching { ThemeChoice.valueOf(preferences.getString("theme", ThemeChoice.SYSTEM.name)!!) }.getOrDefault(ThemeChoice.SYSTEM)
         animationsEnabled = preferences.getBoolean("animations", true)
+        showRouteLines = preferences.getBoolean("show_route_lines", true)
+        showPlaceMarkers = preferences.getBoolean("show_place_markers", true)
         showSplash = !preferences.getBoolean("splash_seen", false)
 
         val app = application as LocationDotsApplication
@@ -256,12 +260,13 @@ class MainActivity : ComponentActivity() {
                         onTabSelected = ::selectTab
                     )
                     destination == 3 -> SettingsScreen(
-                        selectedTab = currentTab,
                         themeChoice = themeChoice,
                         isTracking = isTracking,
                         animationsEnabled = animationsEnabled,
+                        showRouteLines = showRouteLines,
+                        showPlaceMarkers = showPlaceMarkers,
                         places = places,
-                        onTabSelected = ::selectTab,
+                        locationPermissionGranted = hasLocationPermission,
                         onThemeChange = {
                             themeChoice = it
                             preferences.edit().putString("theme", it.name).apply()
@@ -271,9 +276,23 @@ class MainActivity : ComponentActivity() {
                             animationsEnabled = it
                             preferences.edit().putBoolean("animations", it).apply()
                         },
+                        onRouteLinesChange = {
+                            showRouteLines = it
+                            preferences.edit().putBoolean("show_route_lines", it).apply()
+                        },
+                        onPlaceMarkersChange = {
+                            showPlaceMarkers = it
+                            preferences.edit().putBoolean("show_place_markers", it).apply()
+                        },
                         onExport = { exportSummary(insights) },
+                        onExportData = ::exportLocalData,
                         onClearHistory = ::clearHistory,
+                        onResetSettings = ::resetAppSettings,
                         onAbout = { isAboutOpen = true },
+                        onOpenLocationSettings = {
+                            startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                        },
+                        onRequestLocationPermission = ::requestLocationPermission,
                         onSaveNamedPlace = ::saveNamedPlace,
                         onRequestCurrentLocation = ::requestCurrentLocation
                     )
@@ -377,6 +396,79 @@ class MainActivity : ComponentActivity() {
             timelineViewModel.refresh()
             insightsViewModel.refresh()
         }
+    }
+
+    private fun exportLocalData() {
+        val app = application as LocationDotsApplication
+        lifecycleScope.launch {
+            val locations = app.database.locationDao().getRange(Long.MIN_VALUE, Long.MAX_VALUE)
+            val places = app.database.placeDao().getAll()
+            val events = app.database.timelineEventDao().getAll()
+            val root = org.json.JSONObject().apply {
+                put("format", "location-dots-local-export")
+                put("version", 1)
+                put("generatedAtEpochMillis", System.currentTimeMillis())
+                put("locations", org.json.JSONArray().apply {
+                    locations.forEach {
+                        put(org.json.JSONObject().apply {
+                            put("id", it.id)
+                            put("latitude", it.latitude)
+                            put("longitude", it.longitude)
+                            put("accuracyMeters", it.accuracyMeters)
+                            put("timestampEpochMillis", it.timestampEpochMillis)
+                        })
+                    }
+                })
+                put("places", org.json.JSONArray().apply {
+                    places.forEach {
+                        put(org.json.JSONObject().apply {
+                            put("id", it.id)
+                            put("name", it.name)
+                            put("latitude", it.latitude)
+                            put("longitude", it.longitude)
+                            put("createdAtEpochMillis", it.createdAtEpochMillis)
+                            put("updatedAtEpochMillis", it.updatedAtEpochMillis)
+                        })
+                    }
+                })
+                put("timelineEvents", org.json.JSONArray().apply {
+                    events.forEach {
+                        put(org.json.JSONObject().apply {
+                            put("id", it.id)
+                            put("type", it.type)
+                            put("timestampEpochMillis", it.timestampEpochMillis)
+                            put("placeId", it.placeId)
+                            put("arrivalEpochMillis", it.arrivalEpochMillis)
+                            put("departureEpochMillis", it.departureEpochMillis)
+                            put("startPlaceId", it.startPlaceId)
+                            put("endPlaceId", it.endPlaceId)
+                            put("startedAtEpochMillis", it.startedAtEpochMillis)
+                            put("endedAtEpochMillis", it.endedAtEpochMillis)
+                            put("distanceMeters", it.distanceMeters)
+                            put("journeyMode", it.journeyMode)
+                            put("pathEncoded", it.pathEncoded)
+                        })
+                    }
+                })
+            }
+            startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+                type = "application/json"
+                putExtra(Intent.EXTRA_TEXT, root.toString(2))
+            }, "Export local data"))
+        }
+    }
+
+    private fun resetAppSettings() {
+        preferences.edit()
+            .putString("theme", ThemeChoice.SYSTEM.name)
+            .putBoolean("animations", true)
+            .putBoolean("show_route_lines", true)
+            .putBoolean("show_place_markers", true)
+            .apply()
+        themeChoice = ThemeChoice.SYSTEM
+        animationsEnabled = true
+        showRouteLines = true
+        showPlaceMarkers = true
     }
 
     private fun exportSummary(snapshot: com.locationdots.app.domain.insights.InsightsSnapshot) {
