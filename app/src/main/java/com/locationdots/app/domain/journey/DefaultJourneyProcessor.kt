@@ -44,7 +44,7 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
                 add(visit)
 
                 val next = visits.getOrNull(index + 1) ?: return@forEachIndexed
-                val journeyStart = visit.departure ?: visit.arrival
+                val journeyStart = visit.departure ?: return@forEachIndexed
 
                 if (next.arrival.isAfter(journeyStart)) {
                     val path = sorted.filter {
@@ -52,7 +52,9 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
                             !it.timestamp.isAfter(next.arrival)
                     }
 
-                    val distance = pathDistance(path).takeIf { it >= MIN_JOURNEY_DISTANCE_METERS }
+                    val distance = pathDistance(path)
+                    if (distance < MIN_JOURNEY_DISTANCE_METERS) return@forEachIndexed
+
                     val durationSeconds = Duration.between(journeyStart, next.arrival).seconds
                     val mode = classifyMode(distance, durationSeconds)
 
@@ -65,7 +67,8 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
                             startedAt = journeyStart,
                             endedAt = next.arrival,
                             distanceMeters = distance,
-                            mode = mode
+                            mode = mode,
+                            path = path
                         )
                     )
                 }
