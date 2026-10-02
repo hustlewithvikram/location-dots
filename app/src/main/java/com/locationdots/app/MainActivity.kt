@@ -2,6 +2,7 @@ package com.locationdots.app
 
 import android.Manifest
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import androidx.compose.animation.*
@@ -30,6 +31,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.locationdots.app.core.location.LocationTrackingController
+import com.locationdots.app.data.local.LocationEntity
+import com.locationdots.app.data.local.PlaceEntity
+import com.locationdots.app.data.local.TimelineEventEntity
 import com.locationdots.app.core.permissions.LocationPermissionManager
 import com.locationdots.app.domain.model.TimelineEvent
 import com.locationdots.app.feature.about.AboutScreen
@@ -45,7 +49,15 @@ import com.locationdots.app.feature.timeline.*
 import com.locationdots.app.ui.components.AppBottomBar
 import com.locationdots.app.ui.components.AppTab
 import com.locationdots.app.ui.theme.LocationDotsTheme
+import org.json.JSONArray
+import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.room.withTransaction
 
 class MainActivity : ComponentActivity() {
     private lateinit var permissionManager: LocationPermissionManager
@@ -68,6 +80,43 @@ class MainActivity : ComponentActivity() {
     private var mapStyle by mutableStateOf("liberty")
     private var showRouteLines by mutableStateOf(true)
     private var showPlaceMarkers by mutableStateOf(true)
+    private var importPreview by mutableStateOf<ImportPreview?>(null)
+    private var importError by mutableStateOf<String?>(null)
+    private var pendingExportJson: String? = null
+
+    private val exportBackupLauncher =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+            val json = pendingExportJson
+            pendingExportJson = null
+            if (uri != null && json != null) {
+                lifecycleScope.launch(Dispatchers.IO) {
+                    runCatching {
+                        contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray(Charsets.UTF_8)) }
+                            ?: error("Couldn't open the selected location.")
+                    }.onFailure {
+                        runOnUiThread { importError = "Couldn't save the backup file." }
+                    }
+                }
+            }
+        }
+
+    private val importBackupLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri == null) return@registerForActivityResult
+            lifecycleScope.launch(Dispatchers.IO) {
+                val preview = runCatching { readImportPreview(uri) }.getOrElse {
+                    null
+                }
+                withContext(Dispatchers.Main) {
+                    if (preview != null) {
+                        importError = null
+                        importPreview = preview
+                    } else {
+                        importError = "This isn't a valid Location Dots backup."
+                    }
+                }
+            }
+        }
 
     private val preferences by lazy { getSharedPreferences("location_dots_ui", MODE_PRIVATE) }
 
@@ -293,6 +342,11 @@ class MainActivity : ComponentActivity() {
                         },
                         onExport = { exportSummary(insights) },
                         onExportData = ::exportLocalData,
+                        onImportData = { importBackupLauncher.launch(arrayOf("application/json", "text/plain", "text/*")) },
+                        importPreview = importPreview,
+                        importError = importError,
+                        onDismissImport = { importPreview = null; importError = null },
+                        onConfirmImport = ::importBackup,
                         onClearHistory = ::clearHistory,
                         onResetSettings = ::resetAppSettings,
                         onAbout = { isAboutOpen = true },
@@ -408,60 +462,188 @@ class MainActivity : ComponentActivity() {
     private fun exportLocalData() {
         val app = application as LocationDotsApplication
         lifecycleScope.launch {
-            val locations = app.database.locationDao().getRange(Long.MIN_VALUE, Long.MAX_VALUE)
-            val places = app.database.placeDao().getAll()
-            val events = app.database.timelineEventDao().getAll()
-            val root = org.json.JSONObject().apply {
-                put("format", "location-dots-local-export")
-                put("version", 1)
-                put("generatedAtEpochMillis", System.currentTimeMillis())
-                put("locations", org.json.JSONArray().apply {
-                    locations.forEach {
-                        put(org.json.JSONObject().apply {
-                            put("id", it.id)
-                            put("latitude", it.latitude)
-                            put("longitude", it.longitude)
-                            put("accuracyMeters", it.accuracyMeters)
-                            put("timestampEpochMillis", it.timestampEpochMillis)
-                        })
-                    }
-                })
-                put("places", org.json.JSONArray().apply {
-                    places.forEach {
-                        put(org.json.JSONObject().apply {
-                            put("id", it.id)
-                            put("name", it.name)
-                            put("latitude", it.latitude)
-                            put("longitude", it.longitude)
-                            put("createdAtEpochMillis", it.createdAtEpochMillis)
-                            put("updatedAtEpochMillis", it.updatedAtEpochMillis)
-                        })
-                    }
-                })
-                put("timelineEvents", org.json.JSONArray().apply {
-                    events.forEach {
-                        put(org.json.JSONObject().apply {
-                            put("id", it.id)
-                            put("type", it.type)
-                            put("timestampEpochMillis", it.timestampEpochMillis)
-                            put("placeId", it.placeId)
-                            put("arrivalEpochMillis", it.arrivalEpochMillis)
-                            put("departureEpochMillis", it.departureEpochMillis)
-                            put("startPlaceId", it.startPlaceId)
-                            put("endPlaceId", it.endPlaceId)
-                            put("startedAtEpochMillis", it.startedAtEpochMillis)
-                            put("endedAtEpochMillis", it.endedAtEpochMillis)
-                            put("distanceMeters", it.distanceMeters)
-                            put("journeyMode", it.journeyMode)
-                            put("pathEncoded", it.pathEncoded)
-                        })
-                    }
-                })
+            val json = withContext(Dispatchers.Default) {
+                val locations = app.database.locationDao().getRange(Long.MIN_VALUE, Long.MAX_VALUE)
+                val places = app.database.placeDao().getAll()
+                val events = app.database.timelineEventDao().getAll()
+                JSONObject().apply {
+                    put("format", "location-dots-local-export")
+                    put("version", 1)
+                    put("generatedAtEpochMillis", System.currentTimeMillis())
+                    put("locations", JSONArray().apply {
+                        locations.forEach {
+                            put(JSONObject().apply {
+                                put("id", it.id)
+                                put("latitude", it.latitude)
+                                put("longitude", it.longitude)
+                                put("accuracyMeters", it.accuracyMeters)
+                                put("timestampEpochMillis", it.timestampEpochMillis)
+                            })
+                        }
+                    })
+                    put("places", JSONArray().apply {
+                        places.forEach {
+                            put(JSONObject().apply {
+                                put("id", it.id)
+                                put("name", it.name)
+                                put("latitude", it.latitude)
+                                put("longitude", it.longitude)
+                                put("createdAtEpochMillis", it.createdAtEpochMillis)
+                                put("updatedAtEpochMillis", it.updatedAtEpochMillis)
+                            })
+                        }
+                    })
+                    put("timelineEvents", JSONArray().apply {
+                        events.forEach {
+                            put(JSONObject().apply {
+                                put("id", it.id)
+                                put("type", it.type)
+                                put("timestampEpochMillis", it.timestampEpochMillis)
+                                put("placeId", it.placeId)
+                                put("arrivalEpochMillis", it.arrivalEpochMillis)
+                                put("departureEpochMillis", it.departureEpochMillis)
+                                put("startPlaceId", it.startPlaceId)
+                                put("endPlaceId", it.endPlaceId)
+                                put("startedAtEpochMillis", it.startedAtEpochMillis)
+                                put("endedAtEpochMillis", it.endedAtEpochMillis)
+                                put("distanceMeters", it.distanceMeters)
+                                put("journeyMode", it.journeyMode)
+                                put("pathEncoded", it.pathEncoded)
+                            })
+                        }
+                    })
+                }.toString(2)
             }
-            startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
-                type = "application/json"
-                putExtra(Intent.EXTRA_TEXT, root.toString(2))
-            }, "Export local data"))
+            pendingExportJson = json
+            exportBackupLauncher.launch(
+                "location-dots-backup-" +
+                    SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.US).format(Date()) +
+                    ".json"
+            )
+        }
+    }
+
+    private fun readImportPreview(uri: Uri): ImportPreview {
+        val text = contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
+            ?: error("Empty backup file.")
+        val root = JSONObject(text)
+        require(root.optString("format") == "location-dots-local-export") { "Unsupported backup format." }
+        require(root.optInt("version", -1) == 1) { "Unsupported backup version." }
+        return ImportPreview(
+            uri = uri,
+            locations = root.optJSONArray("locations")?.length() ?: 0,
+            places = root.optJSONArray("places")?.length() ?: 0,
+            timelineEvents = root.optJSONArray("timelineEvents")?.length() ?: 0,
+            generatedAtEpochMillis = root.optLong("generatedAtEpochMillis", 0L)
+        )
+    }
+
+    private suspend fun importBackup(preview: ImportPreview, replaceExisting: Boolean) {
+        val app = application as LocationDotsApplication
+        val uri = preview.uri
+        runCatching {
+            val text = contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
+                ?: error("Couldn't read the backup file.")
+            val root = JSONObject(text)
+            require(root.optString("format") == "location-dots-local-export")
+            require(root.optInt("version", -1) == 1)
+
+            val locations = parseLocations(root.optJSONArray("locations"))
+            val places = parsePlaces(root.optJSONArray("places"))
+            val events = parseTimelineEvents(root.optJSONArray("timelineEvents"))
+
+            app.database.withTransaction {
+                if (replaceExisting) {
+                    app.database.locationDao().deleteAll()
+                    app.database.placeDao().deleteAll()
+                    app.database.timelineEventDao().deleteAll()
+                }
+                app.database.locationDao().insertAll(locations)
+                app.database.placeDao().insertAll(places)
+                app.database.timelineEventDao().insertAll(events)
+            }
+        }.onSuccess {
+            importPreview = null
+            importError = null
+            timelineViewModel.refresh()
+            placesViewModel.refresh()
+            insightsViewModel.refresh()
+        }.onFailure {
+            importPreview = null
+            importError = "Couldn't import this backup. No changes were made."
+        }
+    }
+
+    private fun parseLocations(array: JSONArray?): List<LocationEntity> {
+        if (array == null) return emptyList()
+        return buildList {
+            for (i in 0 until array.length()) {
+                val o = array.getJSONObject(i)
+                val id = o.getString("id")
+                val lat = o.getDouble("latitude")
+                val lon = o.getDouble("longitude")
+                require(lat in -90.0..90.0 && lon in -180.0..180.0)
+                add(
+                    LocationEntity(
+                        id = id,
+                        latitude = lat,
+                        longitude = lon,
+                        accuracyMeters = if (o.isNull("accuracyMeters")) null else o.getDouble("accuracyMeters").toFloat(),
+                        timestampEpochMillis = o.getLong("timestampEpochMillis")
+                    )
+                )
+            }
+        }
+    }
+
+    private fun parsePlaces(array: JSONArray?): List<PlaceEntity> {
+        if (array == null) return emptyList()
+        return buildList {
+            for (i in 0 until array.length()) {
+                val o = array.getJSONObject(i)
+                val lat = o.getDouble("latitude")
+                val lon = o.getDouble("longitude")
+                require(lat in -90.0..90.0 && lon in -180.0..180.0)
+                add(
+                    PlaceEntity(
+                        id = o.getString("id"),
+                        name = if (o.isNull("name")) null else o.getString("name"),
+                        latitude = lat,
+                        longitude = lon,
+                        createdAtEpochMillis = o.getLong("createdAtEpochMillis"),
+                        updatedAtEpochMillis = o.getLong("updatedAtEpochMillis")
+                    )
+                )
+            }
+        }
+    }
+
+    private fun parseTimelineEvents(array: JSONArray?): List<TimelineEventEntity> {
+        if (array == null) return emptyList()
+        fun stringOrNull(o: JSONObject, key: String) = if (o.isNull(key)) null else o.getString(key)
+        fun longOrNull(o: JSONObject, key: String) = if (o.isNull(key)) null else o.getLong(key)
+        fun doubleOrNull(o: JSONObject, key: String) = if (o.isNull(key)) null else o.getDouble(key)
+        return buildList {
+            for (i in 0 until array.length()) {
+                val o = array.getJSONObject(i)
+                add(
+                    TimelineEventEntity(
+                        id = o.getString("id"),
+                        type = o.getString("type"),
+                        timestampEpochMillis = o.getLong("timestampEpochMillis"),
+                        placeId = stringOrNull(o, "placeId"),
+                        arrivalEpochMillis = longOrNull(o, "arrivalEpochMillis"),
+                        departureEpochMillis = longOrNull(o, "departureEpochMillis"),
+                        startPlaceId = stringOrNull(o, "startPlaceId"),
+                        endPlaceId = stringOrNull(o, "endPlaceId"),
+                        startedAtEpochMillis = longOrNull(o, "startedAtEpochMillis"),
+                        endedAtEpochMillis = longOrNull(o, "endedAtEpochMillis"),
+                        distanceMeters = doubleOrNull(o, "distanceMeters"),
+                        journeyMode = stringOrNull(o, "journeyMode"),
+                        pathEncoded = stringOrNull(o, "pathEncoded")
+                    )
+                )
+            }
         }
     }
 
