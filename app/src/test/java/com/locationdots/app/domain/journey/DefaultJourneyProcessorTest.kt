@@ -229,7 +229,7 @@ class DefaultJourneyProcessorTest {
         assertTrue(journey.distanceMeters!! >= 100.0)
         assertTrue(journey.path.isNotEmpty())
         assertEquals(departureOne.timestamp, journey.path.first().timestamp)
-        assertEquals(secondStay.last().timestamp, journey.path.last().timestamp)
+        assertEquals(secondStay.first().timestamp, journey.path.last().timestamp)
     }
 
     @Test
