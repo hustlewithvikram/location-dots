@@ -13,6 +13,7 @@ import org.maplibre.android.geometry.LatLng
 import com.locationdots.app.ui.components.LocationMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -92,7 +93,8 @@ fun TimelineScreen(
 @Composable
 private fun DayHeader(date: LocalDate) {
     val today = LocalDate.now(ZoneId.systemDefault())
-    val formatted = DateTimeFormatter.ofPattern("EEE, d MMM", Locale.getDefault()).format(date)
+    val currentLocale = LocalConfiguration.current.locales[0]
+    val formatted = DateTimeFormatter.ofPattern("EEE, d MMM", currentLocale).format(date)
     val label = when (date) {
         today -> "Today · " + formatted
         today.minusDays(1) -> "Yesterday · " + formatted
