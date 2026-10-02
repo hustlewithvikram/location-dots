@@ -22,7 +22,7 @@ fun InsightsScreen(
     onRefresh: () -> Unit,
     onTabSelected: (AppTab) -> Unit = {}
 ) {
-    Scaffold(bottomBar = { AppBottomBar(AppTab.INSIGHTS, onTabSelected) }) { padding ->
+    Scaffold { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(18.dp, 12.dp, 18.dp, 28.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             item {
                 Row {
