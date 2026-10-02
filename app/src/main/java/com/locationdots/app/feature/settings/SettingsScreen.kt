@@ -28,7 +28,7 @@ fun SettingsScreen(
     onAbout: () -> Unit
 ) {
     var showClearDialog by remember { mutableStateOf(false) }
-    Scaffold(bottomBar = { AppBottomBar(selectedTab, onTabSelected) }) { padding ->
+    Scaffold { padding ->
         LazyColumn(
             Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(18.dp, 18.dp, 18.dp, 28.dp),
