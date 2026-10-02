@@ -7,6 +7,7 @@ import android.app.NotificationManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
@@ -45,14 +46,18 @@ class LocationTrackingService : LifecycleService() {
 
         collectionJob = lifecycleScope.launch {
             app.locationProvider.locations.collect { point ->
-                app.locationRepository.saveLocationPoint(point)
+                runCatching {
+                    app.locationRepository.saveLocationPoint(point)
 
-                val to = point.timestamp
-                val from = to.minus(PROCESSING_WINDOW)
-                val points = app.locationRepository.getLocationPoints(from, to)
-                val events = app.journeyProcessor.process(points)
+                    val to = point.timestamp
+                    val from = to.minus(PROCESSING_WINDOW)
+                    val points = app.locationRepository.getLocationPoints(from, to)
+                    val events = app.journeyProcessor.process(points)
 
-                app.timelineRepository.replaceRange(from, to, events)
+                    app.timelineRepository.replaceRange(from, to, events)
+                }.onFailure { error ->
+                    Log.e(TAG, "Failed to process location update; continuing tracking.", error)
+                }
             }
         }
 
@@ -110,6 +115,7 @@ class LocationTrackingService : LifecycleService() {
     }
 
     private companion object {
+        const val TAG = "LocationTrackingService"
         const val CHANNEL_ID = "location_tracking"
         const val PREFERENCES_NAME = "location_dots_ui"
         const val NOTIFICATION_ID = 1001
