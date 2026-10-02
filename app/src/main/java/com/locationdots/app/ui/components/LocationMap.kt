@@ -152,15 +152,17 @@ fun LocationMap(
             }
 
             mapView.post {
-                val bounds = org.maplibre.android.geometry.LatLngBounds.Builder().apply {
-                    points.forEach { include(it) }
-                }.build()
-
                 if (points.size == 1) {
+                    // LatLngBounds.Builder requires at least two included points.
+                    // A single location should use a centered camera instead.
                     readyMap.moveCamera(
                         CameraUpdateFactory.newLatLngZoom(points.first(), 14.0)
                     )
                 } else {
+                    val bounds = org.maplibre.android.geometry.LatLngBounds.Builder().apply {
+                        points.forEach { include(it) }
+                    }.build()
+
                     readyMap.moveCamera(
                         CameraUpdateFactory.newLatLngBounds(bounds, 56)
                     )
