@@ -45,7 +45,8 @@ fun LocationMap(
     points: List<LatLng>,
     modifier: Modifier = Modifier,
     interactive: Boolean = false,
-    fitRequest: Any? = points
+    fitRequest: Any? = points,
+    onMapClick: ((LatLng) -> Unit)? = null
 ) {
     if (points.isEmpty()) return
 
@@ -67,6 +68,24 @@ fun LocationMap(
     }
 
     var map by remember { mutableStateOf<MapLibreMap?>(null) }
+
+    DisposableEffect(map, onMapClick) {
+        val readyMap = map ?: return@DisposableEffect onDispose { }
+        if (onMapClick != null) {
+            readyMap.addOnMapClickListener { point ->
+                onMapClick(point)
+                true
+            }
+        }
+        onDispose {
+            if (onMapClick != null) {
+                readyMap.removeOnMapClickListener { point ->
+                    onMapClick(point)
+                    true
+                }
+            }
+        }
+    }
 
     DisposableEffect(lifecycleOwner, mapView) {
         val observer = LifecycleEventObserver { _, event ->
