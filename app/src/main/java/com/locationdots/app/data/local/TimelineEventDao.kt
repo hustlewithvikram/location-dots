@@ -22,6 +22,14 @@ interface TimelineEventDao {
     """)
     suspend fun getVisitsForPlace(placeId: String): List<TimelineEventEntity>
 
+    @Query("""
+        SELECT * FROM timeline_events
+        WHERE type = 'visit' AND departureEpochMillis IS NULL
+        ORDER BY arrivalEpochMillis DESC
+        LIMIT 1
+    """)
+    suspend fun getActiveVisit(): TimelineEventEntity?
+
     @Query("SELECT * FROM timeline_events ORDER BY timestampEpochMillis DESC")
     suspend fun getAll(): List<TimelineEventEntity>
 
