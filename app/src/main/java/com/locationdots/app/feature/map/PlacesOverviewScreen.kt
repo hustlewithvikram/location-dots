@@ -10,7 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.google.android.gms.maps.model.LatLng
+import org.maplibre.android.geometry.LatLng
 import com.locationdots.app.domain.model.Place
 import com.locationdots.app.ui.components.*
 import androidx.compose.foundation.shape.RoundedCornerShape
