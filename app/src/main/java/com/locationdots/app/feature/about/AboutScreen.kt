@@ -34,19 +34,32 @@ fun AboutScreen(onBack: () -> Unit) {
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(18.dp, 10.dp, 18.dp, 28.dp),
+        contentWindowInsets = WindowInsets.safeDrawing,
+        contentPadding = PaddingValues(start = 18.dp, top = 12.dp, end = 18.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                FilledTonalIconButton(onClick = onBack) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FilledTonalIconButton(
+                    onClick = onBack,
+                    modifier = Modifier.size(48.dp)
+                ) {
                     Icon(Icons.Default.ArrowBack, "Back")
                 }
                 Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text("About Location Dots", style = MaterialTheme.typography.headlineSmall)
+                Column(
+                    Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
                     Text(
-                        "App details, privacy, permissions and project links.",
+                        "About Location Dots",
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    Text(
+                        "App details, privacy and project links.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -65,7 +78,10 @@ fun AboutScreen(onBack: () -> Unit) {
                         containerColor = MaterialTheme.colorScheme.primary
                     )
                     Spacer(Modifier.width(14.dp))
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Column(
+                        Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
                         Text("Location Dots", style = MaterialTheme.typography.headlineSmall)
                         Text(
                             "A local-first timeline for places and journeys.",
@@ -87,26 +103,26 @@ fun AboutScreen(onBack: () -> Unit) {
         item {
             ExpressiveCard {
                 Column(Modifier.padding(8.dp)) {
-                    ExpressiveListRow(
+                    InfoRow(
                         "Local by default",
-                        "Location history and saved places use the on-device Room database.",
-                        { Icon(Icons.Default.Storage, null) }
+                        "Location history and saved places stay in the on-device database.",
+                        Icons.Default.Storage
                     )
-                    ExpressiveListRow(
+                    InfoRow(
                         "No account required",
-                        "The app does not require an account or cloud history.",
-                        { Icon(Icons.Default.PersonOff, null) }
+                        "The local timeline does not require an account or cloud history.",
+                        Icons.Default.PersonOff
                     )
-                    ExpressiveListRow(
+                    InfoRow(
                         "Explicit sharing",
-                        "Data is only shared when you choose a share or export action.",
-                        { Icon(Icons.Default.Share, null) }
+                        "Data leaves the app only when you choose an export or share action.",
+                        Icons.Default.Share
                     )
                     ExpressiveListRow(
-                        "Open project",
-                        "The source is publicly available for inspection.",
+                        "Open-source project",
+                        "Source code is publicly available.",
                         { Icon(Icons.Default.Code, null) },
-                        trailing = { Icon(Icons.Default.ChevronRight, null) },
+                        trailing = { Icon(Icons.Default.OpenInNew, "Open") },
                         onClick = { openUrl(SOURCE_URL) }
                     )
                 }
@@ -118,24 +134,24 @@ fun AboutScreen(onBack: () -> Unit) {
         item {
             ExpressiveCard {
                 Column(Modifier.padding(8.dp)) {
-                    PermissionRow(
-                        "Precise & approximate location",
-                        "Used to record visits and journeys.",
+                    InfoRow(
+                        "Location",
+                        "Precise or approximate location is used to record visits and journeys.",
                         Icons.Default.LocationOn
                     )
-                    PermissionRow(
+                    InfoRow(
                         "Foreground location service",
-                        "Keeps tracking active while the app records your location.",
+                        "Keeps location tracking active while the tracking service is running.",
                         Icons.Default.MyLocation
                     )
-                    PermissionRow(
+                    InfoRow(
                         "Internet",
                         "Used for map tiles and location search.",
                         Icons.Default.Public
                     )
-                    PermissionRow(
-                        "Storage on Android 9 and older",
-                        "Used only for legacy local crash-log file handling.",
+                    InfoRow(
+                        "Legacy storage",
+                        "On Android 9 and older, used for local crash-log handling.",
                         Icons.Default.Folder
                     )
                 }
@@ -144,17 +160,23 @@ fun AboutScreen(onBack: () -> Unit) {
 
         item {
             ExpressiveCard {
-                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         ExpressiveIconBadge(
                             icon = { Icon(Icons.Default.Security, null) },
                             containerColor = MaterialTheme.colorScheme.primaryContainer
                         )
                         Spacer(Modifier.width(12.dp))
-                        Text("Why location access?", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "Why location access?",
+                            style = MaterialTheme.typography.titleMedium
+                        )
                     }
                     Text(
-                        "Location access is the core permission needed to build the timeline. You can control it from Android settings, and the app does not need an account to use the local timeline.",
+                        "Location access is required to build the timeline. You can control it through Android settings, and no account is required.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -170,13 +192,13 @@ fun AboutScreen(onBack: () -> Unit) {
                     "Vikram Vishwakarma",
                     "Developer · Location Dots",
                     { Icon(Icons.Default.Person, null) },
-                    trailing = { Icon(Icons.Default.ChevronRight, null) },
+                    trailing = { Icon(Icons.Default.OpenInNew, "Open") },
                     onClick = { openUrl(DEVELOPER_URL) }
                 )
             }
         }
 
-        item { AboutSectionTitle("Project") }
+        item { AboutSectionTitle("Project links") }
 
         item {
             ExpressiveCard {
@@ -185,21 +207,21 @@ fun AboutScreen(onBack: () -> Unit) {
                         "Source code",
                         "Browse the complete project on GitHub.",
                         { Icon(Icons.Default.Code, null) },
-                        trailing = { Icon(Icons.Default.OpenInNew, null) },
+                        trailing = { Icon(Icons.Default.OpenInNew, "Open") },
                         onClick = { openUrl(SOURCE_URL) }
                     )
                     ExpressiveListRow(
                         "Report an issue",
                         "Report bugs or request improvements.",
                         { Icon(Icons.Default.BugReport, null) },
-                        trailing = { Icon(Icons.Default.OpenInNew, null) },
+                        trailing = { Icon(Icons.Default.OpenInNew, "Open") },
                         onClick = { openUrl(ISSUES_URL) }
                     )
                     ExpressiveListRow(
                         "Releases",
-                        "View published versions and release notes.",
+                        "View versions and release notes.",
                         { Icon(Icons.Default.Download, null) },
-                        trailing = { Icon(Icons.Default.OpenInNew, null) },
+                        trailing = { Icon(Icons.Default.OpenInNew, "Open") },
                         onClick = { openUrl(RELEASES_URL) }
                     )
                 }
@@ -208,7 +230,10 @@ fun AboutScreen(onBack: () -> Unit) {
 
         item {
             ExpressiveCard {
-                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(
+                    Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
                     Text("Built with", style = MaterialTheme.typography.titleMedium)
                     Text(
                         "Kotlin · Jetpack Compose · Material 3 · Room · MapLibre · OpenFreeMap · OpenStreetMap",
@@ -232,7 +257,7 @@ private fun AboutSectionTitle(text: String) {
 }
 
 @Composable
-private fun PermissionRow(
+private fun InfoRow(
     title: String,
     subtitle: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector
