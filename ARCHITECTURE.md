@@ -1,6 +1,6 @@
 # Location Dots — Architecture
 
-Step 2 establishes the application boundaries before real location tracking is implemented.
+The application uses clear boundaries between platform services, persistence, domain processing, and Compose presentation.
 
 ## Layers
 
@@ -16,7 +16,7 @@ Step 2 establishes the application boundaries before real location tracking is i
 
 `Room → Repository → Domain models → TimelineViewModel → Compose UI`
 
-Journey processing will later sit between collected location points and meaningful timeline events:
+Journey processing sits between collected location points and meaningful timeline events:
 
 `Location points → JourneyProcessor → Visits/Journeys → Timeline`
 
@@ -36,4 +36,4 @@ Journey processing will later sit between collected location points and meaningf
 `feature/photos`
 `feature/profile`
 
-No real background location collection is enabled in Step 2. The service and provider boundaries are intentionally present so the implementation can be added without restructuring the project.
+Background location collection is implemented through the foreground location service and persists location points locally before journey/place processing.
