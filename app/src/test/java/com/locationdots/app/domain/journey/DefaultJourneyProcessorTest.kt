@@ -46,6 +46,31 @@ class DefaultJourneyProcessorTest {
     }
 
     @Test
+    fun exactlyEightMinutesCreatesVisit() = runBlocking {
+        val start = Instant.parse("2026-10-02T10:00:00Z")
+        val points = points(start, count = 17, secondsBetween = 30, latitudeStep = 0.00002)
+
+        val visit = processor.process(points)
+            .filterIsInstance<TimelineEvent.Visit>()
+            .singleOrNull()
+
+        assertTrue(visit != null)
+        assertEquals(start.plusSeconds(8 * 60L), points.last().timestamp)
+    }
+
+    @Test
+    fun longStayRemainsOneActiveVisit() = runBlocking {
+        val start = Instant.parse("2026-10-02T10:00:00Z")
+        val events = processor.process(
+            points(start, count = 41, secondsBetween = 30, latitudeStep = 0.00002)
+        )
+
+        assertEquals(1, events.filterIsInstance<TimelineEvent.Visit>().size)
+        assertTrue(events.none { it is TimelineEvent.Journey })
+        assertEquals(null, events.filterIsInstance<TimelineEvent.Visit>().single().departure)
+    }
+
+    @Test
     fun stayShorterThanEightMinutesIsNotAVisit() = runBlocking {
         val start = Instant.parse("2026-10-02T10:00:00Z")
         val points = points(start, count = 15, secondsBetween = 30, latitudeStep = 0.00002)
