@@ -52,7 +52,7 @@ jobs:
         run: gradle wrapper --gradle-version 9.6.0 --distribution-type bin
 
       - name: Build debug APK
-        run: ./gradlew :app:assembleDebug --stacktrace --no-daemon -PversionCode=$((1000 + ${{ github.run_number }})) -PversionName=0.1.${{ github.run_number }}
+        run: ./gradlew :app:assembleDebug --stacktrace --no-daemon -PversionCode=$((1000 + ${{ github.run_number }})) -PversionName=1.0.0-dev.${{ github.run_number }}
 
       - name: Lint debug
         run: ./gradlew :app:lintDebug --stacktrace --no-daemon
