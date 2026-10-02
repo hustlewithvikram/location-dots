@@ -102,10 +102,6 @@ fun SettingsScreen(
     var showAttributionDialog by remember { mutableStateOf(false) }
     var editingPlace by remember { mutableStateOf<Place?>(null) }
 
-    BackHandler(enabled = page != SettingsPage.HOME) {
-        closeSettingsPage()
-    }
-
     fun openPlaceEditor(place: Place?) {
         editingPlace = place
         showPlaceEditor = true
@@ -120,6 +116,10 @@ fun SettingsScreen(
     fun closeSettingsPage() {
         settingsNavigationDirection = NavigationDirection.BACK
         page = SettingsPage.HOME
+    }
+
+    BackHandler(enabled = page != SettingsPage.HOME) {
+        closeSettingsPage()
     }
 
     Scaffold { padding ->
