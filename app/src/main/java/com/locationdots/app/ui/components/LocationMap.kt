@@ -7,9 +7,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,23 +51,12 @@ fun LocationMap(
 
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    var mapInitializationFailed by remember { mutableStateOf(false) }
-
-    if (mapInitializationFailed) {
-        Box(modifier = modifier, contentAlignment = Alignment.Center) {
-            Text("Map unavailable")
-        }
-        return
-    }
 
     val mapView = remember {
-        try {
+        runCatching {
             MapLibre.getInstance(context)
             MapView(context).apply { onCreate(Bundle()) }
-        } catch (_: Throwable) {
-            mapInitializationFailed = true
-            null
-        }
+        }.getOrNull()
     }
 
     if (mapView == null) {
