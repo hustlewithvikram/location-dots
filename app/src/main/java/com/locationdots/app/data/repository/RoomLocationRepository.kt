@@ -18,6 +18,16 @@ class RoomLocationRepository(private val dao: LocationDao) : LocationRepository 
         dao.getRange(from.toEpochMilli(), to.toEpochMilli()).map { it.toDomain() }
 
     override suspend fun saveLocationPoint(point: LocationPoint) {
-        dao.insert(point.toEntity(UUID.randomUUID().toString()))
+        val stableId = buildString {
+            append("location:")
+            append(point.timestamp.toEpochMilli())
+            append(':')
+            append(point.latitude)
+            append(':')
+            append(point.longitude)
+            append(':')
+            append(point.accuracyMeters ?: "unknown")
+        }
+        dao.insert(point.toEntity(stableId))
     }
 }
