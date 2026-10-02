@@ -13,7 +13,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.locationdots.app.ui.components.ExpressiveButton
@@ -42,16 +41,19 @@ fun OnboardingScreen(
             Text((page + 1).toString() + "/3", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                Modifier.fillMaxWidth().height(280.dp).clip(RoundedCornerShape(42.dp))
-                    .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.tertiaryContainer))),
-                contentAlignment = Alignment.Center
+            Surface(
+                modifier = Modifier.fillMaxWidth().height(280.dp),
+                shape = RoundedCornerShape(42.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                tonalElevation = 2.dp
             ) {
+                Box(contentAlignment = Alignment.Center) {
                 ExpressiveCard(emphasized = true) {
                     Column(Modifier.padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         ExpressiveIconBadge(Modifier.size(72.dp), { Icon(icons[page], null, Modifier.size(34.dp)) })
                         Text("Location Dots", style = MaterialTheme.typography.titleLarge)
                     }
+                }
                 }
             }
             Spacer(Modifier.height(34.dp))
