@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.PowerManager
 import android.provider.Settings
 import androidx.compose.animation.*
 import com.google.android.gms.location.LocationServices
@@ -377,6 +378,11 @@ class MainActivity : ComponentActivity() {
                         onOpenLocationSettings = {
                             startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
                         },
+                        batteryOptimizationIgnored = isBatteryOptimizationIgnored(),
+                        onOpenBatterySettings = {
+                            startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+                        },
+                        onShareDiagnostics = ::shareDiagnostics,
                         onRequestLocationPermission = ::requestLocationPermission,
                         onSaveNamedPlace = ::saveNamedPlace,
                         onRequestCurrentLocation = ::requestCurrentLocation
@@ -477,6 +483,38 @@ class MainActivity : ComponentActivity() {
                     onLocation(location.latitude, location.longitude)
                 }
             }
+    }
+
+    private fun isBatteryOptimizationIgnored(): Boolean {
+        val powerManager = getSystemService(PowerManager::class.java)
+        return powerManager?.isIgnoringBatteryOptimizations(packageName) == true
+    }
+
+    private fun shareDiagnostics() {
+        val report = buildString {
+            appendLine("Location Dots diagnostic report")
+            appendLine()
+            appendLine("Android: " + android.os.Build.VERSION.RELEASE + " (API " + android.os.Build.VERSION.SDK_INT + ")")
+            appendLine("Device: " + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL)
+            appendLine("Tracking: " + if (isTracking) "Running" else "Stopped")
+            appendLine("Location permission: " + if (permissionManager.hasForegroundLocationPermission()) "Granted" else "Not granted")
+            appendLine("Location services: " + if (isLocationEnabled()) "Enabled" else "Disabled")
+            appendLine("Battery optimization: " + if (isBatteryOptimizationIgnored()) "Unrestricted" else "Optimized")
+            appendLine("Tracking accuracy: " + trackingAccuracy.name)
+            appendLine("Tracking interval: " + trackingInterval.label)
+            appendLine("Map style: " + mapStyle)
+            appendLine("Route lines: " + showRouteLines)
+            appendLine("Place markers: " + showPlaceMarkers)
+            appendLine("Saved places: " + placesViewModel.places.value.size)
+            appendLine("Maps: MapLibre + OpenFreeMap")
+            appendLine()
+            appendLine("Generated locally by Location Dots.")
+        }
+        startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, "Location Dots diagnostic report")
+            putExtra(Intent.EXTRA_TEXT, report)
+        }, "Share diagnostic report"))
     }
 
     private fun clearHistory() {
