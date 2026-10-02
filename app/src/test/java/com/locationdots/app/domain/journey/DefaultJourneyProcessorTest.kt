@@ -91,7 +91,7 @@ class DefaultJourneyProcessorTest {
         val start = Instant.parse("2026-10-02T10:00:00Z")
         val points = points(start, count = 17, secondsBetween = 30, latitudeStep = 0.00002)
             .mapIndexed { index, point ->
-                if (index == 8) point.copy(accuracyMeters = 150f) else point
+                if (index >= 14) point.copy(accuracyMeters = 150f) else point
             }
 
         val events = processor.process(points)
