@@ -2,6 +2,8 @@ package com.locationdots.app.feature.settings
 
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -101,7 +103,6 @@ fun SettingsScreen(
     var editingPlace by remember { mutableStateOf<Place?>(null) }
 
     BackHandler(enabled = page != SettingsPage.HOME) {
-        settingsNavigationDirection = NavigationDirection.BACK
         closeSettingsPage()
     }
 
@@ -204,7 +205,7 @@ fun SettingsScreen(
             SettingsPage.TRACKING -> SettingsSubPage(
                 Modifier.padding(padding), "Tracking",
                 "",
-                onBack = { page = SettingsPage.HOME }
+                onBack = ::closeSettingsPage
             ) {
                 item {
                     ExpressiveCard(emphasized = isTracking) {
@@ -337,7 +338,7 @@ fun SettingsScreen(
             SettingsPage.MAP_APPEARANCE -> SettingsSubPage(
                 Modifier.padding(padding), "Map & appearance",
                 "",
-                onBack = { page = SettingsPage.HOME }
+                onBack = ::closeSettingsPage
             ) {
                 item {
                     ExpressiveCard {
@@ -404,7 +405,7 @@ fun SettingsScreen(
             SettingsPage.PRIVACY_DATA -> SettingsSubPage(
                 Modifier.padding(padding), "Privacy & data",
                 "",
-                onBack = { page = SettingsPage.HOME }
+                onBack = ::closeSettingsPage
             ) {
                 item {
                     ExpressiveCard(emphasized = true) {
@@ -512,7 +513,7 @@ fun SettingsScreen(
             SettingsPage.EXPORT_BACKUP -> SettingsSubPage(
                 Modifier.padding(padding), "Export & backup",
                 "",
-                onBack = { page = SettingsPage.HOME }
+                onBack = ::closeSettingsPage
             ) {
                 item {
                     ExpressiveCard(emphasized = true) {
@@ -607,7 +608,7 @@ fun SettingsScreen(
             SettingsPage.DIAGNOSTICS -> SettingsSubPage(
                 Modifier.padding(padding), "Diagnostics",
                 "",
-                onBack = { page = SettingsPage.HOME }
+                onBack = ::closeSettingsPage
             ) {
                 item {
                     ExpressiveCard(emphasized = isTracking && locationPermissionGranted) {
