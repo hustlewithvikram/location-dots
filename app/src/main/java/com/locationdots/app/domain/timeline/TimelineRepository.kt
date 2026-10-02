@@ -8,5 +8,6 @@ interface TimelineRepository {
     suspend fun getPage(limit: Int, offset: Int): List<TimelineEvent>
     suspend fun replaceAll(events: List<TimelineEvent>)
     suspend fun getVisitsForPlace(placeId: String): List<TimelineEvent.Visit>
+    suspend fun getActiveVisit(): TimelineEvent.Visit?
     suspend fun replaceRange(from: Instant, to: Instant, events: List<TimelineEvent>)
 }
