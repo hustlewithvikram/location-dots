@@ -52,7 +52,7 @@ fun SettingsScreen(
             item {
                 Column {
                     Text("Settings", style = MaterialTheme.typography.headlineLarge)
-                    Text("Shape how Location Dots works for you.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Personalize tracking, saved places, appearance and local data.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             item {
@@ -73,7 +73,7 @@ fun SettingsScreen(
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         ExpressiveSectionHeader(
                             "Saved locations",
-                            "Name Home, Office and other places so matching visits stay recognizable."
+                            "${places.size} saved ${if (places.size == 1) "place" else "places"} · Search an address, pick on the map, or use your current location."
                         )
                         Button(
                             onClick = { openPlaceEditor(null) },
@@ -81,11 +81,11 @@ fun SettingsScreen(
                         ) {
                             Icon(Icons.Default.AddLocationAlt, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
-                            Text("Add a location")
+                            Text("Add place")
                         }
                         if (places.isEmpty()) {
                             Text(
-                                "No saved locations yet. Add one manually or name an existing place from its detail screen.",
+                                "No saved places yet. Add Home, Office, Gym or any place you want Location Dots to recognize.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -121,7 +121,7 @@ fun SettingsScreen(
             item {
                 ExpressiveCard {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        ExpressiveSectionHeader("Appearance", "Expressive Material design with your choice of theme.")
+                        ExpressiveSectionHeader("Appearance", "Material 3 Expressive design with control over theme and motion.")
                         Text("Theme", style = MaterialTheme.typography.labelLarge)
                         SingleChoiceSegmentedButtonRow {
                             ThemeChoice.entries.forEachIndexed { index, choice ->
@@ -145,7 +145,7 @@ fun SettingsScreen(
             item {
                 ExpressiveCard {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        ExpressiveSectionHeader("Privacy & data")
+                        ExpressiveSectionHeader("Privacy & data", "Location history and saved places remain on this device.")
                         ExpressiveListRow("Private by design", "Your location history stays on this device.", { Icon(Icons.Default.PrivacyTip, null) }, trailing = { Icon(Icons.Default.VerifiedUser, null) })
                         ExpressiveListRow("Export summary", "Share a readable summary of your activity.", { Icon(Icons.Default.Share, null) }, onClick = onExport)
                         ExpressiveListRow("Clear local history", "Delete recorded locations, places and timeline events.", { Icon(Icons.Default.DeleteOutline, null) }, onClick = { showClearDialog = true })
