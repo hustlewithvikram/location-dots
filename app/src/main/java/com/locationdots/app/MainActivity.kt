@@ -237,7 +237,16 @@ class MainActivity : ComponentActivity() {
                 }
 
                 if (destinationKey in 0..3) {
-                    AppBottomBar(currentTab, ::selectTab)
+                    // Keep the navigation shell spatially anchored to the bottom.
+                    // The destination content owns the area above it; the pill is an overlay
+                    // aligned explicitly to the bottom so edge-to-edge layout cannot place it
+                    // at the top when the parent has no vertical alignment constraint.
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = androidx.compose.ui.Alignment.BottomCenter
+                    ) {
+                        AppBottomBar(currentTab, ::selectTab)
+                    }
                 }
             }
         }
