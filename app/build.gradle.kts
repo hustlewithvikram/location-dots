@@ -21,10 +21,10 @@ extensions.configure<ApplicationExtension> {
         targetSdk = 37
         versionCode = providers.gradleProperty("versionCode")
             .map(String::toInt)
-            .orElse(1)
+            .orElse(100)
             .get()
         versionName = providers.gradleProperty("versionName")
-            .orElse("0.1.0")
+            .orElse("1.0.0")
             .get()
     }
 
