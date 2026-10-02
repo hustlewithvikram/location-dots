@@ -34,7 +34,7 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
             val place = placeEngine.resolve(cluster)
 
             TimelineEvent.Visit(
-                id = "visit:" + place.id + ":" + cluster.first().timestamp.toEpochMilli(),
+                id = "visit:" + place.id + ":" + cluster.points.first().timestamp.toEpochMilli(),
                 timestamp = cluster.first().timestamp,
                 place = place,
                 arrival = cluster.first().timestamp,
