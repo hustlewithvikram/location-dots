@@ -22,11 +22,25 @@ private enum class SettingsPage {
     HOME, SAVED_PLACES, TRACKING, MAP_APPEARANCE, PRIVACY_DATA, EXPORT_BACKUP, DIAGNOSTICS
 }
 
+private enum class MapStyleChoice(val key: String, val label: String) {
+    LIBERTY("liberty", "Liberty"),
+    BRIGHT("bright", "Bright"),
+    POSITRON("positron", "Positron"),
+    DARK("dark", "Dark"),
+    FIORD("fiord", "Fiord");
+
+    companion object {
+        fun fromKey(key: String): MapStyleChoice =
+            entries.firstOrNull { it.key == key } ?: LIBERTY
+    }
+}
+
 @Composable
 fun SettingsScreen(
     themeChoice: ThemeChoice,
     isTracking: Boolean,
     animationsEnabled: Boolean,
+    mapStyle: String,
     showRouteLines: Boolean,
     showPlaceMarkers: Boolean,
     places: List<Place>,
@@ -34,6 +48,7 @@ fun SettingsScreen(
     onThemeChange: (ThemeChoice) -> Unit,
     onTrackingChange: (Boolean) -> Unit,
     onAnimationsChange: (Boolean) -> Unit,
+    onMapStyleChange: (String) -> Unit,
     onRouteLinesChange: (Boolean) -> Unit,
     onPlaceMarkersChange: (Boolean) -> Unit,
     onExport: () -> Unit,
@@ -49,6 +64,7 @@ fun SettingsScreen(
     var page by rememberSaveable { mutableStateOf(SettingsPage.HOME) }
     var showClearDialog by remember { mutableStateOf(false) }
     var showPlaceEditor by remember { mutableStateOf(false) }
+    var showMapStyleDialog by remember { mutableStateOf(false) }
     var editingPlace by remember { mutableStateOf<Place?>(null) }
 
     BackHandler(enabled = page != SettingsPage.HOME) { page = SettingsPage.HOME }
@@ -196,7 +212,12 @@ fun SettingsScreen(
                 item {
                     ExpressiveCard {
                         Column(Modifier.padding(10.dp)) {
-                            ExpressiveListRow("Map style", "Liberty · OpenFreeMap", { Icon(Icons.Default.Map, null) })
+                            ExpressiveListRow(
+                                "Map style",
+                                "${MapStyleChoice.fromKey(mapStyle).label} · OpenFreeMap",
+                                { Icon(Icons.Default.Map, null) },
+                                onClick = { showMapStyleDialog = true }
+                            )
                             ExpressiveListRow(
                                 "Route lines",
                                 "Show movement paths on timeline and journey maps.",
@@ -313,6 +334,40 @@ fun SettingsScreen(
                 editingPlace = null
             },
             onRequestCurrentLocation = onRequestCurrentLocation
+        )
+    }
+
+    if (showMapStyleDialog) {
+        val selectedStyle = MapStyleChoice.fromKey(mapStyle)
+        AlertDialog(
+            onDismissRequest = { showMapStyleDialog = false },
+            title = { Text("Map style") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    MapStyleChoice.entries.forEach { style ->
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = selectedStyle == style,
+                                onClick = {
+                                    onMapStyleChange(style.key)
+                                    showMapStyleDialog = false
+                                }
+                            )
+                            Text(
+                                style.label,
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showMapStyleDialog = false }) { Text("Done") }
+            }
         )
     }
 
