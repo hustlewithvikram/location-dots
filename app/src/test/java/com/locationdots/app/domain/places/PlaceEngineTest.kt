@@ -62,7 +62,7 @@ class PlaceEngineTest {
     }
 
     @Test
-    fun spreadOfVisitCanExpandMergeRadiusWithoutExceedingSafetyCap() = runBlocking {
+    fun normalAccuracyUsesMinimumMergeRadiusWithoutClusterSpreadExpansion() = runBlocking {
         val repository = FakeRepository()
         repository.place = Place(
             id = "place:existing",
@@ -84,7 +84,7 @@ class PlaceEngineTest {
         val resolved = engine.resolve(points)
 
         assertEquals("place:existing", resolved.id)
-        assertTrue(repository.lastRadiusMeters!! in 96.6..96.8)
+        assertEquals(75.0, repository.lastRadiusMeters)
     }
 
     @Test
