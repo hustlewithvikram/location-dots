@@ -325,9 +325,13 @@ fun SettingsScreen(
                         Column(Modifier.padding(10.dp)) {
                             ExpressiveListRow(
                                 "Map style",
-                                "${MapStyleChoice.fromKey(mapStyle).label} · OpenFreeMap",
+                                MapStyleChoice.fromKey(mapStyle).label,
                                 { Icon(Icons.Default.Map, null) },
-                                onClick = { showMapStyleDialog = true }
+                                trailing = { Icon(Icons.Default.ChevronRight, null) },
+                                onClick = {
+                                    previewMapStyle = mapStyle
+                                    showMapStyleDialog = true
+                                }
                             )
                             ExpressiveListRow(
                                 "Route lines",
