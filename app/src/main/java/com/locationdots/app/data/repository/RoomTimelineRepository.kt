@@ -23,6 +23,9 @@ class RoomTimelineRepository(
     override suspend fun getVisitsForPlace(placeId: String): List<TimelineEvent.Visit> =
         dao.getVisitsForPlace(placeId).mapNotNull { toDomain(it) as? TimelineEvent.Visit }
 
+    override suspend fun getActiveVisit(): TimelineEvent.Visit? =
+        dao.getActiveVisit()?.let { toDomain(it) as? TimelineEvent.Visit }
+
     override suspend fun replaceAll(events: List<TimelineEvent>) {
         dao.deleteAll()
         dao.insertAll(events.map(::toEntity))
