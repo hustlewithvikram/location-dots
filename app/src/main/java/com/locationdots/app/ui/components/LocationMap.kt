@@ -71,18 +71,20 @@ fun LocationMap(
 
     DisposableEffect(map, onMapClick) {
         val readyMap = map ?: return@DisposableEffect onDispose { }
-        if (onMapClick != null) {
-            readyMap.addOnMapClickListener { point ->
-                onMapClick(point)
-                true
+        val clickListener = onMapClick?.let { callback ->
+            object : MapLibreMap.OnMapClickListener {
+                override fun onMapClick(point: LatLng): Boolean {
+                    callback(point)
+                    return true
+                }
             }
         }
+        if (clickListener != null) {
+            readyMap.addOnMapClickListener(clickListener)
+        }
         onDispose {
-            if (onMapClick != null) {
-                readyMap.removeOnMapClickListener { point ->
-                    onMapClick(point)
-                    true
-                }
+            if (clickListener != null) {
+                readyMap.removeOnMapClickListener(clickListener)
             }
         }
     }
