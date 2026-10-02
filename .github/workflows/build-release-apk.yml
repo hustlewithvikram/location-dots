@@ -77,8 +77,8 @@ jobs:
           releaseKeyPassword=$RELEASE_KEY_PASSWORD
           EOF
 
-      - name: Run release unit tests
-        run: ./gradlew :app:testReleaseUnitTest --stacktrace --no-daemon
+      - name: Run unit tests
+        run: ./gradlew :app:testDebugUnitTest --stacktrace --no-daemon
 
       - name: Lint release
         run: ./gradlew :app:lintRelease --stacktrace --no-daemon
