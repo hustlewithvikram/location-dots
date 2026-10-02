@@ -139,28 +139,28 @@ private fun DayHeader(date: LocalDate) {
 
 @Composable
 private fun TimelineRail(event: TimelineEvent, modifier: Modifier = Modifier) {
-    val isJourney = event is TimelineEvent.Journey
-    val container = if (isJourney) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.primaryContainer
-    val content = if (isJourney) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onPrimaryContainer
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Surface(
-            modifier = Modifier.size(32.dp),
-            shape = CircleShape,
-            color = container,
-            tonalElevation = 1.dp
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = if (isJourney) Icons.Default.Route else Icons.Default.Place,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                    tint = content
-                )
-            }
-        }
+    val dotColor = if (event is TimelineEvent.Journey) {
+        MaterialTheme.colorScheme.tertiary
+    } else {
+        MaterialTheme.colorScheme.primary
+    }
+
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(14.dp)
+                .clip(CircleShape)
+                .background(dotColor)
+        )
         Spacer(Modifier.height(6.dp))
         Box(
-            Modifier.width(3.dp).height(74.dp).clip(MaterialTheme.shapes.extraLarge)
+            Modifier
+                .width(6.dp)
+                .height(74.dp)
+                .clip(MaterialTheme.shapes.extraLarge)
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest)
         )
     }
@@ -205,7 +205,14 @@ private fun TodayCard(
             )
         }
 
-        ExpressiveCard(emphasized = true) {
+        ExpressiveCard(
+            emphasized = true,
+            containerColor = if (isTracking) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerHighest
+            }
+        ) {
             Column(
                 Modifier.padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -257,6 +264,14 @@ private fun MiniStat(
     label: String,
     modifier: Modifier
 ) {
+    val icon = when (label) {
+        "stops" -> Icons.Default.Place
+        "trips" -> Icons.Default.Route
+        "stayed" -> Icons.Default.Schedule
+        "distance" -> Icons.Default.Straighten
+        else -> Icons.Default.Info
+    }
+
     Surface(
         modifier = modifier,
         shape = MaterialTheme.shapes.extraLarge,
@@ -265,12 +280,20 @@ private fun MiniStat(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+                .padding(horizontal = 8.dp, vertical = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Text(
                 value,
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
+                textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -278,6 +301,7 @@ private fun MiniStat(
                 label,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -460,6 +484,23 @@ private fun buildItems(events: List<TimelineEvent>): List<TimelineItem> {
 }
 private fun time(i: java.time.Instant) = DateTimeFormatter.ofPattern("HH:mm").format(i.atZone(ZoneId.systemDefault()))
 private fun formatMinutes(m: Long) = if (m < 60) m.toString() + "m" else (m / 60).toString() + "h " + (m % 60).toString() + "m"
-private fun formatDistance(m: Double) = if (m < 1000) m.toInt().toString() + " m" else "%.1f km".format(m / 1000.0)
+private fun formatDistance(m: Double): String {
+    val distance = m.coerceAtLeast(0.0)
+    return when {
+        distance < 10 -> "0 m"
+        distance < 1000 -> {
+            val roundedMeters = kotlin.math.round(distance / 10.0).toInt() * 10
+            "$" + "roundedMeters m"
+        }
+        else -> {
+            val roundedKm = kotlin.math.round(distance / 100.0) / 10.0
+            if (roundedKm == roundedKm.toLong().toDouble()) {
+                "$" + "roundedKm.toLong() km"
+            } else {
+                "%.1f km".format(Locale.getDefault(), roundedKm)
+            }
+        }
+    }
+}
 private fun JourneyMode.label() = when (this) { JourneyMode.WALKING -> "Walking"; JourneyMode.CYCLING -> "Cycling"; JourneyMode.VEHICLE -> "Driving"; JourneyMode.UNKNOWN -> "Journey" }
 private fun modeIcon(m: JourneyMode) = when (m) { JourneyMode.WALKING -> Icons.Default.DirectionsWalk; JourneyMode.CYCLING -> Icons.Default.PedalBike; JourneyMode.VEHICLE -> Icons.Default.DirectionsCar; JourneyMode.UNKNOWN -> Icons.Default.Route }
