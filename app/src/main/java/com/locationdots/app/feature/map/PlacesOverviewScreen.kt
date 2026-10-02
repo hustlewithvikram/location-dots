@@ -48,7 +48,8 @@ fun PlacesOverviewScreen(
                             LocationMap(
                                 points = points,
                                 modifier = Modifier.fillMaxSize(),
-                                interactive = true
+                                interactive = true,
+                                drawRoute = false
                             )
                         } else {
                             Box(
