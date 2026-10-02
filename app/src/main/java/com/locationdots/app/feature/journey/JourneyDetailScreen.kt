@@ -9,9 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.*
-import com.google.maps.android.compose.*
+import com.google.android.gms.maps.model.LatLng
 import com.locationdots.app.domain.model.*
 import com.locationdots.app.ui.components.*
 import java.time.Duration
@@ -67,20 +65,36 @@ fun JourneyDetailScreen(journey: TimelineEvent.Journey, onBack: () -> Unit) {
         }
     }
 }
-@Composable private fun JourneyMap(points: List<LocationPoint>, startLabel: String, endLabel: String) {
-    val coordinates = remember(points) { points.map { LatLng(it.latitude, it.longitude) } }
-    if (coordinates.isEmpty()) { Box(Modifier.fillMaxWidth().height(280.dp), contentAlignment = Alignment.Center) { Text("No route data available", color = MaterialTheme.colorScheme.onSurfaceVariant) }; return }
-    val camera = rememberCameraPositionState()
-    LaunchedEffect(coordinates) { camera.move(if (coordinates.size == 1) CameraUpdateFactory.newLatLngZoom(coordinates.first(), 16f) else CameraUpdateFactory.newLatLngBounds(LatLngBounds.builder().apply { coordinates.forEach(::include) }.build(), 70)) }
-    Box(Modifier.fillMaxWidth().height(300.dp)) {
-        GoogleMap(Modifier.fillMaxSize(), cameraPositionState = camera, uiSettings = MapUiSettings(zoomControlsEnabled = false, mapToolbarEnabled = false)) {
-            if (coordinates.size >= 2) Polyline(points = coordinates, width = 10f)
-            Marker(MarkerState(coordinates.first()), title = startLabel)
-            if (coordinates.size >= 2) Marker(MarkerState(coordinates.last()), title = endLabel)
-        }
-        FilledTonalIconButton(onClick = { if (coordinates.size >= 2) camera.move(CameraUpdateFactory.newLatLngBounds(LatLngBounds.builder().apply { coordinates.forEach(::include) }.build(), 70)) }, modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp)) { Icon(Icons.Default.MyLocation, "Fit route") }
+@Composable
+private fun JourneyMap(
+    points: List<LocationPoint>,
+    startLabel: String,
+    endLabel: String
+) {
+    val coordinates = remember(points) {
+        points.map { LatLng(it.latitude, it.longitude) }
     }
+
+    if (coordinates.isEmpty()) {
+        Box(
+            Modifier.fillMaxWidth().height(280.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                "No route data available",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        return
+    }
+
+    LocationMap(
+        points = coordinates,
+        modifier = Modifier.fillMaxWidth().height(300.dp),
+        interactive = true
+    )
 }
+
 @Composable private fun Stat(label: String, value: String) { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant); Text(value, style = MaterialTheme.typography.titleMedium) } }
 private fun time(i: java.time.Instant) = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault()).format(i.atZone(ZoneId.systemDefault()))
 private fun formatMinutes(m: Long) = if (m < 60) m.toString() + " min" else (m / 60).toString() + "h " + (m % 60).toString() + "m"
