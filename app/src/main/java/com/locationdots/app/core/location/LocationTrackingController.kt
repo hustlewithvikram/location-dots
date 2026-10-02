@@ -17,9 +17,14 @@ class LocationTrackingController(
 
     fun start() {
         val intent = Intent(context, LocationTrackingService::class.java)
-        ContextCompat.startForegroundService(context, intent)
-        _isTracking.value = true
-        preferences.edit().putBoolean(KEY_TRACKING_ACTIVE, true).apply()
+        runCatching {
+            ContextCompat.startForegroundService(context, intent)
+        }.onSuccess {
+            _isTracking.value = true
+            preferences.edit().putBoolean(KEY_TRACKING_ACTIVE, true).apply()
+        }.onFailure {
+            markStopped()
+        }
     }
 
     fun stop() {
