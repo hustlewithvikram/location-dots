@@ -8,3 +8,4 @@ app/build/
 local.properties
 .idea/
 *.iml
+\n# Release signing material\nsecrets.properties\nkeystore/*.jks\nkeystore/*.keystore\n
