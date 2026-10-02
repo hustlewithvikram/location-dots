@@ -56,7 +56,7 @@ fun TimelineScreen(
 
     Scaffold { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            if (items.isEmpty() && !isRefreshing) EmptyTimeline(isTracking)
+            if (items.isEmpty() && !isRefreshing && !isLoadingMore) EmptyTimeline(isTracking)
             else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(18.dp, 14.dp, 18.dp, 108.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 item("summary") {
                     TodayCard(events, isTracking, onSearchClick)
