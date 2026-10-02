@@ -568,8 +568,7 @@ class MainActivity : ComponentActivity() {
             importPreview = null
             importError = null
             timelineViewModel.refresh()
-            placesViewModel.refresh()
-            insightsViewModel.refresh()
+""            insightsViewModel.refresh()
         }.onFailure {
             importPreview = null
             importError = "Couldn't import this backup. No changes were made."
