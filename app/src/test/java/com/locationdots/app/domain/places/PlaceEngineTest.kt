@@ -69,14 +69,14 @@ class PlaceEngineTest {
     }
 
     @Test
-    fun mergeRadiusIsCappedForVeryWideVisitCluster() = runBlocking {
+    fun mergeRadiusIsCappedForPoorAccuracy() = runBlocking {
         val repository = FakeRepository()
         val engine = PlaceEngine(repository)
         val start = Instant.parse("2026-10-02T10:00:00Z")
         val points = listOf(
-            point(18.5200, 73.8567, start),
-            point(18.5220, 73.8567, start.plusSeconds(30)),
-            point(18.5180, 73.8567, start.plusSeconds(60))
+            point(18.5200, 73.8567, start, accuracy = 100f),
+            point(18.5200, 73.8567, start.plusSeconds(30), accuracy = 100f),
+            point(18.5200, 73.8567, start.plusSeconds(60), accuracy = 100f)
         )
 
         engine.resolve(points)
@@ -84,14 +84,67 @@ class PlaceEngineTest {
         assertEquals(125.0, repository.lastRadiusMeters)
     }
 
+    @Test
+    fun distinctPlaceOutsideConfidenceRadiusIsNotMerged() = runBlocking {
+        val repository = FakeRepository()
+        repository.place = Place(
+            id = "place:existing",
+            name = "Existing",
+            latitude = 18.52072,
+            longitude = 73.8567,
+            createdAt = Instant.parse("2026-10-01T10:00:00Z"),
+            updatedAt = Instant.parse("2026-10-01T10:00:00Z")
+        )
+
+        val engine = PlaceEngine(repository)
+        val start = Instant.parse("2026-10-02T10:00:00Z")
+        val resolved = engine.resolve(
+            listOf(
+                point(18.5200, 73.8567, start),
+                point(18.5200, 73.8567, start.plusSeconds(30)),
+                point(18.5200, 73.8567, start.plusSeconds(60))
+            )
+        )
+
+        assertTrue(resolved.id != "place:existing")
+        assertEquals(75.0, repository.lastRadiusMeters)
+    }
+
+    @Test
+    fun existingPlaceIdentityAndNameArePreservedWhenMatched() = runBlocking {
+        val repository = FakeRepository()
+        repository.place = Place(
+            id = "place:existing",
+            name = "Home",
+            latitude = 18.5200,
+            longitude = 73.8567,
+            createdAt = Instant.parse("2026-10-01T10:00:00Z"),
+            updatedAt = Instant.parse("2026-10-01T10:00:00Z")
+        )
+
+        val engine = PlaceEngine(repository)
+        val start = Instant.parse("2026-10-02T10:00:00Z")
+        val resolved = engine.resolve(
+            listOf(
+                point(18.5201, 73.8567, start),
+                point(18.5201, 73.8567, start.plusSeconds(30)),
+                point(18.5201, 73.8567, start.plusSeconds(60))
+            )
+        )
+
+        assertEquals("place:existing", resolved.id)
+        assertEquals("Home", resolved.name)
+    }
+
     private fun point(
         latitude: Double,
         longitude: Double,
-        timestamp: Instant
+        timestamp: Instant,
+        accuracy: Float = 20f
     ) = LocationPoint(
         latitude = latitude,
         longitude = longitude,
-        accuracyMeters = 20f,
+        accuracyMeters = accuracy,
         timestamp = timestamp
     )
 }
