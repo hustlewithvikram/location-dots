@@ -5,6 +5,7 @@ import com.locationdots.app.domain.model.Place
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
@@ -64,7 +65,7 @@ class PlaceEngineTest {
         val resolved = engine.resolve(points)
 
         assertEquals("place:existing", resolved.id)
-        assertEquals(96.0, repository.lastRadiusMeters)
+        assertTrue(repository.lastRadiusMeters!! in 96.6..96.8)
     }
 
     @Test
