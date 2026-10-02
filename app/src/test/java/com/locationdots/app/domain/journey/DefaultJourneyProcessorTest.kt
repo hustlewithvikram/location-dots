@@ -69,7 +69,7 @@ class DefaultJourneyProcessorTest {
                     )
                 )
             }
-            repeat(9) { index ->
+            repeat(7) { index ->
                 add(
                     LocationPoint(
                         latitude = 18.5280,
