@@ -51,7 +51,10 @@ fun LocationMap(
     modifier: Modifier = Modifier,
     interactive: Boolean = false,
     fitRequest: Any? = points,
-    onMapClick: ((LatLng) -> Unit)? = null
+    onMapClick: ((LatLng) -> Unit)? = null,
+    mapStyle: String? = null,
+    showRouteLines: Boolean? = null,
+    showPlaceMarkers: Boolean? = null
 ) {
     if (points.isEmpty()) return
 
@@ -124,12 +127,13 @@ fun LocationMap(
         }
     )
 
-    LaunchedEffect(map, points, interactive, fitRequest) {
+    LaunchedEffect(map, points, interactive, fitRequest, mapStyle, showRouteLines, showPlaceMarkers) {
         val readyMap = map ?: return@LaunchedEffect
         val preferences = context.getSharedPreferences("location_dots_ui", Context.MODE_PRIVATE)
-        val showMarkers = preferences.getBoolean("show_place_markers", true)
-        val showRoutes = preferences.getBoolean("show_route_lines", true)
-        val styleUrl = when (preferences.getString("map_style", "liberty")) {
+        val showMarkers = showPlaceMarkers ?: preferences.getBoolean("show_place_markers", true)
+        val showRoutes = showRouteLines ?: preferences.getBoolean("show_route_lines", true)
+        val selectedStyle = mapStyle ?: preferences.getString("map_style", "liberty")
+        val styleUrl = when (selectedStyle) {
             "bright" -> BRIGHT_STYLE
             "positron" -> POSITRON_STYLE
             "dark" -> DARK_STYLE
