@@ -54,7 +54,7 @@ fun TimelineScreen(
     Scaffold { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (items.isEmpty() && !isRefreshing) EmptyTimeline(isTracking)
-            else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(18.dp, 4.dp, 18.dp, 28.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(18.dp, 10.dp, 18.dp, 108.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 item("summary") { TodayCard(events, isTracking, onSearchClick) }
                 items(items, key = { when (it) { is TimelineItem.Day -> "day-" + it.date; is TimelineItem.Event -> it.event.id } }) { item ->
                     when (item) {
@@ -89,7 +89,11 @@ fun TimelineScreen(
             color = MaterialTheme.colorScheme.secondaryContainer
         ) {
             Text(
-                DateTimeFormatter.ofPattern("EEE, d MMM", Locale.getDefault()).format(date),
+                when (date) {
+                    LocalDate.now(ZoneId.systemDefault()) -> "Today"
+                    LocalDate.now(ZoneId.systemDefault()).minusDays(1) -> "Yesterday"
+                    else -> DateTimeFormatter.ofPattern("EEE, d MMM", Locale.getDefault()).format(date)
+                },
                 Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -149,8 +153,9 @@ fun TimelineScreen(
                 }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                MiniStat(visits.size.toString(), "places", Modifier.weight(1f))
-                MiniStat(formatMinutes(minutes), "time", Modifier.weight(1f))
+                MiniStat(visits.size.toString(), "stops", Modifier.weight(1f))
+                MiniStat(journeys.size.toString(), "journeys", Modifier.weight(1f))
+                MiniStat(formatMinutes(minutes), "stayed", Modifier.weight(1f))
                 MiniStat(formatDistance(distance), "distance", Modifier.weight(1f))
             }
         }
@@ -164,7 +169,7 @@ fun TimelineScreen(
 @Composable private fun EventCard(event: TimelineEvent, onPlaceClick: (String) -> Unit, onJourneyClick: (String) -> Unit, modifier: Modifier = Modifier) {
     when (event) {
         is TimelineEvent.Visit -> ExpressiveListRow(event.place.name ?: "Unnamed place", "Arrived " + time(event.arrival) + " · " + (event.departure?.let { formatMinutes(Duration.between(event.arrival, it).toMinutes()) } ?: "Still here"), { Icon(Icons.Default.Place, null) }, modifier = modifier, onClick = { onPlaceClick(event.place.id) })
-        is TimelineEvent.Journey -> ExpressiveListRow((event.startPlace?.name ?: "Unknown") + " → " + (event.endPlace?.name ?: "Unknown"), event.mode.label() + " · " + formatDistance(event.distanceMeters ?: 0.0) + " · " + time(event.startedAt), { Icon(modeIcon(event.mode), null) }, modifier = modifier, onClick = { onJourneyClick(event.id) })
+        is TimelineEvent.Journey -> ExpressiveListRow((event.startPlace?.name ?: "Unknown") + " → " + (event.endPlace?.name ?: "Unknown"), event.mode.label() + " · " + formatDistance(event.distanceMeters ?: 0.0) + (event.endedAt?.let { " · " + formatMinutes(Duration.between(event.startedAt, it).toMinutes().coerceAtLeast(0)) } ?: ""), { Icon(modeIcon(event.mode), null) }, modifier = modifier, onClick = { onJourneyClick(event.id) })
     }
 }
 @Composable private fun EmptyTimeline(isTracking: Boolean) {
