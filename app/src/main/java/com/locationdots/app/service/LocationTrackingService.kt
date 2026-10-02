@@ -28,11 +28,20 @@ class LocationTrackingService : LifecycleService() {
         createNotificationChannel()
 
         if (!hasLocationPermission()) {
+            markTrackingStopped()
             stopSelf()
             return
         }
 
         val app = application as LocationDotsApplication
+
+        ServiceCompat.startForeground(
+            this,
+            NOTIFICATION_ID,
+            buildNotification(),
+            android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+        )
+        markTrackingStarted()
 
         collectionJob = lifecycleScope.launch {
             app.locationProvider.locations.collect { point ->
@@ -47,19 +56,13 @@ class LocationTrackingService : LifecycleService() {
             }
         }
 
-        ServiceCompat.startForeground(
-            this,
-            NOTIFICATION_ID,
-            buildNotification(),
-            android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
-        )
-
         app.locationProvider.start()
     }
 
     override fun onDestroy() {
         collectionJob?.cancel()
         (application as LocationDotsApplication).locationProvider.stop()
+        markTrackingStopped()
         super.onDestroy()
     }
 
@@ -94,8 +97,21 @@ class LocationTrackingService : LifecycleService() {
             ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
 
+    private fun markTrackingStarted() {
+        getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE).edit()
+            .putBoolean(com.locationdots.app.core.location.LocationTrackingController.KEY_TRACKING_ACTIVE, true)
+            .apply()
+    }
+
+    private fun markTrackingStopped() {
+        getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE).edit()
+            .putBoolean(com.locationdots.app.core.location.LocationTrackingController.KEY_TRACKING_ACTIVE, false)
+            .apply()
+    }
+
     private companion object {
         const val CHANNEL_ID = "location_tracking"
+        const val PREFERENCES_NAME = "location_dots_ui"
         const val NOTIFICATION_ID = 1001
         val PROCESSING_WINDOW: Duration = Duration.ofHours(48)
     }
