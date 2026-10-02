@@ -28,23 +28,53 @@ extensions.configure<ApplicationExtension> {
             .get()
     }
 
+    val releaseSigningProperties = java.util.Properties().apply {
+        val file = rootProject.file("secrets.properties")
+        if (file.isFile) {
+            file.inputStream().use(::load)
+        }
+    }
+
+    val releaseStoreFile = releaseSigningProperties.getProperty("releaseStoreFile")
+    val releaseStorePassword = releaseSigningProperties.getProperty("releaseStorePassword")
+    val releaseKeyAlias = releaseSigningProperties.getProperty("releaseKeyAlias")
+    val releaseKeyPassword = releaseSigningProperties.getProperty("releaseKeyPassword")
+    val hasReleaseSigning = listOf(
+        releaseStoreFile,
+        releaseStorePassword,
+        releaseKeyAlias,
+        releaseKeyPassword,
+    ).all { !it.isNullOrBlank() }
+
     signingConfigs {
-        create("locationDotsDebug") {
-            storeFile = rootProject.file("keystore/location-dots-debug.keystore")
-            storePassword = "locationdots"
-            keyAlias = "location-dots-debug"
-            keyPassword = "locationdots"
+        if (hasReleaseSigning) {
+            create("locationDotsRelease") {
+                storeFile = rootProject.file(releaseStoreFile!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
         }
     }
 
     buildTypes {
         getByName("debug") {
-            signingConfig = signingConfigs.getByName("locationDotsDebug")
+            // Use the Android Gradle Plugin's generated debug keystore.
         }
 
         getByName("release") {
             isMinifyEnabled = false
             isShrinkResources = false
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("locationDotsRelease")
+            } else {
+                doFirst {
+                    throw GradleException(
+                        "Production release signing is not configured. " +
+                            "Create secrets.properties with release signing values before building a release APK/AAB."
+                    )
+                }
+            }
         }
     }
 
