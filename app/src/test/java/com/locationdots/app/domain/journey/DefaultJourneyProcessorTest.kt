@@ -87,6 +87,24 @@ class DefaultJourneyProcessorTest {
     }
 
     @Test
+    fun stableGpsNoiseStillCreatesVisit() = runBlocking {
+        val start = Instant.parse("2026-10-02T10:00:00Z")
+        val offsets = listOf(0.00000, 0.00020, -0.00015, 0.00018, -0.00010, 0.00012, -0.00008, 0.00010, -0.00005, 0.00006, 0.00000, 0.00004, -0.00003, 0.00002, 0.00000, 0.00001, 0.00000)
+        val points = offsets.mapIndexed { index, offset ->
+            LocationPoint(
+                latitude = 18.5200 + offset,
+                longitude = 73.8567,
+                accuracyMeters = 25f,
+                timestamp = start.plusSeconds(index * 30L)
+            )
+        }
+
+        val events = processor.process(points)
+
+        assertTrue(events.any { it is TimelineEvent.Visit })
+    }
+
+    @Test
     fun poorAccuracyPointsAreIgnoredForVisitConfirmation() = runBlocking {
         val start = Instant.parse("2026-10-02T10:00:00Z")
         val points = points(start, count = 17, secondsBetween = 30, latitudeStep = 0.00002)
