@@ -15,6 +15,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -35,6 +36,7 @@ import com.locationdots.app.feature.search.*
 import com.locationdots.app.feature.settings.*
 import com.locationdots.app.feature.splash.SplashScreen
 import com.locationdots.app.feature.timeline.*
+import com.locationdots.app.ui.components.AppBottomBar
 import com.locationdots.app.ui.components.AppTab
 import com.locationdots.app.ui.theme.LocationDotsTheme
 import kotlinx.coroutines.launch
