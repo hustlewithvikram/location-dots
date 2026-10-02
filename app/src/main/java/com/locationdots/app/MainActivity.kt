@@ -346,7 +346,9 @@ class MainActivity : ComponentActivity() {
                         importPreview = importPreview,
                         importError = importError,
                         onDismissImport = { importPreview = null; importError = null },
-                        onConfirmImport = ::importBackup,
+                        onConfirmImport = { preview, replaceExisting ->
+                            lifecycleScope.launch { importBackup(preview, replaceExisting) }
+                        },
                         onClearHistory = ::clearHistory,
                         onResetSettings = ::resetAppSettings,
                         onAbout = { isAboutOpen = true },
