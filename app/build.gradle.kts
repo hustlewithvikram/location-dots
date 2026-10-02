@@ -41,6 +41,11 @@ extensions.configure<ApplicationExtension> {
         getByName("debug") {
             signingConfig = signingConfigs.getByName("locationDotsDebug")
         }
+
+        getByName("release") {
+            isMinifyEnabled = false
+            isShrinkResources = false
+        }
     }
 
     buildFeatures {
