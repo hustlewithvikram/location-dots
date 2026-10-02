@@ -724,7 +724,8 @@ fun SettingsScreen(
                         Text("Reset app settings")
                     }
                 }
-            }        }
+            }
+        }
     }
 
     if (showPlaceEditor) {
