@@ -244,6 +244,8 @@ fun SettingsScreen(
                 item {
                     ExpressiveCard {
                         Column(Modifier.padding(8.dp)) {
+                item { SettingsGroupTitle("Location collection") }
+
                 item {
                     ExpressiveCard {
                         Column(
@@ -291,7 +293,6 @@ fun SettingsScreen(
                             )
                         }
                     }
-                }
                 }
             }
             SettingsPage.MAP_APPEARANCE -> SettingsSubPage(
