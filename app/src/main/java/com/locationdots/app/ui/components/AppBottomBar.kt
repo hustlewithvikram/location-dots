@@ -1,6 +1,9 @@
 package com.locationdots.app.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.selected as semanticsSelected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
@@ -65,7 +68,7 @@ fun AppBottomBar(selected: AppTab, onSelected: (AppTab) -> Unit) {
                             .height(64.dp)
                             .clickable { onSelected(tab) }
                             .semantics {
-                                selected = isSelected
+                                semanticsSelected = isSelected
                                 role = Role.Tab
                             },
                         contentAlignment = Alignment.Center
