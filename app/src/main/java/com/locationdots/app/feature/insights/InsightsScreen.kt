@@ -194,7 +194,6 @@ fun InsightsScreen(
             }
         }
     }
-}
 
 @Composable
 private fun DailyInsightRow(day: DailyInsight, maxValue: Int) {
