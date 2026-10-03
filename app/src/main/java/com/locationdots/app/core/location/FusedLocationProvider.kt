@@ -47,6 +47,10 @@ class FusedLocationProvider(
     override fun start() {
         if (!hasLocationPermission()) return
 
+        // A restarted service can call start again. Remove the old callback first so
+        // repeated starts never leave multiple active location registrations behind.
+        client.removeLocationUpdates(callback)
+
         val preferences = context.getSharedPreferences("location_dots_ui", Context.MODE_PRIVATE)
         val interval = preferences.getLong("tracking_interval_millis", DEFAULT_UPDATE_INTERVAL_MILLIS)
         val accuracy = preferences.getString("tracking_accuracy", "HIGH")
