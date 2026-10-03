@@ -13,7 +13,7 @@
     <application
         android:name=".LocationDotsApplication"
         android:theme="@style/Theme.LocationDots"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="Location Dots"
         android:roundIcon="@mipmap/ic_launcher_round"
