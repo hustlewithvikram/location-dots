@@ -513,7 +513,6 @@ private fun JourneyCard(
 }
 
 @Composable
-private fun MiniLocationPreview@Composable
 private fun MiniLocationPreview(
     points: List<Pair<Double, Double>>,
     modifier: Modifier
