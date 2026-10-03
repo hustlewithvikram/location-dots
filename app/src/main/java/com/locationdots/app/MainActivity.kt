@@ -735,7 +735,6 @@ class MainActivity : ComponentActivity() {
             importPreview = null
             importError = null
             timelineViewModel.refresh()
-            placesViewModel.refresh()
             insightsViewModel.refresh()
         }.onFailure {
             importLoading = false
