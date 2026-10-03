@@ -84,6 +84,7 @@ class MainActivity : ComponentActivity() {
     private var trackingAccuracy by mutableStateOf(TrackingAccuracy.HIGH)
     private var trackingInterval by mutableStateOf(TrackingInterval.THIRTY_SECONDS)
     private var importPreview by mutableStateOf<ImportPreview?>(null)
+    private var importLoading by mutableStateOf(false)
     private var importError by mutableStateOf<String?>(null)
     private var pendingExportJson: String? = null
 
@@ -112,10 +113,14 @@ class MainActivity : ComponentActivity() {
 
     private val importBackupLauncher =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            if (uri == null) return@registerForActivityResult
+            if (uri == null) {
+                importLoading = false
+                return@registerForActivityResult
+            }
             lifecycleScope.launch(Dispatchers.IO) {
                 val result = runCatching { readImportPreview(uri) }
                 withContext(Dispatchers.Main) {
+                    importLoading = false
                     result.onSuccess { preview ->
                         importError = null
                         importPreview = preview
@@ -423,8 +428,13 @@ class MainActivity : ComponentActivity() {
                         },
                         onExport = { exportSummary(insights) },
                         onExportData = ::exportLocalData,
-                        onImportData = { importBackupLauncher.launch(arrayOf("*/*")) },
+                        onImportData = {
+                            importError = null
+                            importLoading = true
+                            importBackupLauncher.launch(arrayOf("*/*"))
+                        },
                         importPreview = importPreview,
+                        importLoading = importLoading,
                         importError = importError,
                         onDismissImport = { importPreview = null; importError = null },
                         onConfirmImport = { preview, replaceExisting ->
@@ -697,6 +707,7 @@ class MainActivity : ComponentActivity() {
 
     private suspend fun importBackup(preview: ImportPreview, replaceExisting: Boolean) {
         val app = application as LocationDotsApplication
+        withContext(Dispatchers.Main) { importLoading = true }
         val uri = preview.uri
         runCatching {
             val text = contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
@@ -720,11 +731,14 @@ class MainActivity : ComponentActivity() {
                 app.database.timelineEventDao().insertAll(events)
             }
         }.onSuccess {
+            importLoading = false
             importPreview = null
             importError = null
             timelineViewModel.refresh()
+            placesViewModel.refresh()
             insightsViewModel.refresh()
         }.onFailure {
+            importLoading = false
             importPreview = null
             importError = "Couldn't import this backup. No changes were made."
         }
