@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.maplibre.android.geometry.LatLng
 import com.locationdots.app.domain.model.JourneyMode
 import com.locationdots.app.domain.model.TimelineEvent
 import com.locationdots.app.ui.components.*
