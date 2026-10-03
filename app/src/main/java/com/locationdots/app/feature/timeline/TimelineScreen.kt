@@ -178,6 +178,7 @@ private fun TodayCard(
     val today = LocalDate.now(zone)
     val dayStart = today.atStartOfDay(zone).toInstant()
     val dayEnd = today.plusDays(1).atStartOfDay(zone).toInstant()
+    val now = java.time.Instant.now().coerceIn(dayStart, dayEnd)
     val todayEvents = events.filter { event ->
         when (event) {
             is TimelineEvent.Visit ->
@@ -512,11 +513,27 @@ private fun MiniMap(
 private fun buildItems(events: List<TimelineEvent>): List<TimelineItem> {
     val result = mutableListOf<TimelineItem>()
     var last: LocalDate? = null
-    events.sortedByDescending { it.timestamp }.forEach { event ->
-        val date = event.timestamp.atZone(ZoneId.systemDefault()).toLocalDate()
-        if (date != last) { result += TimelineItem.Day(date); last = date }
-        result += TimelineItem.Event(event)
-    }
+    val zone = ZoneId.systemDefault()
+    val now = java.time.Instant.now()
+
+    events
+        .sortedByDescending { event ->
+            if (event is TimelineEvent.Visit && event.departure == null) now else event.timestamp
+        }
+        .forEach { event ->
+            val date = if (event is TimelineEvent.Visit && event.departure == null) {
+                now.atZone(zone).toLocalDate()
+            } else {
+                event.timestamp.atZone(zone).toLocalDate()
+            }
+
+            if (date != last) {
+                result += TimelineItem.Day(date)
+                last = date
+            }
+            result += TimelineItem.Event(event)
+        }
+
     return result
 }
 private fun time(i: java.time.Instant) = DateTimeFormatter.ofPattern("HH:mm").format(i.atZone(ZoneId.systemDefault()))
