@@ -43,6 +43,7 @@ fun TimelineScreen(
     onPlaceClick: (String) -> Unit,
     onJourneyClick: (String) -> Unit,
     onSearchClick: () -> Unit,
+    onProfileClick: () -> Unit,
     onPlacesClick: () -> Unit,
     onInsightsClick: () -> Unit,
     onSettingsClick: () -> Unit,
