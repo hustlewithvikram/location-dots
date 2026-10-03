@@ -39,7 +39,7 @@ fun InsightsScreen(
     val totalModes = snapshot.modeBreakdown.values.sum()
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(start = 18.dp, top = 12.dp, end = 18.dp, bottom = 112.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
