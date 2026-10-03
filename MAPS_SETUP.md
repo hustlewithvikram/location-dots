@@ -1,59 +1,60 @@
-# Maps setup
+# Maps
 
-Location Dots uses **MapLibre Native** with **OpenFreeMap**. The application does not use the Google Maps SDK and does not require a Google Maps API key.
+Location Dots uses **MapLibre Native** and **OpenFreeMap** to display maps.
 
-## Runtime configuration
+You do not need a Google Maps API key.
 
-The map implementation lives in:
+## Where maps are used
+
+Maps appear in:
+
+- the Places overview;
+- place history;
+- journey details;
+- timeline previews.
+
+The shared map component is:
 
 ```text
 app/src/main/java/com/locationdots/app/ui/components/LocationMap.kt
 ```
 
-The currently available OpenFreeMap styles are:
+## Available styles
 
-| App setting | Style URL |
+Users can choose from:
+
+| Style | Look |
 |---|---|
-| Liberty | `https://tiles.openfreemap.org/styles/liberty` |
-| Bright | `https://tiles.openfreemap.org/styles/bright` |
-| Positron | `https://tiles.openfreemap.org/styles/positron` |
-| Dark | `https://tiles.openfreemap.org/styles/dark` |
-| Fiord | `https://tiles.openfreemap.org/styles/fiord` |
+| **Liberty** | General-purpose map |
+| **Bright** | Light and clean |
+| **Positron** | Minimal light map |
+| **Dark** | Dark map |
+| **Fiord** | Darker blue-toned map |
 
-`liberty` is the default.
+**Liberty** is the default.
 
-## What the map component supports
+## Internet requirement
 
-`LocationMap` is shared by timeline, places, and journey-related UI and supports:
+The location history itself is stored locally, but map styles and map data come from the internet.
 
-- interactive and non-interactive modes;
-- route-line rendering;
-- place-marker rendering;
-- automatic camera fitting;
-- map click callbacks;
-- fullscreen place-map presentation;
-- lifecycle-aware MapView handling.
+So:
 
-The timeline uses compact, non-interactive maps for visit/journey previews. The Places screen provides an interactive overview and fullscreen map.
+- tracking and local history do not depend on the map being visible;
+- maps may not render correctly without an internet connection.
 
-## Attribution
+## Changing the map provider
 
-OpenFreeMap uses OpenStreetMap-based data. MapLibre's attribution UI is used by the application.
+The map implementation is kept in one shared component, so the provider can be changed later without redesigning the location-history system.
 
-## Network behavior
+This is useful if the project eventually needs:
 
-Maps are the primary online dependency of the current app. Location history itself is stored locally in Room.
-
-If the map provider is unavailable, location collection and local history do not depend on the map renderer to persist data.
-
-## Production note
-
-OpenFreeMap's public instance is useful for development and prototypes, but it does not provide an SLA.
-
-If the project later needs guaranteed availability or higher-scale tile delivery, the map layer is intentionally isolated in `LocationMap.kt`. The provider/style URLs can therefore be replaced with another MapLibre-compatible source without redesigning the location database or domain model.
+- a dedicated tile provider;
+- self-hosted maps;
+- higher availability;
+- different map styling.
 
 ## Development
 
-No map API key or `secrets.properties` map entry is required.
+No map API key or special map secret is required.
 
-A normal Android build is sufficient to compile the map integration.
+Open the project in Android Studio and build normally.
