@@ -176,13 +176,22 @@ private fun TodayCard(
 ) {
     val zone = ZoneId.systemDefault()
     val today = LocalDate.now(zone)
-    val todayEvents = events.filter { it.timestamp.atZone(zone).toLocalDate() == today }
+    val dayStart = today.atStartOfDay(zone).toInstant()
+    val dayEnd = today.plusDays(1).atStartOfDay(zone).toInstant()
+    val todayEvents = events.filter { event ->
+        when (event) {
+            is TimelineEvent.Visit ->
+                event.arrival < dayEnd && (event.departure ?: dayEnd) >= dayStart
+            is TimelineEvent.Journey ->
+                event.startedAt < dayEnd && (event.endedAt ?: dayEnd) >= dayStart
+        }
+    }
     val visits = todayEvents.filterIsInstance<TimelineEvent.Visit>()
     val journeys = todayEvents.filterIsInstance<TimelineEvent.Journey>()
     val minutes = visits.sumOf {
-        it.departure?.let { end ->
-            Duration.between(it.arrival, end).toMinutes().coerceAtLeast(0)
-        } ?: 0
+        val start = maxOf(it.arrival, dayStart)
+        val end = minOf(it.departure ?: dayEnd, dayEnd)
+        Duration.between(start, end).toMinutes().coerceAtLeast(0)
     }
     val distance = journeys.sumOf { it.distanceMeters ?: 0.0 }
 
