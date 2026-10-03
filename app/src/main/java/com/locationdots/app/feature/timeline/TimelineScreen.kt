@@ -63,7 +63,7 @@ fun TimelineScreen(
             if (items.isEmpty() && !isRefreshing && !isLoadingMore) EmptyTimeline(isTracking)
             else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 12.dp, 16.dp, 112.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 item("summary") {
-                    TodayCard(events, isTracking, onSearchClick)
+                    TodayCard(events, isTracking, onSearchClick, onProfileClick)
                 }
                 item("activity-header") {
                     ExpressiveSectionHeader(
@@ -223,7 +223,8 @@ private fun TimelineRail(event: TimelineEvent) {
 private fun TodayCard(
     events: List<TimelineEvent>,
     isTracking: Boolean,
-    onSearchClick: () -> Unit
+    onSearchClick: () -> Unit,
+    onProfileClick: () -> Unit
 ) {
     val zone = ZoneId.systemDefault()
     val today = LocalDate.now(zone)
@@ -256,7 +257,16 @@ private fun TodayCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(Modifier.weight(1f)) {
-                Text("Today", style = MaterialTheme.typography.displaySmall)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Today", style = MaterialTheme.typography.displaySmall)
+                    Spacer(Modifier.width(5.dp))
+                    Icon(
+                        Icons.Default.KeyboardArrowDown,
+                        contentDescription = "Date options",
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 Text(
                     dateLabel,
                     style = MaterialTheme.typography.bodyLarge,
@@ -264,38 +274,15 @@ private fun TodayCard(
                 )
             }
 
-            Surface(
-                shape = RoundedCornerShape(100.dp),
-                color = if (isTracking) {
-                    MaterialTheme.colorScheme.primaryContainer
-                } else {
-                    MaterialTheme.colorScheme.surfaceContainerHigh
-                }
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        Modifier
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (isTracking) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.outline
-                            )
-                    )
-                    Spacer(Modifier.width(7.dp))
-                    Text(
-                        if (isTracking) "Tracking" else "Paused",
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                }
-            }
-
-            Spacer(Modifier.width(8.dp))
             FilledTonalIconButton(onClick = onSearchClick) {
                 Icon(Icons.Default.Search, "Search your timeline")
+            }
+            Spacer(Modifier.width(6.dp))
+            FilledTonalIconButton(
+                onClick = onProfileClick,
+                modifier = Modifier.size(50.dp)
+            ) {
+                Icon(Icons.Default.Person, "Open profile")
             }
         }
 
