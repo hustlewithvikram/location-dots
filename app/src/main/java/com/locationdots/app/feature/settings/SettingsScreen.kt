@@ -123,8 +123,7 @@ fun SettingsScreen(
         closeSettingsPage()
     }
 
-    Scaffold { padding ->
-        AnimatedContent(
+    AnimatedContent(
             targetState = page,
             transitionSpec = {
                 if (!animationsEnabled) {
@@ -148,11 +147,11 @@ fun SettingsScreen(
         ) { currentPage ->
         when (currentPage) {
             SettingsPage.HOME -> SettingsHome(
-                Modifier.padding(padding), places.size, isTracking,
+                Modifier, places.size, isTracking,
                 onOpen = ::openSettingsPage, onAbout = onAbout
             )
             SettingsPage.SAVED_PLACES -> SettingsSubPage(
-                Modifier.padding(padding), "Saved places",
+                Modifier, "Saved places",
                 "Places Location Dots should recognize automatically.",
                 onBack = ::closeSettingsPage
             ) {
@@ -204,7 +203,7 @@ fun SettingsScreen(
                 }
             }
             SettingsPage.TRACKING -> SettingsSubPage(
-                Modifier.padding(padding), "Tracking",
+                Modifier, "Tracking",
                 "",
                 onBack = ::closeSettingsPage
             ) {
@@ -337,7 +336,7 @@ fun SettingsScreen(
                 }
             }
             SettingsPage.MAP_APPEARANCE -> SettingsSubPage(
-                Modifier.padding(padding), "Map & appearance",
+                Modifier, "Map & appearance",
                 "",
                 onBack = ::closeSettingsPage
             ) {
@@ -404,7 +403,7 @@ fun SettingsScreen(
                 }
             }
             SettingsPage.PRIVACY_DATA -> SettingsSubPage(
-                Modifier.padding(padding), "Privacy & data",
+                Modifier, "Privacy & data",
                 "",
                 onBack = ::closeSettingsPage
             ) {
@@ -512,7 +511,7 @@ fun SettingsScreen(
                 }
             }
             SettingsPage.EXPORT_BACKUP -> SettingsSubPage(
-                Modifier.padding(padding), "Export & backup",
+                Modifier, "Export & backup",
                 "",
                 onBack = ::closeSettingsPage
             ) {
@@ -614,7 +613,7 @@ fun SettingsScreen(
                 }
             }
             SettingsPage.DIAGNOSTICS -> SettingsSubPage(
-                Modifier.padding(padding), "Diagnostics",
+                Modifier, "Diagnostics",
                 "",
                 onBack = ::closeSettingsPage
             ) {
@@ -734,7 +733,6 @@ fun SettingsScreen(
                 }
             }
         }
-    }
     }
 
     if (showPlaceEditor) {
@@ -892,7 +890,7 @@ private fun SettingsHome(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(18.dp, 18.dp, 18.dp, 28.dp),
+        contentPadding = PaddingValues(18.dp, 18.dp, 18.dp, 112.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
@@ -958,7 +956,7 @@ private fun SettingsSubPage(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(18.dp, 10.dp, 18.dp, 28.dp),
+        contentPadding = PaddingValues(18.dp, 10.dp, 18.dp, 112.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
