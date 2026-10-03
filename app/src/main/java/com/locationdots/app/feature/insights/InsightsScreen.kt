@@ -38,10 +38,9 @@ fun InsightsScreen(
     val maxPlaceTime = snapshot.topPlaces.maxOfOrNull { it.timeMinutes } ?: 0L
     val totalModes = snapshot.modeBreakdown.values.sum()
 
-    Scaffold { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = 18.dp, top = 12.dp, end = 18.dp, bottom = 32.dp),
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 18.dp, top = 12.dp, end = 18.dp, bottom = 112.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             item {
