@@ -49,7 +49,7 @@ fun AppBottomBar(selected: AppTab, onSelected: (AppTab) -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Surface(
-            Modifier.fillMaxWidth().height(64.dp),
+            Modifier.fillMaxWidth().height(72.dp),
             shape = RoundedCornerShape(32.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 3.dp,
@@ -72,8 +72,8 @@ fun AppBottomBar(selected: AppTab, onSelected: (AppTab) -> Unit) {
                         .align(Alignment.CenterStart)
                         .offset(x = indicatorOffset)
                         .width(itemWidth)
-                        .height(52.dp)
-                        .clip(RoundedCornerShape(26.dp))
+                        .height(60.dp)
+                        .clip(RoundedCornerShape(30.dp))
                         .background(MaterialTheme.colorScheme.secondaryContainer)
                 )
 
@@ -92,13 +92,26 @@ fun AppBottomBar(selected: AppTab, onSelected: (AppTab) -> Unit) {
                                 },
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                icon,
-                                contentDescription = tab.label,
-                                modifier = Modifier.size(25.dp),
-                                tint = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer
-                                else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    icon,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(22.dp),
+                                    tint = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer
+                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(Modifier.height(2.dp))
+                                Text(
+                                    tab.label,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    maxLines = 1,
+                                    color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer
+                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
