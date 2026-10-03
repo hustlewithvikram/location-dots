@@ -178,7 +178,6 @@ private fun TodayCard(
     val today = LocalDate.now(zone)
     val dayStart = today.atStartOfDay(zone).toInstant()
     val dayEnd = today.plusDays(1).atStartOfDay(zone).toInstant()
-    val now = java.time.Instant.now().coerceIn(dayStart, dayEnd)
     val todayEvents = events.filter { event ->
         when (event) {
             is TimelineEvent.Visit ->
@@ -189,8 +188,8 @@ private fun TodayCard(
     }
     val visits = todayEvents.filterIsInstance<TimelineEvent.Visit>()
     val journeys = todayEvents.filterIsInstance<TimelineEvent.Journey>()
-    val now = java.time.Instant.now()
-    val effectiveDayEnd = minOf(dayEnd, now)
+    val now = java.time.Instant.now().coerceIn(dayStart, dayEnd)
+    val effectiveDayEnd = now
     val minutes = visits.sumOf {
         val start = maxOf(it.arrival, dayStart)
         val end = minOf(it.departure ?: effectiveDayEnd, effectiveDayEnd)
