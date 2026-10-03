@@ -496,10 +496,15 @@ private fun MiniLocationPreview(
     points: List<Pair<Double, Double>>,
     modifier: Modifier
 ) {
+    val surfaceColor = MaterialTheme.colorScheme.surfaceContainerLow
+    val gridColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+    val routeColor = MaterialTheme.colorScheme.primary
+    val startColor = MaterialTheme.colorScheme.tertiary
+
     Surface(
         modifier = modifier,
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerLow
+        color = surfaceColor
     ) {
         Canvas(Modifier.fillMaxSize()) {
             if (points.isEmpty()) return@Canvas
@@ -520,7 +525,6 @@ private fun MiniLocationPreview(
             }
 
             // Subtle map-like grid without creating a native map view.
-            val gridColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
             repeat(5) { index ->
                 val gx = size.width * index / 4f
                 val gy = size.height * index / 4f
@@ -537,21 +541,21 @@ private fun MiniLocationPreview(
             if (points.size > 1) {
                 drawPath(
                     path = path,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = routeColor,
                     style = Stroke(width = 5f, cap = StrokeCap.Round)
                 )
             }
 
             val end = androidx.compose.ui.geometry.Offset(x(points.last().second), y(points.last().first))
             drawCircle(
-                color = MaterialTheme.colorScheme.primary,
+                color = routeColor,
                 radius = 7f,
                 center = end
             )
             if (points.size > 1) {
                 val start = androidx.compose.ui.geometry.Offset(x(points.first().second), y(points.first().first))
                 drawCircle(
-                    color = MaterialTheme.colorScheme.tertiary,
+                    color = startColor,
                     radius = 5f,
                     center = start
                 )
