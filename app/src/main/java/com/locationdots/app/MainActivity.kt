@@ -159,7 +159,10 @@ class MainActivity : ComponentActivity() {
         )
         // Keep the Android navigation surface transparent. The Compose root below owns
         // the background so uncovered transition/system-bar areas always use the theme.
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
         window.navigationBarColor = android.graphics.Color.TRANSPARENT
+        window.isNavigationBarContrastEnforced = false
+        window.navigationBarDividerColor = android.graphics.Color.TRANSPARENT
         permissionManager = LocationPermissionManager(this)
         trackingController = LocationTrackingController(this)
         themeChoice = runCatching { ThemeChoice.valueOf(preferences.getString("theme", ThemeChoice.SYSTEM.name)!!) }.getOrDefault(ThemeChoice.SYSTEM)
