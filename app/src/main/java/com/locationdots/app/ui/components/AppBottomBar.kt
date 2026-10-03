@@ -52,7 +52,7 @@ fun AppBottomBar(selected: AppTab, onSelected: (AppTab) -> Unit) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(70.dp),
+                .height(64.dp),
             shape = RoundedCornerShape(100.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 2.dp,
@@ -79,7 +79,7 @@ fun AppBottomBar(selected: AppTab, onSelected: (AppTab) -> Unit) {
                         .align(Alignment.CenterStart)
                         .offset(x = indicatorOffset)
                         .width(itemWidth)
-                        .height(60.dp)
+                        .height(54.dp)
                         .clip(RoundedCornerShape(100.dp))
                         .background(MaterialTheme.colorScheme.secondaryContainer)
                 )
