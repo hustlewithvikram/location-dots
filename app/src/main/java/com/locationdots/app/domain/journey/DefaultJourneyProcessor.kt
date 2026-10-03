@@ -100,7 +100,10 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
                 continue
             }
 
-            val center = centroid(current)
+            // Keep the visit center robust against a few drifting GPS points.
+            // A mean can follow a slow-moving user and make an actual departure look
+            // like continued presence. The median stays anchored to the bulk of the visit.
+            val center = robustCenter(current)
             val distance = distanceMeters(
                 center.first,
                 center.second,
@@ -212,8 +215,20 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
         return point.accuracyMeters == null || point.accuracyMeters <= MAX_ACCURACY_METERS
     }
 
-    private fun centroid(points: List<LocationPoint>): Pair<Double, Double> =
-        points.map { it.latitude }.average() to points.map { it.longitude }.average()
+    private fun robustCenter(points: List<LocationPoint>): Pair<Double, Double> {
+        val latitudes = points.map { it.latitude }.sorted()
+        val longitudes = points.map { it.longitude }.sorted()
+        return median(latitudes) to median(longitudes)
+    }
+
+    private fun median(values: List<Double>): Double {
+        val middle = values.size / 2
+        return if (values.size % 2 == 0) {
+            (values[middle - 1] + values[middle]) / 2.0
+        } else {
+            values[middle]
+        }
+    }
 
     private fun distanceMeters(
         latitude1: Double,
