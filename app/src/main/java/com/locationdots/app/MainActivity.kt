@@ -114,15 +114,14 @@ class MainActivity : ComponentActivity() {
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri == null) return@registerForActivityResult
             lifecycleScope.launch(Dispatchers.IO) {
-                val preview = runCatching { readImportPreview(uri) }.getOrElse {
-                    null
-                }
+                val result = runCatching { readImportPreview(uri) }
                 withContext(Dispatchers.Main) {
-                    if (preview != null) {
+                    result.onSuccess { preview ->
                         importError = null
                         importPreview = preview
-                    } else {
-                        importError = "This isn't a valid Location Dots backup."
+                    }.onFailure {
+                        importPreview = null
+                        importError = "Couldn't read this backup. Select a Location Dots JSON backup."
                     }
                 }
             }
@@ -424,7 +423,7 @@ class MainActivity : ComponentActivity() {
                         },
                         onExport = { exportSummary(insights) },
                         onExportData = ::exportLocalData,
-                        onImportData = { importBackupLauncher.launch(arrayOf("application/json", "text/plain", "text/*")) },
+                        onImportData = { importBackupLauncher.launch(arrayOf("*/*")) },
                         importPreview = importPreview,
                         importError = importError,
                         onDismissImport = { importPreview = null; importError = null },
