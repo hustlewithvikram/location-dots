@@ -388,8 +388,7 @@ private fun VisitCard(
 
     ExpressiveCard(
         modifier = modifier,
-        onClick = { onPlaceClick(event.place.id) },
-        shape = MaterialTheme.shapes.extraLarge
+        onClick = { onPlaceClick(event.place.id) }
     ) {
         Row(
             Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
@@ -462,8 +461,7 @@ private fun JourneyCard(
 
     ExpressiveCard(
         modifier = modifier,
-        onClick = { onJourneyClick(event.id) },
-        shape = MaterialTheme.shapes.extraLarge
+        onClick = { onJourneyClick(event.id) }
     ) {
         Column {
             Row(
