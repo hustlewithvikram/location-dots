@@ -7,6 +7,7 @@ import android.app.NotificationManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.IBinder
+import android.location.LocationManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
@@ -83,6 +84,11 @@ class LocationTrackingService : LifecycleService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
+        if (!hasLocationPermission() || !isLocationEnabled()) {
+            markTrackingStopped()
+            stopSelfResult(startId)
+            return START_NOT_STICKY
+        }
         return START_STICKY
     }
 
@@ -117,6 +123,12 @@ class LocationTrackingService : LifecycleService() {
             }
         )
     }
+
+    private fun isLocationEnabled(): Boolean =
+        getSystemService(LocationManager::class.java)?.let { manager ->
+            manager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+        } ?: false
 
     private fun hasLocationPermission(): Boolean =
         ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
