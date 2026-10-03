@@ -109,13 +109,13 @@ private fun DayHeader(date: LocalDate) {
     ) {
         Surface(
             shape = androidx.compose.foundation.shape.RoundedCornerShape(100.dp),
-            color = MaterialTheme.colorScheme.secondaryContainer
+            color = MaterialTheme.colorScheme.surfaceContainerHigh
         ) {
             Text(
                 label,
                 Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSecondaryContainer
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         Spacer(Modifier.width(10.dp))
@@ -218,11 +218,7 @@ private fun TodayCard(
 
         ExpressiveCard(
             emphasized = true,
-            containerColor = if (isTracking) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerHighest
-            }
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ) {
             Column(
                 Modifier.padding(18.dp),
@@ -231,12 +227,12 @@ private fun TodayCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     ExpressiveIconBadge(
                         modifier = Modifier.size(44.dp),
-                        containerColor = if (isTracking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest,
+                        containerColor = if (isTracking) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
                         icon = {
                             Icon(
                                 if (isTracking) Icons.Default.LocationOn else Icons.Default.LocationDisabled,
                                 contentDescription = null,
-                                tint = if (isTracking) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = if (isTracking) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     )
@@ -255,16 +251,43 @@ private fun TodayCard(
                     }
                 }
 
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    MiniStat(visits.size.toString(), "stops", Modifier.weight(1f))
-                    MiniStat(journeys.size.toString(), "trips", Modifier.weight(1f))
-                    MiniStat(formatMinutes(minutes), "stayed", Modifier.weight(1f))
-                    MiniStat(formatDistance(distance), "distance", Modifier.weight(1f))
-                }
+                ResponsiveStats(
+                    stats = listOf(
+                        "stops" to visits.size.toString(),
+                        "trips" to journeys.size.toString(),
+                        "stayed" to formatMinutes(minutes),
+                        "distance" to formatDistance(distance)
+                    )
+                )
             }
+        }
+    }
+}
+
+@Composable
+private fun ResponsiveStats(
+    stats: List<Pair<String, String>>
+) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        StatsColumn(stats.take(2), Modifier.weight(1f))
+        StatsColumn(stats.drop(2), Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun StatsColumn(
+    stats: List<Pair<String, String>>,
+    modifier: Modifier
+) {
+    Column(
+        modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        stats.forEach { (label, value) ->
+            MiniStat(value, label, Modifier.fillMaxWidth())
         }
     }
 }
@@ -284,16 +307,15 @@ private fun MiniStat(
     }
 
     Surface(
-        modifier = modifier,
-        shape = MaterialTheme.shapes.extraLarge,
+        modifier = modifier.heightIn(min = 64.dp),
+        shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainer
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(3.dp)
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = icon,
@@ -301,21 +323,21 @@ private fun MiniStat(
                 modifier = Modifier.size(18.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Text(
-                value,
-                style = MaterialTheme.typography.titleLarge,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Spacer(Modifier.width(9.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    value,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+            }
         }
     }
 }
@@ -381,8 +403,8 @@ private fun VisitCard(
                 points = listOf(LatLng(event.place.latitude, event.place.longitude)),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(126.dp)
-                    .padding(12.dp)
+                    .height(104.dp)
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
             )
         }
     }
