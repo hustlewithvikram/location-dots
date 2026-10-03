@@ -60,7 +60,11 @@ extensions.configure<ApplicationExtension> {
 
     buildTypes {
         getByName("debug") {
-            // Use the Android Gradle Plugin's generated debug keystore.
+            // CI debug artifacts use the stable release signer when configured so
+            // successive GitHub builds can update an existing installation.
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("locationDotsRelease")
+            }
         }
 
         getByName("release") {
