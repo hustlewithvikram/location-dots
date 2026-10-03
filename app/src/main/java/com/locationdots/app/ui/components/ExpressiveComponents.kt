@@ -14,8 +14,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -88,7 +89,9 @@ fun ExpressiveIconButton(
 ) {
     FilledTonalIconButton(
         onClick = onClick,
-        modifier = modifier.size(48.dp),
+        modifier = modifier
+            .size(48.dp)
+            .semantics { this.contentDescription = contentDescription ?: "Action" },
         colors = IconButtonDefaults.filledTonalIconButtonColors(
             containerColor = if (emphasized) {
                 MaterialTheme.colorScheme.primaryContainer
@@ -219,14 +222,7 @@ fun ExpressiveProgress(progress: Float, modifier: Modifier = Modifier) {
         Box(
             Modifier
                 .fillMaxWidth(progress.coerceIn(0f, 1f))
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(
-                            MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.tertiary
-                        )
-                    )
-                )
+                .background(MaterialTheme.colorScheme.primary)
                 .height(8.dp)
         )
     }
