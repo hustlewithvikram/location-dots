@@ -20,6 +20,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected as semanticsSelected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 enum class AppTab(val label: String) {
@@ -45,23 +46,29 @@ fun AppBottomBar(selected: AppTab, onSelected: (AppTab) -> Unit) {
         Modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(horizontal = 24.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
         Surface(
-            Modifier.fillMaxWidth().height(72.dp),
-            shape = RoundedCornerShape(32.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(74.dp),
+            shape = RoundedCornerShape(30.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            tonalElevation = 3.dp,
+            tonalElevation = 2.dp,
             shadowElevation = 0.dp
         ) {
-            BoxWithConstraints(Modifier.fillMaxSize().padding(6.dp)) {
+            BoxWithConstraints(
+                Modifier
+                    .fillMaxSize()
+                    .padding(5.dp)
+            ) {
                 val itemWidth = maxWidth / tabs.size
                 val indicatorOffset by animateDpAsState(
                     targetValue = itemWidth * selectedIndex,
                     animationSpec = spring(
-                        dampingRatio = 0.8f,
-                        stiffness = 700f,
+                        dampingRatio = 0.82f,
+                        stiffness = 650f,
                         visibilityThreshold = 0.5.dp
                     ),
                     label = "navigation-pill"
@@ -72,8 +79,8 @@ fun AppBottomBar(selected: AppTab, onSelected: (AppTab) -> Unit) {
                         .align(Alignment.CenterStart)
                         .offset(x = indicatorOffset)
                         .width(itemWidth)
-                        .height(60.dp)
-                        .clip(RoundedCornerShape(30.dp))
+                        .height(64.dp)
+                        .clip(RoundedCornerShape(26.dp))
                         .background(MaterialTheme.colorScheme.secondaryContainer)
                 )
 
@@ -94,22 +101,28 @@ fun AppBottomBar(selected: AppTab, onSelected: (AppTab) -> Unit) {
                         ) {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
                             ) {
                                 Icon(
                                     icon,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(22.dp),
-                                    tint = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer
-                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                                    contentDescription = tab.label,
+                                    modifier = Modifier.size(23.dp),
+                                    tint = if (isSelected) {
+                                        MaterialTheme.colorScheme.onSecondaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    }
                                 )
-                                Spacer(Modifier.height(2.dp))
                                 Text(
                                     tab.label,
                                     style = MaterialTheme.typography.labelSmall,
+                                    color = if (isSelected) {
+                                        MaterialTheme.colorScheme.onSecondaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
                                     maxLines = 1,
-                                    color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer
-                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
