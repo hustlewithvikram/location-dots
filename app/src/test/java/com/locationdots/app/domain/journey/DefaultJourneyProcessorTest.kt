@@ -143,6 +143,30 @@ class DefaultJourneyProcessorTest {
     }
 
     @Test
+    fun multipleOutliersDoNotMoveVisitAnchor() = runBlocking {
+        val start = Instant.parse("2026-10-02T10:00:00Z")
+        val stable = points(start, count = 17, secondsBetween = 30, latitudeStep = 0.00002)
+        val outlierOne = LocationPoint(
+            latitude = 18.5230,
+            longitude = 73.8567,
+            accuracyMeters = 20f,
+            timestamp = start.plusSeconds(17 * 30L)
+        )
+        val outlierTwo = LocationPoint(
+            latitude = 18.5240,
+            longitude = 73.8567,
+            accuracyMeters = 20f,
+            timestamp = start.plusSeconds(18 * 30L)
+        )
+
+        val visit = processor.process(stable + outlierOne + outlierTwo)
+            .filterIsInstance<TimelineEvent.Visit>()
+            .single()
+
+        assertEquals(outlierOne.timestamp, visit.departure)
+    }
+
+    @Test
     fun singleGpsOutlierDoesNotCloseVisit() = runBlocking {
         val start = Instant.parse("2026-10-02T10:00:00Z")
         val stable = points(start, count = 17, secondsBetween = 30, latitudeStep = 0.00002)
