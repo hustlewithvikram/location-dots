@@ -37,6 +37,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
+          gradle-version: 9.6.0
           validate-wrappers: false
 
       - name: Prepare Android SDK
@@ -54,8 +55,6 @@ jobs:
           ls -ld "$SDK_ROOT/platforms/android-37" "$SDK_ROOT/platforms/android-37.0"
           test -x "$SDK_ROOT/build-tools/37.0.0/aapt2"
 
-      - name: Make Gradle wrapper executable
-        run: chmod +x ./gradlew
       - name: Prepare stable debug signing
         if: ${{ env.RELEASE_KEYSTORE_BASE64 != '' && env.RELEASE_STORE_PASSWORD != '' && env.RELEASE_KEY_ALIAS != '' && env.RELEASE_KEY_PASSWORD != '' }}
         shell: bash
@@ -71,13 +70,13 @@ jobs:
           EOF
 
       - name: Build debug APK
-        run: ./gradlew :app:assembleDebug --stacktrace --no-daemon -PversionCode=$((1000 + ${{ github.run_number }})) -PversionName=1.0.0-dev.${{ github.run_number }}
+        run: gradle :app:assembleDebug --stacktrace --no-daemon -PversionCode=$((1000 + ${{ github.run_number }})) -PversionName=1.0.0-dev.${{ github.run_number }}
 
       - name: Run unit tests
-        run: ./gradlew :app:testDebugUnitTest --stacktrace --no-daemon
+        run: gradle :app:testDebugUnitTest --stacktrace --no-daemon
 
       - name: Lint debug
-        run: ./gradlew :app:lintDebug --stacktrace --no-daemon
+        run: gradle :app:lintDebug --stacktrace --no-daemon
 
       - name: Verify APK
         run: |
