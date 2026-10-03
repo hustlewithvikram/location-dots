@@ -76,10 +76,21 @@ fun TimelineScreen(
                         title = "Activity"
                     )
                 }
-                items(items, key = { when (it) { is TimelineItem.Day -> "day-" + it.date; is TimelineItem.Event -> it.event.id } }) { item ->
+                items.forEach { item ->
                     when (item) {
-                        is TimelineItem.Day -> DayHeader(item.date)
-                        is TimelineItem.Event -> TimelineEventRow(item.event, onPlaceClick, onJourneyClick)
+                        is TimelineItem.Day -> stickyHeader(key = "day-" + item.date) {
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.background)
+                                    .padding(horizontal = 16.dp)
+                            ) {
+                                DayHeader(item.date)
+                            }
+                        }
+                        is TimelineItem.Event -> item(key = item.event.id) {
+                            TimelineEventRow(item.event, onPlaceClick, onJourneyClick)
+                        }
                     }
                 }
                 if (isRefreshing) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
