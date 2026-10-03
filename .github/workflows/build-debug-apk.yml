@@ -17,6 +17,11 @@ jobs:
   build:
     name: Build debug APK
     runs-on: ubuntu-latest
+    env:
+      RELEASE_KEYSTORE_BASE64: ${{ secrets.LOCATION_DOTS_RELEASE_KEYSTORE_BASE64 }}
+      RELEASE_STORE_PASSWORD: ${{ secrets.LOCATION_DOTS_RELEASE_STORE_PASSWORD }}
+      RELEASE_KEY_ALIAS: ${{ secrets.LOCATION_DOTS_RELEASE_KEY_ALIAS }}
+      RELEASE_KEY_PASSWORD: ${{ secrets.LOCATION_DOTS_RELEASE_KEY_PASSWORD }}
     timeout-minutes: 30
 
     steps:
@@ -52,13 +57,8 @@ jobs:
         run: gradle wrapper --gradle-version 9.6.0 --distribution-type bin
 
       - name: Prepare stable debug signing
-        if: ${{ secrets.LOCATION_DOTS_RELEASE_KEYSTORE_BASE64 != '' && secrets.LOCATION_DOTS_RELEASE_STORE_PASSWORD != '' && secrets.LOCATION_DOTS_RELEASE_KEY_ALIAS != '' && secrets.LOCATION_DOTS_RELEASE_KEY_PASSWORD != '' }}
+        if: ${{ env.RELEASE_KEYSTORE_BASE64 != '' && env.RELEASE_STORE_PASSWORD != '' && env.RELEASE_KEY_ALIAS != '' && env.RELEASE_KEY_PASSWORD != '' }}
         shell: bash
-        env:
-          RELEASE_KEYSTORE_BASE64: ${{ secrets.LOCATION_DOTS_RELEASE_KEYSTORE_BASE64 }}
-          RELEASE_STORE_PASSWORD: ${{ secrets.LOCATION_DOTS_RELEASE_STORE_PASSWORD }}
-          RELEASE_KEY_ALIAS: ${{ secrets.LOCATION_DOTS_RELEASE_KEY_ALIAS }}
-          RELEASE_KEY_PASSWORD: ${{ secrets.LOCATION_DOTS_RELEASE_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           mkdir -p keystore
