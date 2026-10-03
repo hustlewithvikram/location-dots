@@ -43,6 +43,7 @@ import com.locationdots.app.feature.journey.JourneyDetailScreen
 import com.locationdots.app.feature.map.*
 import com.locationdots.app.feature.onboarding.OnboardingScreen
 import com.locationdots.app.feature.place.*
+import com.locationdots.app.feature.profile.ProfileScreen
 import com.locationdots.app.feature.search.*
 import com.locationdots.app.feature.settings.*
 import com.locationdots.app.feature.splash.SplashScreen
@@ -72,6 +73,7 @@ class MainActivity : ComponentActivity() {
     private var isTracking by mutableStateOf(false)
     private var selectedPlaceId by mutableStateOf<String?>(null)
     private var selectedJourneyId by mutableStateOf<String?>(null)
+    private var isProfileOpen by mutableStateOf(false)
     private var currentTab by mutableStateOf(AppTab.TIMELINE)
     private var isSearchOpen by mutableStateOf(false)
     private var isAboutOpen by mutableStateOf(false)
@@ -214,6 +216,7 @@ class MainActivity : ComponentActivity() {
                     showSplash -> -100
                     !hasLocationPermission -> -90
                     isAboutOpen -> -80
+                    isProfileOpen -> -40
                     selectedJourneyId != null -> -60
                     selectedPlaceId != null -> -50
                     isSearchOpen -> -70
@@ -231,6 +234,7 @@ class MainActivity : ComponentActivity() {
                 // One app-level back handler keeps every manually-managed destination
                 // consistent with its visible navigation hierarchy.
                 val canNavigateBack = isAboutOpen ||
+                    isProfileOpen ||
                     selectedJourneyId != null ||
                     selectedPlaceId != null ||
                     isSearchOpen ||
@@ -241,6 +245,10 @@ class MainActivity : ComponentActivity() {
                         isAboutOpen -> {
                             pendingNavigationDirection = NavigationDirection.BACK
                             isAboutOpen = false
+                        }
+                        isProfileOpen -> {
+                            pendingNavigationDirection = NavigationDirection.BACK
+                            isProfileOpen = false
                         }
                         selectedJourneyId != null -> {
                             pendingNavigationDirection = NavigationDirection.BACK
@@ -311,7 +319,21 @@ class MainActivity : ComponentActivity() {
                             pendingNavigationDirection = NavigationDirection.BACK
                             isAboutOpen = false
                         }
-                        destination.key == -70 -> SearchScreen(
+                        destination.key == -40 -> ProfileScreen(
+                        events = timelineState.events,
+                        placesCount = places.size,
+                        isTracking = isTracking,
+                        onBack = {
+                            pendingNavigationDirection = NavigationDirection.BACK
+                            isProfileOpen = false
+                        },
+                        onSettings = {
+                            pendingNavigationDirection = NavigationDirection.FORWARD
+                            isProfileOpen = false
+                            currentTab = AppTab.SETTINGS
+                        }
+                    )
+                    destination.key == -70 -> SearchScreen(
                         query = searchState.query,
                         results = searchState.results,
                         isSearching = searchState.isSearching,
@@ -481,6 +503,10 @@ class MainActivity : ComponentActivity() {
                         onSearchClick = {
                             pendingNavigationDirection = NavigationDirection.FORWARD
                             isSearchOpen = true
+                        },
+                        onProfileClick = {
+                            pendingNavigationDirection = NavigationDirection.FORWARD
+                            isProfileOpen = true
                         },
                         onPlacesClick = {
                             pendingNavigationDirection = NavigationDirection.FORWARD
