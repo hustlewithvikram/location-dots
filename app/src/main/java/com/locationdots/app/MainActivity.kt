@@ -256,9 +256,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 AnimatedContent(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = if (destination.key in 0..3) 88.dp else 0.dp),
+                    modifier = Modifier.fillMaxSize(),
                     targetState = destination,
                     transitionSpec = {
                         if (!animationsEnabled) {
