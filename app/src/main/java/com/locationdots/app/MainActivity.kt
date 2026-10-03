@@ -611,9 +611,7 @@ class MainActivity : ComponentActivity() {
     private fun clearHistory() {
         val app = application as LocationDotsApplication
         lifecycleScope.launch {
-            app.database.locationDao().deleteAll()
-            app.database.placeDao().deleteAll()
-            app.database.timelineEventDao().deleteAll()
+            app.database.clearAllData()
             timelineViewModel.refresh()
             insightsViewModel.refresh()
         }
