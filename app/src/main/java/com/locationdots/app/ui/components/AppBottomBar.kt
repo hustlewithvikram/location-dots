@@ -52,8 +52,8 @@ fun AppBottomBar(selected: AppTab, onSelected: (AppTab) -> Unit) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(74.dp),
-            shape = RoundedCornerShape(30.dp),
+                .height(70.dp),
+            shape = RoundedCornerShape(100.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 2.dp,
             shadowElevation = 0.dp
@@ -79,8 +79,8 @@ fun AppBottomBar(selected: AppTab, onSelected: (AppTab) -> Unit) {
                         .align(Alignment.CenterStart)
                         .offset(x = indicatorOffset)
                         .width(itemWidth)
-                        .height(64.dp)
-                        .clip(RoundedCornerShape(26.dp))
+                        .height(60.dp)
+                        .clip(RoundedCornerShape(100.dp))
                         .background(MaterialTheme.colorScheme.secondaryContainer)
                 )
 
@@ -91,7 +91,7 @@ fun AppBottomBar(selected: AppTab, onSelected: (AppTab) -> Unit) {
                             Modifier
                                 .weight(1f)
                                 .fillMaxHeight()
-                                .clip(RoundedCornerShape(26.dp))
+                                .clip(RoundedCornerShape(100.dp))
                                 .clickable { onSelected(tab) }
                                 .semantics {
                                     semanticsSelected = isSelected
