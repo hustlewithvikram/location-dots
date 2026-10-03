@@ -61,7 +61,7 @@ fun TimelineScreen(
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
-    ) {
+    ) { _ ->
         Column(
             Modifier
                 .fillMaxSize()
