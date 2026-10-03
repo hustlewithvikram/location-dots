@@ -955,7 +955,7 @@ private fun SettingsSubPage(
     content: LazyListScope.() -> Unit
 ) {
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(18.dp, 10.dp, 18.dp, 112.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
