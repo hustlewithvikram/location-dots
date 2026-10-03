@@ -59,14 +59,11 @@ fun TimelineScreen(
         }
     }
 
-    Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
-    ) { _ ->
-        Column(
-            Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-        ) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+    ) {
             if (items.isEmpty() && !isRefreshing && !isLoadingMore) EmptyTimeline(isTracking)
             else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 12.dp, 16.dp, 88.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 item("summary") {
@@ -107,7 +104,6 @@ fun TimelineScreen(
                     }
                 }
             }
-        }
     }
 }
 
