@@ -51,6 +51,25 @@ jobs:
       - name: Generate Gradle wrapper
         run: gradle wrapper --gradle-version 9.6.0 --distribution-type bin
 
+      - name: Prepare stable debug signing
+        if: ${{ secrets.LOCATION_DOTS_RELEASE_KEYSTORE_BASE64 != '' && secrets.LOCATION_DOTS_RELEASE_STORE_PASSWORD != '' && secrets.LOCATION_DOTS_RELEASE_KEY_ALIAS != '' && secrets.LOCATION_DOTS_RELEASE_KEY_PASSWORD != '' }}
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.LOCATION_DOTS_RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.LOCATION_DOTS_RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.LOCATION_DOTS_RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.LOCATION_DOTS_RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          mkdir -p keystore
+          printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > keystore/location-dots-release.jks
+          cat > secrets.properties <<EOF
+          releaseStoreFile=keystore/location-dots-release.jks
+          releaseStorePassword=$RELEASE_STORE_PASSWORD
+          releaseKeyAlias=$RELEASE_KEY_ALIAS
+          releaseKeyPassword=$RELEASE_KEY_PASSWORD
+          EOF
+
       - name: Build debug APK
         run: ./gradlew :app:assembleDebug --stacktrace --no-daemon -PversionCode=$((1000 + ${{ github.run_number }})) -PversionName=1.0.0-dev.${{ github.run_number }}
 
