@@ -58,8 +58,14 @@ fun TimelineScreen(
         }
     }
 
-    Scaffold { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
+    Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    ) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+        ) {
             if (items.isEmpty() && !isRefreshing && !isLoadingMore) EmptyTimeline(isTracking)
             else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 12.dp, 16.dp, 88.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 item("summary") {
@@ -97,38 +103,74 @@ fun TimelineScreen(
 private fun DayHeader(date: LocalDate) {
     val today = LocalDate.now(ZoneId.systemDefault())
     val currentLocale = LocalConfiguration.current.locales[0]
-    val formatted = DateTimeFormatter.ofPattern("EEE, d MMM", currentLocale).format(date)
-    val label = when (date) {
-        today -> "Today · " + formatted
-        today.minusDays(1) -> "Yesterday · " + formatted
-        else -> formatted
+    val formatted = DateTimeFormatter.ofPattern("EEE, d MMM yyyy", currentLocale).format(date)
+    val isToday = date == today
+    val isYesterday = date == today.minusDays(1)
+    val title = when {
+        isToday -> "Today"
+        isYesterday -> "Yesterday"
+        else -> DateTimeFormatter.ofPattern("EEEE", currentLocale).format(date)
+    }
+    val containerColor = when {
+        isToday -> MaterialTheme.colorScheme.primaryContainer
+        isYesterday -> MaterialTheme.colorScheme.secondaryContainer
+        else -> MaterialTheme.colorScheme.surfaceContainer
+    }
+    val contentColor = when {
+        isToday -> MaterialTheme.colorScheme.onPrimaryContainer
+        isYesterday -> MaterialTheme.colorScheme.onSecondaryContainer
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
-    Row(
-        Modifier
+    Surface(
+        modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 12.dp, bottom = 2.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(top = 14.dp),
+        shape = RoundedCornerShape(100.dp),
+        color = containerColor,
+        tonalElevation = if (isToday) 2.dp else 0.dp
     ) {
-        Surface(
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(100.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            Surface(
+                modifier = Modifier.size(32.dp),
+                shape = CircleShape,
+                color = contentColor.copy(alpha = 0.14f)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        if (isToday) Icons.Default.Today else Icons.Default.CalendarToday,
+                        contentDescription = null,
+                        modifier = Modifier.size(17.dp),
+                        tint = contentColor
+                    )
+                }
+            }
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = contentColor
+                )
+                Text(
+                    formatted,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = contentColor.copy(alpha = 0.78f)
+                )
+            }
             Text(
-                label,
-                Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                if (isToday) "LIVE" else "DAY",
+                style = MaterialTheme.typography.labelSmall,
+                color = contentColor.copy(alpha = 0.72f)
             )
         }
-        Spacer(Modifier.width(10.dp))
-        HorizontalDivider(
-            Modifier.weight(1f),
-            color = MaterialTheme.colorScheme.outlineVariant
-        )
     }
 }
-
 @Composable private fun TimelineEventRow(
     event: TimelineEvent,
     onPlaceClick: (String) -> Unit,
