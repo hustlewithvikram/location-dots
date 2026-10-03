@@ -1,16 +1,18 @@
 package com.locationdots.app.feature.timeline
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import org.maplibre.android.geometry.LatLng
-import com.locationdots.app.ui.components.LocationMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -58,7 +60,7 @@ fun TimelineScreen(
     Scaffold { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (items.isEmpty() && !isRefreshing && !isLoadingMore) EmptyTimeline(isTracking)
-            else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 12.dp, 16.dp, 112.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 12.dp, 16.dp, 88.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 item("summary") {
                     TodayCard(events, isTracking, onSearchClick)
                 }
@@ -403,11 +405,11 @@ private fun VisitCard(
                 )
             }
 
-            MiniMap(
-                points = listOf(LatLng(event.place.latitude, event.place.longitude)),
+            MiniLocationPreview(
+                points = listOf(event.place.latitude to event.place.longitude),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(104.dp)
+                    .height(88.dp)
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             )
         }
@@ -476,11 +478,11 @@ private fun JourneyCard(
             }
 
             if (points.isNotEmpty()) {
-                MiniMap(
-                    points = points,
+                MiniLocationPreview(
+                    points = points.map { it.latitude to it.longitude },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(112.dp)
+                        .height(88.dp)
                         .padding(10.dp)
                 )
             }
@@ -489,15 +491,72 @@ private fun JourneyCard(
 }
 
 @Composable
-private fun MiniMap(
-    points: List<LatLng>,
+private fun MiniLocationPreview(
+    points: List<Pair<Double, Double>>,
     modifier: Modifier
 ) {
-    LocationMap(
-        points = points,
+    Surface(
         modifier = modifier,
-        interactive = false
-    )
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerLow
+    ) {
+        Canvas(Modifier.fillMaxSize()) {
+            if (points.isEmpty()) return@Canvas
+
+            val minLat = points.minOf { it.first }
+            val maxLat = points.maxOf { it.first }
+            val minLon = points.minOf { it.second }
+            val maxLon = points.maxOf { it.second }
+
+            fun x(lon: Double): Float {
+                val range = (maxLon - minLon).coerceAtLeast(0.000001)
+                return (((lon - minLon) / range) * (size.width - 28f) + 14f).toFloat()
+            }
+
+            fun y(lat: Double): Float {
+                val range = (maxLat - minLat).coerceAtLeast(0.000001)
+                return (size.height - 14f - ((lat - minLat) / range * (size.height - 28f))).toFloat()
+            }
+
+            // Subtle map-like grid without creating a native map view.
+            val gridColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+            repeat(5) { index ->
+                val gx = size.width * index / 4f
+                val gy = size.height * index / 4f
+                drawLine(gridColor, androidx.compose.ui.geometry.Offset(gx, 0f), androidx.compose.ui.geometry.Offset(gx, size.height), 1f)
+                drawLine(gridColor, androidx.compose.ui.geometry.Offset(0f, gy), androidx.compose.ui.geometry.Offset(size.width, gy), 1f)
+            }
+
+            val path = Path()
+            points.forEachIndexed { index, point ->
+                val offset = androidx.compose.ui.geometry.Offset(x(point.second), y(point.first))
+                if (index == 0) path.moveTo(offset.x, offset.y) else path.lineTo(offset.x, offset.y)
+            }
+
+            if (points.size > 1) {
+                drawPath(
+                    path = path,
+                    color = MaterialTheme.colorScheme.primary,
+                    style = Stroke(width = 5f, cap = StrokeCap.Round)
+                )
+            }
+
+            val end = androidx.compose.ui.geometry.Offset(x(points.last().second), y(points.last().first))
+            drawCircle(
+                color = MaterialTheme.colorScheme.primary,
+                radius = 7f,
+                center = end
+            )
+            if (points.size > 1) {
+                val start = androidx.compose.ui.geometry.Offset(x(points.first().second), y(points.first().first))
+                drawCircle(
+                    color = MaterialTheme.colorScheme.tertiary,
+                    radius = 5f,
+                    center = start
+                )
+            }
+        }
+    }
 }
 
 @Composable private fun EmptyTimeline(isTracking: Boolean) {
