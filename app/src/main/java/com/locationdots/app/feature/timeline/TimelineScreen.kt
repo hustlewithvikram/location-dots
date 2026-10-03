@@ -106,113 +106,115 @@ fun TimelineScreen(
 @Composable
 private fun DayHeader(date: LocalDate) {
     val today = LocalDate.now(ZoneId.systemDefault())
-    val currentLocale = LocalConfiguration.current.locales[0]
-    val formatted = DateTimeFormatter.ofPattern("EEE, d MMM yyyy", currentLocale).format(date)
+    val locale = LocalConfiguration.current.locales[0]
+    val formatted = DateTimeFormatter.ofPattern("EEE, d MMM", locale).format(date)
     val isToday = date == today
     val isYesterday = date == today.minusDays(1)
     val title = when {
         isToday -> "Today"
         isYesterday -> "Yesterday"
-        else -> DateTimeFormatter.ofPattern("EEEE", currentLocale).format(date)
-    }
-    val containerColor = when {
-        isToday -> MaterialTheme.colorScheme.primaryContainer
-        isYesterday -> MaterialTheme.colorScheme.secondaryContainer
-        else -> MaterialTheme.colorScheme.surfaceContainer
-    }
-    val contentColor = when {
-        isToday -> MaterialTheme.colorScheme.onPrimaryContainer
-        isYesterday -> MaterialTheme.colorScheme.onSecondaryContainer
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
+        else -> DateTimeFormatter.ofPattern("EEEE", locale).format(date)
     }
 
-    Surface(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 14.dp),
-        shape = RoundedCornerShape(100.dp),
-        color = containerColor,
-        tonalElevation = if (isToday) 2.dp else 0.dp
+            .padding(horizontal = 4.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
+        Box(
             Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+                .size(10.dp)
+                .clip(CircleShape)
+                .background(
+                    if (isToday) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.outlineVariant
+                )
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(title, style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.width(8.dp))
+        Text(
+            formatted,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        if (isToday) {
+            Spacer(Modifier.weight(1f))
             Surface(
-                modifier = Modifier.size(32.dp),
-                shape = CircleShape,
-                color = contentColor.copy(alpha = 0.14f)
+                shape = RoundedCornerShape(100.dp),
+                color = MaterialTheme.colorScheme.primaryContainer
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        if (isToday) Icons.Default.Today else Icons.Default.CalendarToday,
-                        contentDescription = null,
-                        modifier = Modifier.size(17.dp),
-                        tint = contentColor
-                    )
-                }
-            }
-            Spacer(Modifier.width(10.dp))
-            Column(Modifier.weight(1f)) {
                 Text(
-                    title,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = contentColor
-                )
-                Text(
-                    formatted,
+                    "LIVE",
+                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
                     style = MaterialTheme.typography.labelSmall,
-                    color = contentColor.copy(alpha = 0.78f)
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
-            Text(
-                if (isToday) "LIVE" else "DAY",
-                style = MaterialTheme.typography.labelSmall,
-                color = contentColor.copy(alpha = 0.72f)
-            )
         }
     }
 }
-@Composable private fun TimelineEventRow(
+
+@Composable
+private fun TimelineEventRow(
     event: TimelineEvent,
     onPlaceClick: (String) -> Unit,
     onJourneyClick: (String) -> Unit
 ) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-        TimelineRail(event = event, modifier = Modifier.width(36.dp))
-        Spacer(Modifier.width(8.dp))
-        EventCard(event, onPlaceClick, onJourneyClick, Modifier.weight(1f))
+    val eventTime = when (event) {
+        is TimelineEvent.Visit -> event.arrival
+        is TimelineEvent.Journey -> event.startedAt
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top
+    ) {
+        Column(
+            modifier = Modifier.width(48.dp),
+            horizontalAlignment = Alignment.End
+        ) {
+            Text(
+                time(eventTime),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(10.dp))
+            TimelineRail(event)
+        }
+
+        Spacer(Modifier.width(12.dp))
+        EventCard(
+            event,
+            onPlaceClick,
+            onJourneyClick,
+            Modifier.weight(1f)
+        )
     }
 }
 
-
 @Composable
-private fun TimelineRail(event: TimelineEvent, modifier: Modifier = Modifier) {
+private fun TimelineRail(event: TimelineEvent) {
     val dotColor = if (event is TimelineEvent.Journey) {
         MaterialTheme.colorScheme.tertiary
     } else {
         MaterialTheme.colorScheme.primary
     }
 
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
-            modifier = Modifier
-                .size(14.dp)
+            Modifier
+                .size(12.dp)
                 .clip(CircleShape)
                 .background(dotColor)
         )
-        Spacer(Modifier.height(6.dp))
         Box(
             Modifier
-                .width(6.dp)
+                .padding(top = 5.dp)
+                .width(2.dp)
                 .height(74.dp)
-                .clip(MaterialTheme.shapes.extraLarge)
-                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                .background(MaterialTheme.colorScheme.outlineVariant)
         )
     }
 }
@@ -227,6 +229,7 @@ private fun TodayCard(
     val today = LocalDate.now(zone)
     val dayStart = today.atStartOfDay(zone).toInstant()
     val dayEnd = today.plusDays(1).atStartOfDay(zone).toInstant()
+
     val todayEvents = events.filter { event ->
         when (event) {
             is TimelineEvent.Visit ->
@@ -238,161 +241,125 @@ private fun TodayCard(
     val visits = todayEvents.filterIsInstance<TimelineEvent.Visit>()
     val journeys = todayEvents.filterIsInstance<TimelineEvent.Journey>()
     val now = java.time.Instant.now().coerceIn(dayStart, dayEnd)
-    val effectiveDayEnd = now
     val minutes = visits.sumOf {
         val start = maxOf(it.arrival, dayStart)
-        val end = minOf(it.departure ?: effectiveDayEnd, effectiveDayEnd)
+        val end = minOf(it.departure ?: now, now)
         Duration.between(start, end).toMinutes().coerceAtLeast(0)
     }
     val distance = journeys.sumOf { it.distanceMeters ?: 0.0 }
+    val locale = LocalConfiguration.current.locales[0]
+    val dateLabel = DateTimeFormatter.ofPattern("EEEE, d MMMM", locale).format(today)
 
-    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Row(
-            Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(Modifier.weight(1f)) {
-                Text("Today", style = MaterialTheme.typography.headlineMedium)
+                Text("Today", style = MaterialTheme.typography.displaySmall)
                 Text(
-                    if (todayEvents.isEmpty()) "Your timeline is ready."
-                    else "A quick view of your day.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium
+                    dateLabel,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            ExpressiveIconButton(
-                onClick = onSearchClick,
-                icon = { Icon(Icons.Default.Search, "Search your timeline") },
-                emphasized = true,
-                modifier = Modifier.size(50.dp)
-            )
-        }
 
-        ExpressiveCard(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ) {
-            Column(
-                Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    ExpressiveIconBadge(
-                        modifier = Modifier.size(44.dp),
-                        containerColor = if (isTracking) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
-                        icon = {
-                            Icon(
-                                if (isTracking) Icons.Default.LocationOn else Icons.Default.LocationDisabled,
-                                contentDescription = null,
-                                tint = if (isTracking) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            if (isTracking) "Tracking active" else "Tracking paused",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            if (isTracking) "Recording your location in the background."
-                            else "Turn tracking on to build your timeline.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
+            Surface(
+                shape = RoundedCornerShape(100.dp),
+                color = if (isTracking) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainerHigh
                 }
-
-                ResponsiveStats(
-                    stats = listOf(
-                        "stops" to visits.size.toString(),
-                        "trips" to journeys.size.toString(),
-                        "stayed" to formatDuration(minutes),
-                        "distance" to formatDistance(distance)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        Modifier
+                            .size(7.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isTracking) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.outline
+                            )
                     )
-                )
+                    Spacer(Modifier.width(7.dp))
+                    Text(
+                        if (isTracking) "Tracking" else "Paused",
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+            }
+
+            Spacer(Modifier.width(8.dp))
+            FilledTonalIconButton(onClick = onSearchClick) {
+                Icon(Icons.Default.Search, "Search your timeline")
+            }
+        }
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surfaceContainerLow
+        ) {
+            Row(
+                modifier = Modifier.padding(vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SummaryMetric(visits.size.toString(), "stops", Icons.Default.Place, Modifier.weight(1f))
+                SummaryDivider()
+                SummaryMetric(journeys.size.toString(), "trips", Icons.Default.Route, Modifier.weight(1f))
+                SummaryDivider()
+                SummaryMetric(formatDuration(minutes), "stayed", Icons.Default.Schedule, Modifier.weight(1f))
+                SummaryDivider()
+                SummaryMetric(formatDistance(distance), "distance", Icons.Default.Straighten, Modifier.weight(1f))
             }
         }
     }
 }
 
 @Composable
-private fun ResponsiveStats(
-    stats: List<Pair<String, String>>
-) {
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        StatsColumn(stats.take(2), Modifier.weight(1f))
-        StatsColumn(stats.drop(2), Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun StatsColumn(
-    stats: List<Pair<String, String>>,
+private fun SummaryMetric(
+    value: String,
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     modifier: Modifier
 ) {
     Column(
-        modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        modifier.padding(horizontal = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        stats.forEach { (label, value) ->
-            MiniStat(value, label, Modifier.fillMaxWidth())
-        }
+        Icon(
+            icon,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Spacer(Modifier.height(5.dp))
+        Text(
+            value,
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
 @Composable
-private fun MiniStat(
-    value: String,
-    label: String,
-    modifier: Modifier
-) {
-    val icon = when (label) {
-        "stops" -> Icons.Default.Place
-        "trips" -> Icons.Default.Route
-        "stayed" -> Icons.Default.Schedule
-        "distance" -> Icons.Default.Straighten
-        else -> Icons.Default.Info
-    }
-
-    Surface(
-        modifier = modifier.heightIn(min = 64.dp),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainer
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(Modifier.width(9.dp))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    value,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    label,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1
-                )
-            }
-        }
-    }
+private fun SummaryDivider() {
+    Box(
+        Modifier
+            .width(1.dp)
+            .height(34.dp)
+            .background(MaterialTheme.colorScheme.outlineVariant)
+    )
 }
 
 @Composable
@@ -417,47 +384,57 @@ private fun VisitCard(
     val duration = event.departure?.let {
         formatMinutes(Duration.between(event.arrival, it).toMinutes().coerceAtLeast(0))
     } ?: "Still here"
+    val isCurrent = event.departure == null
 
     ExpressiveCard(
         modifier = modifier,
-        onClick = { onPlaceClick(event.place.id) }
+        onClick = { onPlaceClick(event.place.id) },
+        shape = MaterialTheme.shapes.extraLarge
     ) {
-        Column {
-            Row(
-                Modifier.padding(start = 14.dp, top = 14.dp, end = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ExpressiveIconBadge(
-                    modifier = Modifier.size(46.dp),
-                    icon = { Icon(Icons.Default.Place, null) }
-                )
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
+        Row(
+            Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ExpressiveIconBadge(
+                modifier = Modifier.size(42.dp),
+                icon = { Icon(Icons.Default.Place, null) }
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         event.place.name ?: "Unnamed place",
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Text(
-                        "Arrived " + time(event.arrival) + " · " + duration,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    if (isCurrent) {
+                        Spacer(Modifier.width(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(100.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer
+                        ) {
+                            Text(
+                                "NOW",
+                                Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
                 }
-                Icon(
-                    Icons.Default.ChevronRight,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    if (isCurrent) "At this place · $duration"
+                    else "Stayed $duration",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-
-            MiniLocationPreview(
-                points = listOf(event.place.latitude to event.place.longitude),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(88.dp)
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            Icon(
+                Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -485,15 +462,16 @@ private fun JourneyCard(
 
     ExpressiveCard(
         modifier = modifier,
-        onClick = { onJourneyClick(event.id) }
+        onClick = { onJourneyClick(event.id) },
+        shape = MaterialTheme.shapes.extraLarge
     ) {
         Column {
             Row(
-                Modifier.padding(start = 14.dp, top = 14.dp, end = 10.dp),
+                Modifier.padding(start = 14.dp, top = 14.dp, end = 10.dp, bottom = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ExpressiveIconBadge(
-                    modifier = Modifier.size(46.dp),
+                    modifier = Modifier.size(42.dp),
                     icon = { Icon(modeIcon(event.mode), null) }
                 )
                 Spacer(Modifier.width(12.dp))
@@ -505,12 +483,11 @@ private fun JourneyCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    Spacer(Modifier.height(3.dp))
                     Text(
                         event.mode.label() + " · " +
                             (event.endedAt?.let {
-                                formatMinutes(
-                                    Duration.between(event.startedAt, it).toMinutes().coerceAtLeast(0)
-                                )
+                                formatMinutes(Duration.between(event.startedAt, it).toMinutes().coerceAtLeast(0))
                             } ?: "In progress") +
                             " · " + formatDistance(event.distanceMeters ?: 0.0),
                         style = MaterialTheme.typography.bodySmall,
@@ -524,13 +501,13 @@ private fun JourneyCard(
                 )
             }
 
-            if (points.isNotEmpty()) {
+            if (points.size > 1) {
                 MiniLocationPreview(
                     points = points.map { it.latitude to it.longitude },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(88.dp)
-                        .padding(10.dp)
+                        .height(76.dp)
+                        .padding(start = 12.dp, end = 12.dp, bottom = 12.dp)
                 )
             }
         }
@@ -538,6 +515,7 @@ private fun JourneyCard(
 }
 
 @Composable
+private fun MiniLocationPreview@Composable
 private fun MiniLocationPreview(
     points: List<Pair<Double, Double>>,
     modifier: Modifier
