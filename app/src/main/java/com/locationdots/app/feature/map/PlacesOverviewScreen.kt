@@ -28,7 +28,7 @@ fun PlacesOverviewScreen(
     var isMapFullscreen by remember { mutableStateOf(false) }
 
     LazyColumn(
-        Modifier.fillMaxSize(),
+        Modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(18.dp, 12.dp, 18.dp, 112.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
