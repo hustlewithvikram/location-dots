@@ -16,7 +16,7 @@ concurrency:
 jobs:
   build:
     name: Build debug APK
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       RELEASE_KEYSTORE_BASE64: ${{ secrets.LOCATION_DOTS_RELEASE_KEYSTORE_BASE64 }}
       RELEASE_STORE_PASSWORD: ${{ secrets.LOCATION_DOTS_RELEASE_STORE_PASSWORD }}
@@ -48,9 +48,14 @@ jobs:
           "$SDKMANAGER" --sdk_root="$SDK_ROOT" --install \
             "platform-tools" \
             "platforms;android-37.0" \
-            "build-tools;36.0.0"
+            "build-tools;37.0.0"
           test -f "$SDK_ROOT/platforms/android-37.0/android.jar"
-          test -x "$SDK_ROOT/build-tools/36.0.0/aapt2"
+          if [ ! -e "$SDK_ROOT/platforms/android-37" ]; then
+            ln -s android-37.0 "$SDK_ROOT/platforms/android-37"
+          fi
+          echo "Created Android SDK compatibility alias:"
+          ls -ld "$SDK_ROOT/platforms/android-37" "$SDK_ROOT/platforms/android-37.0"
+          test -x "$SDK_ROOT/build-tools/37.0.0/aapt2"
 
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
