@@ -161,7 +161,9 @@ class MainActivity : ComponentActivity() {
         // the background so uncovered transition/system-bar areas always use the theme.
         window.statusBarColor = android.graphics.Color.TRANSPARENT
         window.navigationBarColor = android.graphics.Color.TRANSPARENT
-        window.isNavigationBarContrastEnforced = false
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
+        }
         window.navigationBarDividerColor = android.graphics.Color.TRANSPARENT
         permissionManager = LocationPermissionManager(this)
         trackingController = LocationTrackingController(this)
