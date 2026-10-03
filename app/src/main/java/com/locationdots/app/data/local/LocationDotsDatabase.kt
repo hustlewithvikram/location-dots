@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.Transaction
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
@@ -17,6 +18,13 @@ abstract class LocationDotsDatabase : RoomDatabase() {
     abstract fun locationDao(): LocationDao
     abstract fun placeDao(): PlaceDao
     abstract fun timelineEventDao(): TimelineEventDao
+
+    @Transaction
+    open suspend fun clearAllData() {
+        locationDao().deleteAll()
+        placeDao().deleteAll()
+        timelineEventDao().deleteAll()
+    }
 
     companion object {
         private val MIGRATION_1_2 = object : Migration(1, 2) {
