@@ -58,7 +58,7 @@ fun TimelineScreen(
     Scaffold { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (items.isEmpty() && !isRefreshing && !isLoadingMore) EmptyTimeline(isTracking)
-            else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(18.dp, 14.dp, 18.dp, 108.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 12.dp, 16.dp, 112.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 item("summary") {
                     TodayCard(events, isTracking, onSearchClick)
                 }
@@ -113,8 +113,8 @@ private fun DayHeader(date: LocalDate) {
         ) {
             Text(
                 label,
-                Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                style = MaterialTheme.typography.labelLarge,
+                Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -188,9 +188,11 @@ private fun TodayCard(
     }
     val visits = todayEvents.filterIsInstance<TimelineEvent.Visit>()
     val journeys = todayEvents.filterIsInstance<TimelineEvent.Journey>()
+    val now = java.time.Instant.now()
+    val effectiveDayEnd = minOf(dayEnd, now)
     val minutes = visits.sumOf {
         val start = maxOf(it.arrival, dayStart)
-        val end = minOf(it.departure ?: dayEnd, dayEnd)
+        val end = minOf(it.departure ?: effectiveDayEnd, effectiveDayEnd)
         Duration.between(start, end).toMinutes().coerceAtLeast(0)
     }
     val distance = journeys.sumOf { it.distanceMeters ?: 0.0 }
@@ -201,28 +203,28 @@ private fun TodayCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(Modifier.weight(1f)) {
-                Text("Today", style = MaterialTheme.typography.headlineLarge)
+                Text("Today", style = MaterialTheme.typography.headlineMedium)
                 Text(
                     if (todayEvents.isEmpty()) "Your timeline is ready."
                     else "A quick view of your day.",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
             ExpressiveIconButton(
                 onClick = onSearchClick,
                 icon = { Icon(Icons.Default.Search, "Search your timeline") },
-                emphasized = true
+                emphasized = true,
+                modifier = Modifier.size(50.dp)
             )
         }
 
         ExpressiveCard(
-            emphasized = true,
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ) {
             Column(
-                Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     ExpressiveIconBadge(
@@ -243,10 +245,12 @@ private fun TodayCard(
                             style = MaterialTheme.typography.titleMedium
                         )
                         Text(
-                            if (isTracking) "Location updates are being recorded."
+                            if (isTracking) "Recording your location in the background."
                             else "Turn tracking on to build your timeline.",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
@@ -255,7 +259,7 @@ private fun TodayCard(
                     stats = listOf(
                         "stops" to visits.size.toString(),
                         "trips" to journeys.size.toString(),
-                        "stayed" to formatMinutes(minutes),
+                        "stayed" to formatDuration(minutes),
                         "distance" to formatDistance(distance)
                     )
                 )
@@ -476,8 +480,8 @@ private fun JourneyCard(
                     points = points,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(126.dp)
-                        .padding(12.dp)
+                        .height(112.dp)
+                        .padding(10.dp)
                 )
             }
         }
@@ -517,6 +521,14 @@ private fun buildItems(events: List<TimelineEvent>): List<TimelineItem> {
 }
 private fun time(i: java.time.Instant) = DateTimeFormatter.ofPattern("HH:mm").format(i.atZone(ZoneId.systemDefault()))
 private fun formatMinutes(m: Long) = if (m < 60) m.toString() + "m" else (m / 60).toString() + "h " + (m % 60).toString() + "m"
+private fun formatDuration(m: Long): String {
+    val minutes = m.coerceAtLeast(0)
+    return when {
+        minutes < 60 -> "${minutes}m"
+        minutes < 24 * 60 -> "${minutes / 60}h ${minutes % 60}m"
+        else -> "${minutes / (24 * 60)}d ${(minutes / 60) % 24}h"
+    }
+}
 private fun formatDistance(m: Double): String {
     val distance = m.coerceAtLeast(0.0)
     return when {
