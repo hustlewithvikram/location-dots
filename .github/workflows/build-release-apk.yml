@@ -38,6 +38,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
+          gradle-version: 9.6.0
           validate-wrappers: false
 
       - name: Prepare Android SDK
@@ -55,8 +56,6 @@ jobs:
           ls -ld "$SDK_ROOT/platforms/android-37" "$SDK_ROOT/platforms/android-37.0"
           test -x "$SDK_ROOT/build-tools/37.0.0/aapt2"
 
-      - name: Make Gradle wrapper executable
-        run: chmod +x ./gradlew
       - name: Prepare release signing
         shell: bash
         env:
@@ -81,16 +80,16 @@ jobs:
           EOF
 
       - name: Run unit tests
-        run: ./gradlew :app:testDebugUnitTest --stacktrace --no-daemon
+        run: gradle :app:testDebugUnitTest --stacktrace --no-daemon
 
       - name: Lint release
-        run: ./gradlew :app:lintRelease --stacktrace --no-daemon
+        run: gradle :app:lintRelease --stacktrace --no-daemon
 
       - name: Build release APK
-        run: ./gradlew :app:assembleRelease --stacktrace --no-daemon -PversionCode=${{ inputs.version_code }} -PversionName=${{ inputs.version_name }}
+        run: gradle :app:assembleRelease --stacktrace --no-daemon -PversionCode=${{ inputs.version_code }} -PversionName=${{ inputs.version_name }}
 
       - name: Build release AAB
-        run: ./gradlew :app:bundleRelease --stacktrace --no-daemon -PversionCode=${{ inputs.version_code }} -PversionName=${{ inputs.version_name }}
+        run: gradle :app:bundleRelease --stacktrace --no-daemon -PversionCode=${{ inputs.version_code }} -PversionName=${{ inputs.version_name }}
 
       - name: Verify release artifacts
         shell: bash
