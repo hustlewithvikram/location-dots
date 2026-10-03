@@ -1,5 +1,6 @@
 package com.locationdots.app.ui.components
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,13 +26,25 @@ fun ExpressiveCard(
     onClick: (() -> Unit)? = null,
     emphasized: Boolean = false,
     containerColor: Color? = null,
+    fillMaxWidth: Boolean = false,
     content: @Composable () -> Unit
 ) {
     Card(
         modifier = modifier
+            .then(if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier)
             .animateContentSize()
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
-        shape = if (emphasized) MaterialTheme.shapes.extraLarge else MaterialTheme.shapes.large,
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(onClick = onClick)
+                } else {
+                    Modifier
+                }
+            ),
+        shape = if (emphasized) {
+            MaterialTheme.shapes.extraLarge
+        } else {
+            MaterialTheme.shapes.large
+        },
         colors = CardDefaults.cardColors(
             containerColor = containerColor ?: if (emphasized) {
                 MaterialTheme.colorScheme.primaryContainer
@@ -39,7 +52,9 @@ fun ExpressiveCard(
                 MaterialTheme.colorScheme.surfaceContainerLow
             }
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (emphasized) 1.dp else 0.dp)
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (emphasized) 1.dp else 0.dp
+        )
     ) {
         content()
     }
@@ -176,9 +191,9 @@ fun ExpressiveMetric(
 @Composable
 fun ExpressiveListRow(
     title: String,
-    subtitle: String? = null,
+    subtitle: String = "",
     icon: @Composable () -> Unit,
-    modifier: Modifier = Modifier,
+    @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
     trailing: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null
 ) {
@@ -194,7 +209,7 @@ fun ExpressiveListRow(
         ExpressiveIconBadge(icon = icon)
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.titleMedium)
-            if (subtitle != null) {
+            if (subtitle.isNotEmpty()) {
                 Spacer(Modifier.size(2.dp))
                 Text(
                     subtitle,

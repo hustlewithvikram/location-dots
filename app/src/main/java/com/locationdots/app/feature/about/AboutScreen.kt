@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.locationdots.app.ui.components.ExpressiveCard
 import com.locationdots.app.ui.components.ExpressiveIconBadge
 import com.locationdots.app.ui.components.ExpressiveListRow
+import androidx.core.net.toUri
 
 private const val SOURCE_URL = "https://github.com/hustlewithvikram/location-dots"
 private const val ISSUES_URL = "https://github.com/hustlewithvikram/location-dots/issues"
@@ -27,7 +28,7 @@ fun AboutScreen(onBack: () -> Unit) {
     val context = LocalContext.current
 
     fun openUrl(url: String) {
-        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
     }
 
     BackHandler(onBack = onBack)
@@ -46,7 +47,6 @@ fun AboutScreen(onBack: () -> Unit) {
             ) {
                 FilledTonalIconButton(
                     onClick = onBack,
-                    modifier = Modifier.size(48.dp)
                 ) {
                     Icon(Icons.Default.ArrowBack, "Back")
                 }
@@ -58,11 +58,6 @@ fun AboutScreen(onBack: () -> Unit) {
                     Text(
                         "About Location Dots",
                         style = MaterialTheme.typography.headlineSmall
-                    )
-                    Text(
-                        "App details, privacy and project links.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -261,7 +256,7 @@ private fun AboutSectionTitle(text: String) {
 private fun InfoRow(
     title: String,
     subtitle: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
 ) {
     ExpressiveListRow(
         title = title,

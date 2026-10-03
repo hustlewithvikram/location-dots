@@ -9,7 +9,6 @@ import android.provider.Settings
 import androidx.compose.animation.*
 import com.google.android.gms.location.LocationServices
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -23,10 +22,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -60,6 +57,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.room.withTransaction
+import androidx.core.content.edit
 
 class MainActivity : ComponentActivity() {
     private lateinit var permissionManager: LocationPermissionManager
@@ -93,7 +91,7 @@ class MainActivity : ComponentActivity() {
     private enum class NavigationDirection { FORWARD, BACK }
     private data class AppDestination(
         val key: Int,
-        val direction: NavigationDirection
+        val direction: NavigationDirection,
     )
     private var pendingNavigationDirection by mutableStateOf(NavigationDirection.FORWARD)
 
@@ -424,34 +422,39 @@ class MainActivity : ComponentActivity() {
                         trackingInterval = trackingInterval,
                         onThemeChange = {
                             themeChoice = it
-                            preferences.edit().putString("theme", it.name).apply()
+                            preferences.edit { putString("theme", it.name) }
                         },
                         onTrackingChange = { enabled -> if (enabled) startTracking() else stopTracking() },
                         onTrackingAccuracyChange = { accuracy ->
                             trackingAccuracy = accuracy
-                            preferences.edit().putString("tracking_accuracy", accuracy.name).apply()
+                            preferences.edit { putString("tracking_accuracy", accuracy.name) }
                             restartTrackingIfNeeded()
                         },
                         onTrackingIntervalChange = { interval ->
                             trackingInterval = interval
-                            preferences.edit().putLong("tracking_interval_millis", interval.millis).apply()
+                            preferences.edit {
+                                putLong(
+                                    "tracking_interval_millis",
+                                    interval.millis
+                                )
+                            }
                             restartTrackingIfNeeded()
                         },
                         onAnimationsChange = {
                             animationsEnabled = it
-                            preferences.edit().putBoolean("animations", it).apply()
+                            preferences.edit { putBoolean("animations", it) }
                         },
                         onMapStyleChange = {
                             mapStyle = it
-                            preferences.edit().putString("map_style", it).apply()
+                            preferences.edit { putString("map_style", it) }
                         },
                         onRouteLinesChange = {
                             showRouteLines = it
-                            preferences.edit().putBoolean("show_route_lines", it).apply()
+                            preferences.edit { putBoolean("show_route_lines", it) }
                         },
                         onPlaceMarkersChange = {
                             showPlaceMarkers = it
-                            preferences.edit().putBoolean("show_place_markers", it).apply()
+                            preferences.edit { putBoolean("show_place_markers", it) }
                         },
                         onExport = { exportSummary(insights) },
                         onExportData = ::exportLocalData,

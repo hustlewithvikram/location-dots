@@ -99,7 +99,7 @@ fun InsightsScreen(
 
             if (hasData) {
                 item {
-                    ExpressiveCard(emphasized = true) {
+                    ExpressiveCard(emphasized = true, fillMaxWidth = true) {
                         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text("Your movement", style = MaterialTheme.typography.titleLarge)
                             Text(formatDistance(snapshot.totalDistanceMeters), style = MaterialTheme.typography.displaySmall)

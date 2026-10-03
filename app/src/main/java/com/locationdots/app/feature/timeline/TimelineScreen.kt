@@ -66,11 +66,6 @@ fun TimelineScreen(
                 item("summary") {
                     TodayCard(events, isTracking, onSearchClick, onProfileClick)
                 }
-                item("activity-header") {
-                    ExpressiveSectionHeader(
-                        title = "Activity"
-                    )
-                }
                 items.forEach { item ->
                     when (item) {
                         is TimelineItem.Day -> stickyHeader(key = "day-" + item.date) {
@@ -257,23 +252,7 @@ private fun TodayCard(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Today", style = MaterialTheme.typography.displaySmall)
-                    Spacer(Modifier.width(5.dp))
-                    Icon(
-                        Icons.Default.KeyboardArrowDown,
-                        contentDescription = "Date options",
-                        modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Text(
-                    dateLabel,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            Column(Modifier.weight(1f)) {}
 
             FilledTonalIconButton(onClick = onSearchClick) {
                 Icon(Icons.Default.Search, "Search your timeline")
@@ -281,7 +260,6 @@ private fun TodayCard(
             Spacer(Modifier.width(6.dp))
             FilledTonalIconButton(
                 onClick = onProfileClick,
-                modifier = Modifier.size(50.dp)
             ) {
                 Icon(Icons.Default.Person, "Open profile")
             }
