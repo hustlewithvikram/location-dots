@@ -27,10 +27,9 @@ fun PlacesOverviewScreen(
     val points = remember(places) { places.map { LatLng(it.latitude, it.longitude) } }
     var isMapFullscreen by remember { mutableStateOf(false) }
 
-    Scaffold { padding ->
-        LazyColumn(
-            Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(18.dp, 12.dp, 18.dp, 28.dp),
+    LazyColumn(
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(18.dp, 12.dp, 18.dp, 112.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item {
@@ -142,7 +141,6 @@ fun PlacesOverviewScreen(
                 }
             }
         }
-    }
 
     if (isMapFullscreen && points.isNotEmpty()) {
         Dialog(
