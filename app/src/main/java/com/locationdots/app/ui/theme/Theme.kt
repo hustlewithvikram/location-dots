@@ -1,5 +1,6 @@
 package com.locationdots.app.ui.theme
 
+import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -25,5 +26,13 @@ private val LightColors = lightColorScheme(
 )
 @Composable
 fun LocationDotsTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = if (darkTheme) DarkColors else LightColors, typography = Typography(), shapes = Shapes(extraLarge = RoundedCornerShape(32.dp), large = RoundedCornerShape(28.dp), medium = RoundedCornerShape(20.dp), small = RoundedCornerShape(16.dp), extraSmall = RoundedCornerShape(12.dp)), content = content)
+    val dynamicColors = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val colors = when {
+        dynamicColors && darkTheme -> dynamicDarkColorScheme(androidx.compose.ui.platform.LocalContext.current)
+        dynamicColors && !darkTheme -> dynamicLightColorScheme(androidx.compose.ui.platform.LocalContext.current)
+        darkTheme -> DarkColors
+        else -> LightColors
+    }
+
+    MaterialTheme(colorScheme = colors, typography = Typography(), shapes = Shapes(extraLarge = RoundedCornerShape(32.dp), large = RoundedCornerShape(28.dp), medium = RoundedCornerShape(20.dp), small = RoundedCornerShape(16.dp), extraSmall = RoundedCornerShape(12.dp)), content = content)
 }
