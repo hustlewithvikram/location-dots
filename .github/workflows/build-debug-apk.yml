@@ -44,13 +44,8 @@ jobs:
         run: |
           set -euo pipefail
           SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
-          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
-          test -x "$SDKMANAGER"
-          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses >/dev/null
-          "$SDKMANAGER" --sdk_root="$SDK_ROOT" --install \
-            "platform-tools" \
-            "platforms;android-37.0" \
-            "build-tools;37.0.0"
+          test -d "$SDK_ROOT/platforms/android-37.0"
+          test -d "$SDK_ROOT/build-tools/37.0.0"
           test -f "$SDK_ROOT/platforms/android-37.0/android.jar"
           if [ ! -e "$SDK_ROOT/platforms/android-37" ]; then
             ln -s android-37.0 "$SDK_ROOT/platforms/android-37"
