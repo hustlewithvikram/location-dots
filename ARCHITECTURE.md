@@ -1,338 +1,206 @@
-# Location Dots — Architecture
+# Location Dots — How it works
 
-> **Source of truth:** this document describes the architecture that exists in the current repository, not planned package names.
+This page explains the parts of Location Dots that are useful to understand when working on the project.
 
-## System overview
+## The big picture
 
-Location Dots is a Kotlin/Jetpack Compose Android application with a local Room database and a foreground location service.
-
-```mermaid
-flowchart TD
-    A[Fused Location Provider] --> B[LocationTrackingService]
-    B --> C[LocationRepository]
-    C --> D[(Room Database)]
-    D --> E[DefaultJourneyProcessor]
-    E --> F[PlaceEngine]
-    F --> G[PlaceRepository]
-    E --> H[TimelineRepository]
-    H --> I[Timeline / Search / Insights UI]
-    G --> J[Places / Place Detail UI]
-```
-
-The key design choice is that **raw location collection and semantic timeline processing are separate concerns**.
-
----
-
-## Repository layers
-
-### `core/`
-
-Platform-facing contracts and utilities:
-
-- location provider abstractions
-- location permission handling
-- navigation destinations
-- notification helpers
-- common result types
-
-### `data/`
-
-Persistence and repository implementations:
-
-- Room database
-- DAOs
-- Room entities
-- domain/data mappers
-- location repository
-- place repository
-- timeline repository
-- search repository
-- insights repository
-
-The database currently contains:
-
-- `location_points`
-- `places`
-- `timeline_events`
-
-### `domain/`
-
-The application's semantic model and processing rules.
-
-Important areas:
-
-- `domain/model` — `LocationPoint`, `Place`, `TimelineEvent`, `JourneyMode`
-- `domain/places` — `PlaceEngine` and place contracts
-- `domain/journey` — `JourneyProcessor` and `DefaultJourneyProcessor`
-- `domain/location` — location repository contract
-- `domain/search` — search contract/model
-- `domain/insights` — insights contract and snapshot model
-
-The domain layer does not depend on Compose UI.
-
-### `feature/`
-
-Compose presentation grouped by user-facing feature:
-
-- `about`
-- `insights`
-- `journey`
-- `map`
-- `onboarding`
-- `place`
-- `search`
-- `settings`
-- `splash`
-- `timeline`
-
-Most screens use ViewModels where stateful repository interaction is required.
-
-### `service/`
-
-Android service entry points:
-
-- `LocationTrackingService` — owns continuous foreground location collection and triggers processing.
-- `JourneyProcessingService` — currently exists as a service shell but is **not** the active processing pipeline.
-
-### `ui/`
-
-Shared Compose infrastructure:
-
-- `AppBottomBar`
-- expressive Material 3-inspired components
-- MapLibre-backed `LocationMap`
-- application theme
-
-### `logging/`
-
-Crash/diagnostic logging used by the application.
-
----
-
-## Runtime data flow
-
-### 1. Location collection
+Location Dots takes raw location updates and turns them into a timeline:
 
 ```text
-FusedLocationProviderClient
+📍 Location updates
         ↓
-LocationTrackingService
+   Save locally
         ↓
-LocationRepository
+ Find meaningful stops
         ↓
-Room: location_points
+   Create places
+        ↓
+ Find movement between them
+        ↓
+ Timeline + Maps + Insights
 ```
 
-The tracking service runs as a foreground service with `foregroundServiceType="location"`.
+The important idea is that **location collection and timeline generation are separate**.
 
-The UI exposes:
+The tracker collects data first. The app then decides what that data means.
 
-- High / Balanced accuracy
-- 30 seconds / 1 minute / 5 minutes update intervals
-- tracking on/off
-- battery optimization guidance
+## Main parts
 
-### 2. Timeline processing
+### Location tracking
 
-The tracking service periodically loads a processing window of stored location points and calls:
+The Android foreground service keeps collecting location updates while tracking is enabled.
+
+It uses Google's location services and saves the received points locally.
+
+This is what allows tracking to continue while Location Dots is not the screen currently open.
+
+### Local storage
+
+Location history is stored on the device using **Room**.
+
+The app keeps three main kinds of information:
+
+- **Location points** — recorded positions.
+- **Places** — locations recognized as meaningful stops.
+- **Timeline events** — visits and journeys shown to the user.
+
+This keeps the raw data available while allowing the timeline to be rebuilt when the detection logic changes.
+
+### Visit detection
+
+The journey processor looks through recorded points and searches for clusters where the user appears to have stayed.
+
+A stop currently needs:
+
+- at least **5 usable location points**;
+- around **8 minutes** of dwell time;
+- locations that remain reasonably close together;
+- mostly stationary movement.
+
+If the cluster looks like a genuine stop, it becomes a **visit**.
+
+The exact thresholds are implementation details and can change as detection improves.
+
+### Place recognition
+
+A visit does not always create a brand-new place.
+
+The app calculates the center of the visit and checks whether a saved place is nearby.
+
+If one is found, the visit is associated with that place.
+
+Otherwise, a new place is created.
+
+This is what allows repeated visits to places such as **Home, Office, Gym, or a favourite café** to build history around the same dot.
+
+### Journey detection
+
+When the app finds two visits with movement between them, it can create a journey.
+
+Journeys contain:
+
+- start and end places when available;
+- start and end times;
+- travelled distance;
+- the recorded route;
+- an estimated movement mode.
+
+The current mode estimate is intentionally simple:
+
+- slower movement → walking;
+- medium movement → cycling;
+- faster movement → vehicle.
+
+It is an estimate, not a promise of exact transport recognition.
+
+## What the user sees
+
+The processing above feeds the main parts of the app:
 
 ```text
-DefaultJourneyProcessor.process(points)
+                  ┌── Timeline
+                  ├── Places
+Location data ────┼── Journey details
+                  ├── Search
+                  └── Insights
 ```
 
-The processor:
+### Timeline
 
-1. removes unusable points;
-2. sorts points by timestamp;
-3. builds spatial clusters;
-4. confirms stationary visits;
-5. resolves each visit through `PlaceEngine`;
-6. creates journey events between visits;
-7. replaces the affected timeline range in Room.
+Shows visits and journeys in chronological order, grouped by day.
 
-This means the timeline is a **derived representation** of stored location points.
+### Places
 
----
+Shows recognized places on a map and lets the user open their history or rename them.
 
-## Visit detection
+### Journey details
 
-A visit is confirmed using the current constants in `DefaultJourneyProcessor`:
+Shows the route, distance, duration, and estimated movement mode.
 
-| Constant | Value |
-|---|---:|
-| `MIN_POINTS_PER_VISIT` | 5 |
-| `MIN_DWELL` | 8 minutes |
-| `STAY_RADIUS_METERS` | 100 m |
-| `DEPARTURE_RADIUS_METERS` | 150 m |
-| `DEPARTURE_CONFIRMATION_POINTS` | 2 |
-| `MAX_ACCURACY_METERS` | 100 m |
-| `STATIONARY_MAX_KMH` | 3 km/h |
-| `STATIONARY_RATIO` | 70% |
+### Search
 
-A visit therefore requires both enough observations and enough time spent moving at stationary-like speeds.
+Lets the user find stored timeline/place information without manually browsing every day.
 
-### Place resolution
+### Insights
 
-`PlaceEngine` calculates a robust cluster center using the median latitude and longitude.
+Uses the stored visits and journeys to produce summaries about movement and time.
 
-It then searches for an existing nearby place using an accuracy-aware merge radius:
+## App structure
 
-- minimum: **75 m**
-- default accuracy contribution: **median accuracy × 1.5**
-- maximum: **125 m**
-- cluster spread is included in the radius calculation.
-
-If a nearby place exists, it is reused. Otherwise a new place is persisted.
-
----
-
-## Journey detection
-
-For confirmed visits, the processor examines the location path between departure and the next arrival.
-
-A journey is created only when the path distance reaches at least **100 m**.
-
-The current speed-based classifier is:
-
-| Average speed | Result |
-|---|---|
-| ≤ 7 km/h | Walking |
-| > 7 and ≤ 25 km/h | Cycling |
-| ≥ 35 km/h | Vehicle |
-| 25–35 km/h | Unknown |
-
-The classifier is deliberately simple and should be treated as an estimate, not sensor-level transport recognition.
-
----
-
-## Persistence
-
-Room is the source of truth for local history.
+The source code is grouped by responsibility:
 
 ```text
-LocationEntity
-      │
-      └── raw sampled location
-
-PlaceEntity
-      │
-      └── resolved reusable place
-
-TimelineEventEntity
-      │
-      ├── Visit
-      └── Journey
+core/       → Android/platform helpers
+data/       → Room database and repositories
+domain/     → Location, places, journeys and business rules
+feature/    → User-facing screens and ViewModels
+service/    → Background location tracking
+ui/         → Shared Compose UI and maps
+logging/    → Diagnostics
 ```
 
-Repositories expose domain-facing operations so feature code does not need to know Room implementation details.
+A typical change should stay in the layer that owns it.
 
----
+For example:
 
-## Presentation flow
+**Change how a visit is detected?** → `domain/journey`
 
-```text
-Room repositories
-      ↓
-ViewModels / MainActivity state
-      ↓
-Feature screens
-      ↓
-Shared Compose components
-```
+**Change how places are stored?** → `data`
 
-The current main navigation has four tabs:
+**Change the Places screen?** → `feature/map`
 
-1. Timeline
-2. Places
-3. Insights
-4. Settings
-
-Secondary screens include onboarding, search, place detail, journey detail, and About.
-
----
+**Change a shared map component?** → `ui/components`
 
 ## Maps
 
-Maps are isolated behind the shared `LocationMap` Compose component.
+Maps are provided by **MapLibre Native** using OpenFreeMap styles.
 
-The map layer uses:
+The shared map component handles:
 
-- MapLibre Native
-- OpenFreeMap styles
-- local place coordinates / journey paths
+- place markers;
+- route lines;
+- camera positioning;
+- interactive maps;
+- compact map previews.
 
-No Google Maps SDK is required.
+Map configuration is documented separately in [MAPS_SETUP.md](MAPS_SETUP.md).
 
-See [MAPS_SETUP.md](MAPS_SETUP.md).
+## Backup and restore
 
----
+The app can export its local history to JSON.
 
-## Data import/export
-
-Backup is implemented in `MainActivity` and exposed through Settings.
-
-Export:
+The flow is:
 
 ```text
-Room data
-   ↓
-versioned JSON
-   ↓
-Android CreateDocument picker
+Local data
+    ↓
+Export JSON
+    ↓
+User chooses where to save it
+
+Backup file
+    ↓
+Import
+    ↓
+Preview
+    ↓
+User confirms
+    ↓
+Restore local data
 ```
-
-Import:
-
-```text
-Android OpenDocument picker
-   ↓
-JSON validation
-   ↓
-preview counts
-   ↓
-user confirmation
-   ↓
-Room transaction
-```
-
-The current envelope identifies itself as:
-
-```text
-format = location-dots-local-export
-version = 1
-```
-
----
 
 ## Privacy boundary
 
-The current application has no account or cloud location-history service.
+Normal location tracking stores history locally.
 
-Location data is persisted locally. Explicit export/import is user initiated.
+There is currently no account or cloud location-history backend.
 
-The application does require network access for online map resources, so "local-first" should not be interpreted as "the app never uses the network."
+The map is different: it uses online map resources, so an internet connection may be needed to display map tiles/styles.
 
----
+## In short
 
-## Build and release
+If you only remember one thing about the architecture:
 
-The repository contains:
+> **Location Dots collects raw location data first, then turns it into meaningful places and journeys, and finally presents those results through the UI.**
 
-```text
-.github/workflows/build-debug-apk.yml
-.github/workflows/build-release-apk.yml
-```
-
-Release builds enable minification and resource shrinking. Release signing is conditional on the configured `secrets.properties` values.
-
----
-
-## Testing boundary
-
-Domain behavior is covered independently from Compose UI, including:
-
-- place detection
-- minimum eight-minute dwell behavior
-- journey processing
-
-The main logic to protect with regression tests is `DefaultJourneyProcessor` and `PlaceEngine`, because changes there directly alter the generated timeline.
+That separation is what makes the location algorithm, storage, and UI easier to improve independently.
