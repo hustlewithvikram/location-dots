@@ -79,6 +79,7 @@ fun SettingsScreen(
     onExportData: () -> Unit,
     onImportData: () -> Unit,
     importPreview: ImportPreview?,
+    importLoading: Boolean,
     importError: String?,
     onDismissImport: () -> Unit,
     onConfirmImport: (ImportPreview, Boolean) -> Unit,
@@ -543,12 +544,19 @@ fun SettingsScreen(
                             )
                             OutlinedButton(
                                 onClick = onImportData,
+                                enabled = !importLoading,
                                 modifier = Modifier.fillMaxWidth().height(56.dp),
                                 shape = MaterialTheme.shapes.large
                             ) {
-                                Icon(Icons.Default.FileDownload, null)
-                                Spacer(Modifier.width(8.dp))
-                                Text("Import backup")
+                                if (importLoading) {
+                                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Reading backup…")
+                                } else {
+                                    Icon(Icons.Default.FileDownload, null)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Import backup")
+                                }
                             }
                         }
                     }
@@ -739,6 +747,59 @@ fun SettingsScreen(
                 editingPlace = null
             },
             onRequestCurrentLocation = onRequestCurrentLocation
+        )
+    }
+
+    if (importPreview != null) {
+        AlertDialog(
+            onDismissRequest = onDismissImport,
+            icon = { Icon(Icons.Default.FileDownload, null) },
+            title = { Text("Import backup?") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        "Location Dots found the following data in this backup.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                        ),
+                        shape = MaterialTheme.shapes.large
+                    ) {
+                        Column(
+                            Modifier.padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            ImportStatRow("Places", importPreview.places)
+                            ImportStatRow("Locations", importPreview.locations)
+                            ImportStatRow("Timeline events", importPreview.timelineEvents)
+                        }
+                    }
+                    Text(
+                        "Replace all removes the current local history before importing. Merge keeps existing data and adds the backup.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { onConfirmImport(importPreview, true) },
+                    enabled = !importLoading
+                ) {
+                    Text("Replace all")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { onConfirmImport(importPreview, false) },
+                    enabled = !importLoading
+                ) {
+                    Text("Merge")
+                }
+            }
         )
     }
 
