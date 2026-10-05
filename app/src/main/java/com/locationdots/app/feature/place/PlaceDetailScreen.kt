@@ -50,6 +50,7 @@ fun PlaceDetailScreen(
             }
         } else {
             val zone = ZoneId.systemDefault()
+            val timeFormatter = DateTimeFormatter.ofPattern("h:mm a", currentLocale)
             val sortedVisits = remember(visits) { visits.sortedByDescending { it.arrival } }
             val completedVisits = sortedVisits.filter { it.departure != null }
             val totalMinutes = completedVisits.sumOf {
@@ -127,40 +128,13 @@ fun PlaceDetailScreen(
                 }
 
                 item {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(IntrinsicSize.Min),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        ExpressiveMetric(
-                            sortedVisits.size.toString(),
-                            "visits",
-                            Modifier.weight(1f).fillMaxHeight(),
-                            { Icon(Icons.Default.Repeat, null) }
-                        )
-                        ExpressiveMetric(
-                            formatMinutes(totalMinutes),
-                            "total stay",
-                            Modifier.weight(1f).fillMaxHeight(),
-                            { Icon(Icons.Default.Schedule, null) }
-                        )
-                        ExpressiveMetric(
-                            formatMinutes(average),
-                            "avg stay",
-                            Modifier.weight(1f).fillMaxHeight(),
-                            { Icon(Icons.Default.Timelapse, null) }
-                        )
-                    }
-                }
-
-                item {
                     ExpressiveCard {
                         Row(
                             Modifier.fillMaxWidth().padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             ExpressiveIconBadge(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                                 icon = { Icon(Icons.Default.LocationOn, null) }
                             )
                             Spacer(Modifier.width(12.dp))
@@ -169,27 +143,14 @@ fun PlaceDetailScreen(
                                     String.format(Locale.US, "%.5f, %.5f", place.latitude, place.longitude),
                                     style = MaterialTheme.typography.bodyMedium
                                 )
-                                Text(
-                                    "Saved " + DateTimeFormatter.ofPattern("d MMM yyyy", currentLocale)
-                                        .format(place.createdAt.atZone(zone)),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            if (activeVisit != null && activeMinutes != null) {
-                                Spacer(Modifier.width(16.dp))
-                                VerticalDivider(
-                                    modifier = Modifier.height(42.dp),
-                                    color = MaterialTheme.colorScheme.outlineVariant
-                                )
-                                Spacer(Modifier.width(16.dp))
-                                Column(horizontalAlignment = Alignment.End) {
+                                if (activeVisit != null && activeMinutes != null) {
+                                    Spacer(Modifier.height(8.dp))
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(
-                                            "Now",
+                                            "Still Here",
                                             style = MaterialTheme.typography.titleMedium
                                         )
-                                        Spacer(Modifier.width(6.dp))
+                                        Spacer(Modifier.width(8.dp))
                                         Surface(
                                             shape = RoundedCornerShape(50.dp),
                                             color = MaterialTheme.colorScheme.primaryContainer
@@ -203,9 +164,8 @@ fun PlaceDetailScreen(
                                         }
                                     }
                                     Text(
-                                        formatMinutes(activeMinutes) + " · " +
-                                            DateTimeFormatter.ofPattern("HH:mm", currentLocale)
-                                                .format(activeVisit.arrival.atZone(zone)),
+                                        timeFormatter.format(activeVisit.arrival.atZone(zone)) +
+                                            " – Now | " + formatMinutes(activeMinutes),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -248,13 +208,8 @@ fun PlaceDetailScreen(
                                 val duration = formatMinutes(
                                     Duration.between(visit.arrival, end).toMinutes().coerceAtLeast(0)
                                 )
-                                val timeRange = DateTimeFormatter.ofPattern(
-                                    "HH:mm",
-                                    currentLocale
-                                ).format(visit.arrival.atZone(zone)) + " – " +
-                                    if (visit.departure == null) "Now" else
-                                        DateTimeFormatter.ofPattern("HH:mm", currentLocale)
-                                            .format(end.atZone(zone))
+                                val timeRange = timeFormatter.format(visit.arrival.atZone(zone)) + " – " +
+                                    if (visit.departure == null) "Now" else timeFormatter.format(end.atZone(zone))
                                 val shape = when {
                                     sortedVisits.size == 1 -> RoundedCornerShape(22.dp)
                                     index == 0 -> RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp)
@@ -273,7 +228,8 @@ fun PlaceDetailScreen(
                                         ).format(visit.arrival.atZone(zone)),
                                         subtitle = "$timeRange · $duration",
                                         icon = { Icon(Icons.Default.Place, null) },
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier.fillMaxWidth(),
+                                        trailing = { }
                                     )
                                 }
                                 if (index < sortedVisits.lastIndex) {
@@ -284,6 +240,42 @@ fun PlaceDetailScreen(
                                 }
                             }
                         }
+                    }
+                }
+                                item {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Min),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        ExpressiveMetric(
+                            sortedVisits.size.toString(),
+                            "visits",
+                            Modifier.weight(1f).fillMaxHeight(),
+                            { Icon(Icons.Default.Repeat, null) },
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            iconContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        ExpressiveMetric(
+                            formatMinutes(totalMinutes),
+                            "total stay",
+                            Modifier.weight(1f).fillMaxHeight(),
+                            { Icon(Icons.Default.Schedule, null) },
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            iconContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        ExpressiveMetric(
+                            formatMinutes(average),
+                            "avg stay",
+                            Modifier.weight(1f).fillMaxHeight(),
+                            { Icon(Icons.Default.Timelapse, null) },
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            iconContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
                     }
                 }
             }
