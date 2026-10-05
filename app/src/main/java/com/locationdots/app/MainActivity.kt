@@ -390,6 +390,7 @@ class MainActivity : ComponentActivity() {
                     destination.key == 1 -> PlacesOverviewScreen(
                         places = places,
                         summaries = placeSummaries,
+                        onRefresh = placesViewModel::refresh,
                         onBack = {
                             pendingNavigationDirection = NavigationDirection.BACK
                             currentTab = AppTab.TIMELINE
@@ -526,6 +527,7 @@ class MainActivity : ComponentActivity() {
                             currentTab = AppTab.SETTINGS
                         },
                         onLoadMore = timelineViewModel::loadMore,
+                        onRefresh = timelineViewModel::refresh,
                         onRetry = timelineViewModel::retry,
                         onClearError = timelineViewModel::clearError
                     )
