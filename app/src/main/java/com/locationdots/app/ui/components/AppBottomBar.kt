@@ -54,7 +54,7 @@ fun AppBottomBar(selected: AppTab, onSelected: (AppTab) -> Unit) {
                 .fillMaxWidth()
                 .height(64.dp),
             shape = RoundedCornerShape(100.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.88f),
             tonalElevation = 2.dp,
             shadowElevation = 0.dp
         ) {
