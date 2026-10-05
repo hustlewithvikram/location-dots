@@ -60,6 +60,7 @@ fun TimelineScreen(
 ) {
     val listState = rememberLazyListState()
     val items = remember(events) { buildItems(events) }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(listState, items.size, hasMore, isLoadingMore) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }.collect { last ->
@@ -76,7 +77,20 @@ fun TimelineScreen(
             if (items.isEmpty() && !isRefreshing && !isLoadingMore) EmptyTimeline(isTracking)
             else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 12.dp, 16.dp, 112.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 item("summary") {
-                    TodayCard(events, isTracking, onSearchClick, onProfileClick, actionButton, onActionButtonClick)
+                    TodayCard(
+                        events = events,
+                        isTracking = isTracking,
+                        onSearchClick = onSearchClick,
+                        onProfileClick = onProfileClick,
+                        actionButton = actionButton,
+                        onActionButtonClick = {
+                            if (actionButton == com.locationdots.app.feature.settings.ActionButton.TODAY) {
+                                scope.launch { listState.animateScrollToItem(0) }
+                            } else {
+                                onActionButtonClick()
+                            }
+                        }
+                    )
                 }
                 items.forEach { item ->
                     when (item) {
