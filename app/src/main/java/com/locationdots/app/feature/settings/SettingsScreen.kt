@@ -548,7 +548,6 @@ fun SettingsScreen(
             SettingsPage.MAP_APPEARANCE -> SettingsSubPage(
                 Modifier,
                 "Map & appearance",
-                "Customize the app theme and how maps are displayed.",
                 onBack = ::closeSettingsPage
             ) {
                 item {
