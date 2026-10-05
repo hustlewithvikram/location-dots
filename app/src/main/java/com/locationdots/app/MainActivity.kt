@@ -83,6 +83,12 @@ class MainActivity : ComponentActivity() {
     private var showPlaceMarkers by mutableStateOf(true)
     private var trackingAccuracy by mutableStateOf(TrackingAccuracy.HIGH)
     private var trackingInterval by mutableStateOf(TrackingInterval.THIRTY_SECONDS)
+    private var automaticJourneyDetection by mutableStateOf(true)
+    private var stationaryDetection by mutableStateOf(true)
+    private var visitDuration by mutableStateOf(VisitDuration.EIGHT)
+    private var visitRadius by mutableStateOf(VisitRadius.HUNDRED)
+    private var maxTrackingAccuracy by mutableStateOf(TrackingMaxAccuracy.HUNDRED)
+    private var movementThreshold by mutableStateOf(MovementThreshold.TWENTY_FIVE)
     private var importPreview by mutableStateOf<ImportPreview?>(null)
     private var importLoading by mutableStateOf(false)
     private var importError by mutableStateOf<String?>(null)
@@ -199,6 +205,20 @@ class MainActivity : ComponentActivity() {
         trackingInterval = TrackingInterval.entries.firstOrNull {
             it.millis == preferences.getLong("tracking_interval_millis", TrackingInterval.THIRTY_SECONDS.millis)
         } ?: TrackingInterval.THIRTY_SECONDS
+        automaticJourneyDetection = preferences.getBoolean("automatic_journey_detection", true)
+        stationaryDetection = preferences.getBoolean("stationary_detection", true)
+        visitDuration = VisitDuration.entries.firstOrNull {
+            it.minutes == preferences.getLong("visit_duration_minutes", VisitDuration.EIGHT.minutes)
+        } ?: VisitDuration.EIGHT
+        visitRadius = VisitRadius.entries.firstOrNull {
+            it.meters == preferences.getFloat("visit_radius_meters", VisitRadius.HUNDRED.meters.toFloat()).toDouble()
+        } ?: VisitRadius.HUNDRED
+        maxTrackingAccuracy = TrackingMaxAccuracy.entries.firstOrNull {
+            it.meters == preferences.getFloat("max_tracking_accuracy_meters", TrackingMaxAccuracy.HUNDRED.meters.toFloat()).toDouble()
+        } ?: TrackingMaxAccuracy.HUNDRED
+        movementThreshold = MovementThreshold.entries.firstOrNull {
+            it.meters == preferences.getFloat("movement_threshold_meters", MovementThreshold.TWENTY_FIVE.meters.toFloat()).toDouble()
+        } ?: MovementThreshold.TWENTY_FIVE
         showSplash = !preferences.getBoolean("splash_seen", false)
         profileName = preferences.getString("profile_name", "Your name") ?: "Your name"
         profilePhotoUri = preferences.getString("profile_photo_uri", null)
@@ -452,6 +472,12 @@ class MainActivity : ComponentActivity() {
                         locationPermissionGranted = hasLocationPermission,
                         trackingAccuracy = trackingAccuracy,
                         trackingInterval = trackingInterval,
+                        automaticJourneyDetection = automaticJourneyDetection,
+                        stationaryDetection = stationaryDetection,
+                        visitDuration = visitDuration,
+                        visitRadius = visitRadius,
+                        maxTrackingAccuracy = maxTrackingAccuracy,
+                        movementThreshold = movementThreshold,
                         actionButton = actionButton,
                         onActionButtonChange = {
                             actionButton = it
@@ -475,6 +501,36 @@ class MainActivity : ComponentActivity() {
                                     interval.millis
                                 )
                             }
+                            restartTrackingIfNeeded()
+                        },
+                        onAutomaticJourneyDetectionChange = {
+                            automaticJourneyDetection = it
+                            preferences.edit { putBoolean("automatic_journey_detection", it) }
+                            restartTrackingIfNeeded()
+                        },
+                        onStationaryDetectionChange = {
+                            stationaryDetection = it
+                            preferences.edit { putBoolean("stationary_detection", it) }
+                            restartTrackingIfNeeded()
+                        },
+                        onVisitDurationChange = {
+                            visitDuration = it
+                            preferences.edit { putLong("visit_duration_minutes", it.minutes) }
+                            restartTrackingIfNeeded()
+                        },
+                        onVisitRadiusChange = {
+                            visitRadius = it
+                            preferences.edit { putFloat("visit_radius_meters", it.meters.toFloat()) }
+                            restartTrackingIfNeeded()
+                        },
+                        onMaxTrackingAccuracyChange = {
+                            maxTrackingAccuracy = it
+                            preferences.edit { putFloat("max_tracking_accuracy_meters", it.meters.toFloat()) }
+                            restartTrackingIfNeeded()
+                        },
+                        onMovementThresholdChange = {
+                            movementThreshold = it
+                            preferences.edit { putFloat("movement_threshold_meters", it.meters.toFloat()) }
                             restartTrackingIfNeeded()
                         },
                         onAnimationsChange = {
@@ -917,6 +973,12 @@ class MainActivity : ComponentActivity() {
             .putBoolean("show_place_markers", true)
             .putString("tracking_accuracy", TrackingAccuracy.HIGH.name)
             .putLong("tracking_interval_millis", TrackingInterval.THIRTY_SECONDS.millis)
+            .putBoolean("automatic_journey_detection", true)
+            .putBoolean("stationary_detection", true)
+            .putLong("visit_duration_minutes", VisitDuration.EIGHT.minutes)
+            .putFloat("visit_radius_meters", VisitRadius.HUNDRED.meters.toFloat())
+            .putFloat("max_tracking_accuracy_meters", TrackingMaxAccuracy.HUNDRED.meters.toFloat())
+            .putFloat("movement_threshold_meters", MovementThreshold.TWENTY_FIVE.meters.toFloat())
             .putString("action_button", ActionButton.THEME.name)
             .apply()
         themeChoice = ThemeChoice.SYSTEM
@@ -926,6 +988,12 @@ class MainActivity : ComponentActivity() {
         showPlaceMarkers = true
         trackingAccuracy = TrackingAccuracy.HIGH
         trackingInterval = TrackingInterval.THIRTY_SECONDS
+        automaticJourneyDetection = true
+        stationaryDetection = true
+        visitDuration = VisitDuration.EIGHT
+        visitRadius = VisitRadius.HUNDRED
+        maxTrackingAccuracy = TrackingMaxAccuracy.HUNDRED
+        movementThreshold = MovementThreshold.TWENTY_FIVE
         actionButton = ActionButton.THEME
     }
 
