@@ -186,7 +186,7 @@ class MainActivity : ComponentActivity() {
 
         val app = application as LocationDotsApplication
         timelineViewModel = ViewModelProvider(this, TimelineViewModelFactory(app.timelineRepository))[TimelineViewModel::class.java]
-        placesViewModel = ViewModelProvider(this, PlacesOverviewViewModelFactory(app.placeRepository))[PlacesOverviewViewModel::class.java]
+        placesViewModel = ViewModelProvider(this, PlacesOverviewViewModelFactory(app.placeRepository, app.timelineRepository))[PlacesOverviewViewModel::class.java]
         searchViewModel = ViewModelProvider(this, SearchViewModelFactory(app.searchRepository))[SearchViewModel::class.java]
         insightsViewModel = ViewModelProvider(this, InsightsViewModelFactory(app.insightsRepository))[InsightsViewModel::class.java]
         refreshState()
@@ -205,6 +205,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val timelineState by timelineViewModel.uiState.collectAsStateWithLifecycle()
                 val places by placesViewModel.places.collectAsStateWithLifecycle()
+                val placeSummaries by placesViewModel.summaries.collectAsStateWithLifecycle()
                 val searchState by searchViewModel.uiState.collectAsStateWithLifecycle()
                 val insights by insightsViewModel.snapshot.collectAsStateWithLifecycle()
                 val insightsLoading by insightsViewModel.isLoading.collectAsStateWithLifecycle()
@@ -388,6 +389,7 @@ class MainActivity : ComponentActivity() {
                     }
                     destination.key == 1 -> PlacesOverviewScreen(
                         places = places,
+                        summaries = placeSummaries,
                         onBack = {
                             pendingNavigationDirection = NavigationDirection.BACK
                             currentTab = AppTab.TIMELINE
