@@ -10,9 +10,9 @@ import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.NearMe
 import androidx.compose.material.icons.filled.PedalBike
 import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +24,7 @@ import com.locationdots.app.domain.insights.PlaceInsight
 import com.locationdots.app.domain.model.JourneyMode
 import com.locationdots.app.ui.components.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InsightsScreen(
     snapshot: InsightsSnapshot,
@@ -38,7 +39,12 @@ fun InsightsScreen(
     val maxPlaceTime = snapshot.topPlaces.maxOfOrNull { it.timeMinutes } ?: 0L
     val totalModes = snapshot.modeBreakdown.values.sum()
 
-    LazyColumn(
+    PullToRefreshBox(
+        isRefreshing = isLoading,
+        onRefresh = onRefresh,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        LazyColumn(
         modifier = Modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(start = 18.dp, top = 12.dp, end = 18.dp, bottom = 112.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)
@@ -53,11 +59,6 @@ fun InsightsScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    ExpressiveIconButton(
-                        onClick = onRefresh,
-                        icon = { Icon(Icons.Default.Refresh, contentDescription = "Refresh") },
-                        contentDescription = "Refresh insights"
-                    )
                 }
             }
 
@@ -193,6 +194,8 @@ fun InsightsScreen(
                 }
             }
         }
+    }
+
     }
 
 @Composable
