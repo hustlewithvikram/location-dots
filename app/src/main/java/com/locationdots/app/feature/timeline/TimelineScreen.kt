@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,6 +35,7 @@ import kotlinx.coroutines.delay
 
 private sealed interface TimelineItem { data class Day(val date: LocalDate) : TimelineItem; data class Event(val event: TimelineEvent) : TimelineItem }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimelineScreen(
     events: List<TimelineEvent>,
@@ -50,6 +52,7 @@ fun TimelineScreen(
     onInsightsClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onLoadMore: () -> Unit,
+    onRefresh: () -> Unit,
     onRetry: () -> Unit,
     onClearError: () -> Unit
 ) {
@@ -62,7 +65,12 @@ fun TimelineScreen(
         }
     }
 
-    Column(Modifier.fillMaxSize().statusBarsPadding()) {
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        modifier = Modifier.fillMaxSize().statusBarsPadding()
+    ) {
+    Column(Modifier.fillMaxSize()) {
             if (items.isEmpty() && !isRefreshing && !isLoadingMore) EmptyTimeline(isTracking)
             else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 12.dp, 16.dp, 112.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 item("summary") {
@@ -98,6 +106,7 @@ fun TimelineScreen(
                     }
                 }
             }
+    }
     }
 }
 
