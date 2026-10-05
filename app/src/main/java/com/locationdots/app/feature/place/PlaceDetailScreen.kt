@@ -49,12 +49,11 @@ fun PlaceDetailScreen(
         } else {
             val zone = ZoneId.systemDefault()
             val sortedVisits = remember(visits) { visits.sortedByDescending { it.arrival } }
-            val totalMinutes = sortedVisits.sumOf {
-                it.departure?.let { end ->
-                    Duration.between(it.arrival, end).toMinutes().coerceAtLeast(0)
-                } ?: 0
+            val completedVisits = sortedVisits.filter { it.departure != null }
+            val totalMinutes = completedVisits.sumOf {
+                Duration.between(it.arrival, it.departure).toMinutes().coerceAtLeast(0)
             }
-            val average = if (sortedVisits.isNotEmpty()) totalMinutes / sortedVisits.size else 0
+            val average = if (completedVisits.isNotEmpty()) totalMinutes / completedVisits.size else 0
             val lastVisit = sortedVisits.firstOrNull()
             val points = listOf(LatLng(place.latitude, place.longitude))
 
@@ -200,20 +199,23 @@ fun PlaceDetailScreen(
                     }
                 } else {
                     items(sortedVisits, key = { it.id }) { visit ->
-                        val duration = visit.departure?.let {
-                            formatMinutes(
-                                Duration.between(visit.arrival, it).toMinutes().coerceAtLeast(0)
-                            )
-                        } ?: "Still here"
+                        val end = visit.departure ?: java.time.Instant.now()
+                        val duration = formatMinutes(
+                            Duration.between(visit.arrival, end).toMinutes().coerceAtLeast(0)
+                        )
+                        val timeRange = DateTimeFormatter.ofPattern(
+                            "HH:mm",
+                            currentLocale
+                        ).format(visit.arrival.atZone(zone)) + " – " +
+                            if (visit.departure == null) "Now" else
+                                DateTimeFormatter.ofPattern("HH:mm", currentLocale)
+                                    .format(end.atZone(zone))
                         ExpressiveListRow(
                             title = DateTimeFormatter.ofPattern(
                                 "EEE, d MMM",
                                 currentLocale
                             ).format(visit.arrival.atZone(zone)),
-                            subtitle = DateTimeFormatter.ofPattern(
-                                "HH:mm",
-                                currentLocale
-                            ).format(visit.arrival.atZone(zone)) + " · " + duration,
+                            subtitle = "$timeRange · $duration",
                             icon = { Icon(Icons.Default.Place, null) }
                         )
                     }
