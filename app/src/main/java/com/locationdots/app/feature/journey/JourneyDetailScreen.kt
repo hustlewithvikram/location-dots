@@ -47,7 +47,6 @@ fun JourneyDetailScreen(journey: TimelineEvent.Journey, onBack: () -> Unit) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     FilledTonalIconButton(
                         onClick = onBack,
-                        modifier = Modifier.size(48.dp)
                     ) {
                         Icon(Icons.Default.ArrowBack, "Back")
                     }
@@ -55,7 +54,7 @@ fun JourneyDetailScreen(journey: TimelineEvent.Journey, onBack: () -> Unit) {
                     Column(Modifier.weight(1f)) {
                         Text("Journey", style = MaterialTheme.typography.headlineMedium)
                         Text(
-                            "${time(journey.startedAt)} – ${journey.endedAt?.let(::time) ?: "Now"}",
+                            date(journey.startedAt),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -262,7 +261,7 @@ private fun Endpoint(label: String, value: String, modifier: Modifier = Modifier
         shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
-        Column(Modifier.padding(14.dp)) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
             Text(
                 label,
                 style = MaterialTheme.typography.labelSmall,
@@ -318,6 +317,10 @@ private fun JourneyMap(
         drawRoute = true
     )
 }
+
+private fun date(i: java.time.Instant) =
+    DateTimeFormatter.ofPattern("EEE, d MMM yyyy", Locale.getDefault())
+        .format(i.atZone(ZoneId.systemDefault()))
 
 private fun time(i: java.time.Instant) =
     DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault())
