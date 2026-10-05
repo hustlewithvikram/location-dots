@@ -42,7 +42,7 @@ class DefaultJourneyProcessorTest {
         Proxy.newProxyInstance(
             SharedPreferences::class.java.classLoader,
             arrayOf(SharedPreferences::class.java)
-        ) { _, method, _ ->
+        ) { _, method, args ->
             when (method.name) {
                 "getLong" -> {
                     val key = args?.firstOrNull() as? String
