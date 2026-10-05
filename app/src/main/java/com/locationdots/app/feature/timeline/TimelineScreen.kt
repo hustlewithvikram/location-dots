@@ -123,7 +123,11 @@ private fun DayHeader(date: LocalDate) {
             .padding(horizontal = 4.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(title, style = MaterialTheme.typography.titleMedium)
+        Text(
+            title,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.width(64.dp)
+        )
         Spacer(Modifier.width(8.dp))
         Text(
             formatted,
@@ -356,7 +360,12 @@ private fun VisitCard(
 
     ExpressiveCard(
         modifier = modifier,
-        onClick = { onPlaceClick(event.place.id) }
+        onClick = { onPlaceClick(event.place.id) },
+        containerColor = if (isCurrent) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceContainer
+        }
     ) {
         Row(
             Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
@@ -375,14 +384,7 @@ private fun VisitCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    if (isCurrent) {
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "You're here",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
+
                 }
                 Spacer(Modifier.height(3.dp))
                 Text(
