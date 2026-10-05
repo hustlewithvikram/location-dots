@@ -1,5 +1,6 @@
 package com.locationdots.app.ui.theme
 
+import android.annotation.SuppressLint
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
@@ -24,6 +25,7 @@ private val LightColors = lightColorScheme(
     surfaceContainerLowest = Color.White, surfaceContainerLow = Color(0xFFF3F1F7), surfaceContainer = Color(0xFFEDEBF1), surfaceContainerHigh = Color(0xFFE7E5EB), surfaceContainerHighest = Color(0xFFE1DFE6),
     onSurfaceVariant = Color(0xFF46464F), outline = Color(0xFF777780), outlineVariant = Color(0xFFC7C5CC)
 )
+@SuppressLint("NewApi")
 @Composable
 fun LocationDotsTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
