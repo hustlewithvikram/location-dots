@@ -174,6 +174,27 @@ fun SettingsScreen(
         closeSettingsPage()
     }
 
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var lastLocationTimestamp by remember { mutableLongStateOf(0L) }
+    var lastLocationAccuracy by remember { mutableStateOf<Float?>(null) }
+
+    LaunchedEffect(page, isTracking) {
+        if (page != SettingsPage.TRACKING) return@LaunchedEffect
+        while (page == SettingsPage.TRACKING) {
+            val prefs = context.getSharedPreferences(
+                "location_dots_ui",
+                android.content.Context.MODE_PRIVATE
+            )
+            lastLocationTimestamp = prefs.getLong("last_location_timestamp", 0L)
+            lastLocationAccuracy = if (prefs.contains("last_location_accuracy")) {
+                prefs.getFloat("last_location_accuracy", 0f)
+            } else {
+                null
+            }
+            kotlinx.coroutines.delay(2_000L)
+        }
+    }
+
     AnimatedContent(
         targetState = page,
         transitionSpec = {
@@ -260,23 +281,6 @@ fun SettingsScreen(
                 Modifier, "Tracking",
                 onBack = ::closeSettingsPage
             ) {
-                val context = androidx.compose.ui.platform.LocalContext.current
-                var lastLocationTimestamp by remember { mutableLongStateOf(0L) }
-                var lastLocationAccuracy by remember { mutableStateOf<Float?>(null) }
-
-                LaunchedEffect(page, isTracking) {
-                    while (page == SettingsPage.TRACKING) {
-                        val prefs = context.getSharedPreferences("location_dots_ui", android.content.Context.MODE_PRIVATE)
-                        lastLocationTimestamp = prefs.getLong("last_location_timestamp", 0L)
-                        lastLocationAccuracy = if (prefs.contains("last_location_accuracy")) {
-                            prefs.getFloat("last_location_accuracy", 0f)
-                        } else {
-                            null
-                        }
-                        kotlinx.coroutines.delay(2_000L)
-                    }
-                }
-
                 item { SettingsGroupTitle("Tracking status", "See whether Location Dots is currently recording your location.") }
 
                 item {
