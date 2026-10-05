@@ -62,7 +62,7 @@ data class ImportPreview(
 )
 
 private enum class SettingsPage {
-    HOME, SAVED_PLACES, TRACKING, MAP_APPEARANCE, PRIVACY_DATA, EXPORT_BACKUP, DIAGNOSTICS
+    HOME, SAVED_PLACES, TRACKING, MAP_APPEARANCE, INTERFACE, PRIVACY_DATA, EXPORT_BACKUP, DIAGNOSTICS
 }
 
 private enum class NavigationDirection { FORWARD, BACK }
@@ -222,6 +222,7 @@ fun SettingsScreen(
                 Modifier,
                 places.size,
                 isTracking,
+                actionButton,
                 onOpen = ::openSettingsPage,
                 onAbout = onAbout,
                 onTrackingChange = onTrackingChange
@@ -548,13 +549,52 @@ fun SettingsScreen(
                 }
             }
             SettingsPage.MAP_APPEARANCE -> SettingsSubPage(
-                Modifier, "Map & appearance",
+                Modifier,
+                "Map & appearance",
+                "Customize the app theme and how maps are displayed.",
                 onBack = ::closeSettingsPage
             ) {
                 item {
-                    ExpressiveCard {
-                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text("Theme", style = MaterialTheme.typography.titleMedium)
+                    SettingsGroupTitle(
+                        "Appearance",
+                        "Control the visual style and motion used throughout Location Dots."
+                    )
+                }
+
+                item {
+                    ExpressiveCard(emphasized = true) {
+                        Column(
+                            Modifier.padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                ExpressiveIconBadge(
+                                    icon = {
+                                        Icon(
+                                            when (themeChoice) {
+                                                ThemeChoice.SYSTEM -> Icons.Default.BrightnessAuto
+                                                ThemeChoice.LIGHT -> Icons.Default.LightMode
+                                                ThemeChoice.DARK -> Icons.Default.DarkMode
+                                            },
+                                            null
+                                        )
+                                    }
+                                )
+                                Spacer(Modifier.width(14.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text("Theme", style = MaterialTheme.typography.titleMedium)
+                                    Text(
+                                        when (themeChoice) {
+                                            ThemeChoice.SYSTEM -> "Follow your device"
+                                            ThemeChoice.LIGHT -> "Always use light mode"
+                                            ThemeChoice.DARK -> "Always use dark mode"
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+
                             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                                 ThemeChoice.entries.forEachIndexed { index, choice ->
                                     SegmentedButton(
@@ -565,132 +605,128 @@ fun SettingsScreen(
                                     ) { Text(choice.label()) }
                                 }
                             }
+
                             ExpressiveListRow(
                                 title = "Motion & transitions",
+                                subtitle = "Use animations when moving between settings and screens.",
                                 icon = { Icon(Icons.Default.Animation, null) },
                                 trailing = { Switch(animationsEnabled, onAnimationsChange) }
                             )
                         }
                     }
                 }
+
                 item {
-                    ExpressiveCard {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Text("Timeline action button", style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                "Choose the quick action shown in the empty space at the top-left of your timeline.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-
-                            Column(Modifier.fillMaxWidth()) {
-                                ActionButton.entries.forEachIndexed { index, option ->
-                                    val shape = when (index) {
-                                        0 -> RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
-                                        ActionButton.entries.lastIndex ->
-                                            RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
-                                        else -> RoundedCornerShape(0.dp)
-                                    }
-                                    val selected = actionButton == option
-
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(58.dp)
-                                            
-                                            .padding(horizontal = 12.dp),
-                                        contentAlignment = Alignment.CenterStart
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Surface(
-                                                modifier = Modifier.size(38.dp),
-                                                shape = CircleShape,
-                                                color = if (selected) {
-                                                    MaterialTheme.colorScheme.secondary
-                                                } else {
-                                                    MaterialTheme.colorScheme.surfaceContainerHighest
-                                                },
-                                                contentColor = if (selected) {
-                                                    MaterialTheme.colorScheme.onSecondary
-                                                } else {
-                                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                                }
-                                            ) {
-                                                Box(contentAlignment = Alignment.Center) {
-                                                    Icon(
-                                                        when (option) {
-                                                            ActionButton.THEME -> when (themeChoice) {
-                                                                ThemeChoice.SYSTEM -> Icons.Default.BrightnessAuto
-                                                                ThemeChoice.LIGHT -> Icons.Default.LightMode
-                                                                ThemeChoice.DARK -> Icons.Default.DarkMode
-                                                            }
-                                                            ActionButton.REFRESH -> Icons.Default.Refresh
-                                                            ActionButton.TRACKING -> Icons.Default.MyLocation
-                                                            ActionButton.TODAY -> Icons.Default.Today
-                                                            ActionButton.EXPORT -> Icons.Default.FileDownload
-                                                        },
-                                                        contentDescription = null,
-                                                        modifier = Modifier.size(20.dp)
-                                                    )
-                                                }
-                                            }
-                                            Spacer(Modifier.width(12.dp))
-                                            Text(
-                                                option.label(),
-                                                style = MaterialTheme.typography.titleSmall,
-                                                modifier = Modifier.weight(1f)
-                                            )
-                                            RadioButton(
-                                                selected = selected,
-                                                onClick = { onActionButtonChange(option) }
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    SettingsGroupTitle(
+                        "Map display",
+                        "Choose the map style and which visual elements are drawn on the map."
+                    )
                 }
+
                 item {
                     ExpressiveCard {
-                        Column(Modifier.padding(10.dp)) {
+                        Column(Modifier.padding(8.dp)) {
                             ExpressiveListRow(
-                                "Map style",
-                                MapStyleChoice.fromKey(mapStyle).label,
-                                { Icon(Icons.Default.Map, null) },
+                                title = "Map style",
+                                subtitle = MapStyleChoice.fromKey(mapStyle).label + " · Tap to preview",
+                                icon = { Icon(Icons.Default.Map, null) },
                                 trailing = { Icon(Icons.Default.ChevronRight, null) },
                                 onClick = {
                                     previewMapStyle = mapStyle
                                     showMapStyleDialog = true
                                 }
                             )
+                            HorizontalDivider(
+                                Modifier.padding(horizontal = 14.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant
+                            )
                             ExpressiveListRow(
-                                "Route lines",
+                                title = "Route lines",
+                                subtitle = "Draw journey paths between places",
                                 icon = { Icon(Icons.Default.Timeline, null) },
                                 trailing = { Switch(showRouteLines, onRouteLinesChange) }
                             )
                             ExpressiveListRow(
-                                "Place markers",
+                                title = "Place markers",
+                                subtitle = "Show saved places on the map",
                                 icon = { Icon(Icons.Default.Place, null) },
                                 trailing = { Switch(showPlaceMarkers, onPlaceMarkersChange) }
                             )
                         }
                     }
                 }
+
+                item {
+                    SettingsGroupTitle(
+                        "Map information",
+                        "See the source information required by the map providers."
+                    )
+                }
+
                 item {
                     ExpressiveCard {
                         ExpressiveListRow(
-                            "Map credits",
+                            title = "Map credits",
+                            subtitle = "OpenFreeMap · OpenStreetMap",
                             icon = { Icon(Icons.Default.Public, null) },
                             trailing = { Icon(Icons.Default.Info, null) },
                             onClick = { showAttributionDialog = true }
                         )
+                    }
+                }
+            }
+            SettingsPage.INTERFACE -> SettingsSubPage(
+                Modifier,
+                "Interface",
+                "Customize quick controls used around your timeline.",
+                onBack = ::closeSettingsPage
+            ) {
+                item {
+                    SettingsGroupTitle(
+                        "Timeline",
+                        "Choose the quick action shown in the empty space at the top-left of your timeline."
+                    )
+                }
+
+                item {
+                    ExpressiveCard {
+                        Column(Modifier.padding(8.dp)) {
+                            ActionButton.entries.forEachIndexed { index, option ->
+                                val selected = actionButton == option
+                                ExpressiveListRow(
+                                    title = option.label(),
+                                    icon = {
+                                        Icon(
+                                            when (option) {
+                                                ActionButton.THEME -> when (themeChoice) {
+                                                    ThemeChoice.SYSTEM -> Icons.Default.BrightnessAuto
+                                                    ThemeChoice.LIGHT -> Icons.Default.LightMode
+                                                    ThemeChoice.DARK -> Icons.Default.DarkMode
+                                                }
+                                                ActionButton.REFRESH -> Icons.Default.Refresh
+                                                ActionButton.TRACKING -> Icons.Default.MyLocation
+                                                ActionButton.TODAY -> Icons.Default.Today
+                                                ActionButton.EXPORT -> Icons.Default.FileDownload
+                                            },
+                                            null
+                                        )
+                                    },
+                                    trailing = {
+                                        RadioButton(
+                                            selected = selected,
+                                            onClick = { onActionButtonChange(option) }
+                                        )
+                                    },
+                                    onClick = { onActionButtonChange(option) }
+                                )
+                                if (index != ActionButton.entries.lastIndex) {
+                                    HorizontalDivider(
+                                        Modifier.padding(horizontal = 14.dp),
+                                        color = MaterialTheme.colorScheme.outlineVariant
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1174,6 +1210,7 @@ private fun SettingsHome(
     modifier: Modifier,
     placesCount: Int,
     isTracking: Boolean,
+    actionButton: ActionButton,
     onOpen: (SettingsPage) -> Unit,
     onAbout: () -> Unit,
     onTrackingChange: (Boolean) -> Unit
@@ -1264,6 +1301,23 @@ private fun SettingsHome(
                     { Icon(Icons.Default.Palette, null) },
                     trailing = { Icon(Icons.Default.ChevronRight, null) },
                     onClick = { onOpen(SettingsPage.MAP_APPEARANCE) }
+                )
+            }
+        }
+
+        item {
+            SettingsGroupTitle(
+                "Interface",
+            )
+        }
+        item {
+            ExpressiveCard {
+                ExpressiveListRow(
+                    "Timeline action button",
+                    actionButton.label(),
+                    { Icon(Icons.Default.Tune, null) },
+                    trailing = { Icon(Icons.Default.ChevronRight, null) },
+                    onClick = { onOpen(SettingsPage.INTERFACE) }
                 )
             }
         }
