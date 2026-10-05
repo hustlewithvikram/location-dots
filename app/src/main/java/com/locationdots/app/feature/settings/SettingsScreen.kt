@@ -5,6 +5,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
@@ -341,7 +342,10 @@ fun SettingsScreen(
                 }
                 item {
                     ExpressiveCard {
-                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
                             Text("Timeline action button", style = MaterialTheme.typography.titleMedium)
                             Text(
                                 "Choose the quick action shown in the empty space at the top-left of your timeline.",
@@ -349,11 +353,9 @@ fun SettingsScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
 
-                            Column(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
+                            Column(Modifier.fillMaxWidth()) {
                                 ActionButton.entries.forEachIndexed { index, option ->
-                                    val rowShape = when (index) {
+                                    val shape = when (index) {
                                         0 -> RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
                                         ActionButton.entries.lastIndex ->
                                             RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
@@ -361,25 +363,28 @@ fun SettingsScreen(
                                     }
                                     val selected = actionButton == option
 
-                                    Surface(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = rowShape,
-                                        color = if (selected) {
-                                            MaterialTheme.colorScheme.secondaryContainer
-                                        } else {
-                                            MaterialTheme.colorScheme.surfaceContainerLow
-                                        },
-                                        onClick = { onActionButtonChange(option) }
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(58.dp)
+                                            .clip(shape)
+                                            .background(
+                                                if (selected) {
+                                                    MaterialTheme.colorScheme.secondaryContainer
+                                                } else {
+                                                    MaterialTheme.colorScheme.surfaceContainerLow
+                                                }
+                                            )
+                                            .clickable { onActionButtonChange(option) }
+                                            .padding(horizontal = 12.dp),
+                                        contentAlignment = Alignment.CenterStart
                                     ) {
                                         Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(60.dp)
-                                                .padding(horizontal = 14.dp),
+                                            modifier = Modifier.fillMaxWidth(),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Surface(
-                                                modifier = Modifier.size(40.dp),
+                                                modifier = Modifier.size(38.dp),
                                                 shape = CircleShape,
                                                 color = if (selected) {
                                                     MaterialTheme.colorScheme.secondary
@@ -406,11 +411,11 @@ fun SettingsScreen(
                                                             ActionButton.EXPORT -> Icons.Default.FileDownload
                                                         },
                                                         contentDescription = null,
-                                                        modifier = Modifier.size(21.dp)
+                                                        modifier = Modifier.size(20.dp)
                                                     )
                                                 }
                                             }
-                                            Spacer(Modifier.width(14.dp))
+                                            Spacer(Modifier.width(12.dp))
                                             Text(
                                                 option.label(),
                                                 style = MaterialTheme.typography.titleSmall,
@@ -421,7 +426,7 @@ fun SettingsScreen(
                                                 onClick = { onActionButtonChange(option) }
                                             )
                                         }
-                                    )
+                                    }
                                 }
                             }
                         }
