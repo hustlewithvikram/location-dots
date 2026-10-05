@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,19 +22,27 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlacesOverviewScreen(
     places: List<Place>,
     onBack: () -> Unit,
     summaries: Map<String, PlaceSummary>,
     onPlaceClick: (String) -> Unit,
-    onTabSelected: (AppTab) -> Unit = {}
+    onTabSelected: (AppTab) -> Unit = {},
+    onRefresh: () -> Unit = {},
+    isRefreshing: Boolean = false
 ) {
     val points = remember(places) { places.map { LatLng(it.latitude, it.longitude) } }
     var isMapFullscreen by remember { mutableStateOf(false) }
     val totalVisits = remember(summaries) { summaries.values.sumOf { it.visitCount } }
     val totalStayMinutes = remember(summaries) { summaries.values.sumOf { it.totalStayMinutes } }
 
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        modifier = Modifier.fillMaxSize()
+    ) {
     LazyColumn(
         Modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(18.dp, 12.dp, 18.dp, 112.dp),
@@ -199,6 +208,7 @@ fun PlacesOverviewScreen(
                 }
             }
         }
+    }
     }
 
     if (isMapFullscreen && points.isNotEmpty()) {
