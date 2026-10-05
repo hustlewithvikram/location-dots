@@ -31,23 +31,31 @@ class PlacesOverviewViewModel(
     private val _summaries = MutableStateFlow<Map<String, PlaceSummary>>(emptyMap())
     val summaries: StateFlow<Map<String, PlaceSummary>> = _summaries
 
+    fun refresh() {
+        viewModelScope.launch { refreshSummaries(places.value) }
+    }
+
+    private suspend fun refreshSummaries(currentPlaces: List<Place>) {
+        _summaries.value = currentPlaces.associate { place ->
+            val visits = timelineRepository.getVisitsForPlace(place.id)
+            val completed = visits.mapNotNull { visit ->
+                visit.departure?.let { departure ->
+                    Duration.between(visit.arrival, departure).toMinutes().coerceAtLeast(0)
+                }
+            }
+            place.id to PlaceSummary(
+                visitCount = visits.size,
+                totalStayMinutes = completed.sum(),
+                averageStayMinutes = if (completed.isEmpty()) 0 else completed.sum() / completed.size,
+                lastVisit = visits.maxByOrNull { it.arrival }
+            )
+        }
+    }
+
     init {
         viewModelScope.launch {
             places.collectLatest { currentPlaces ->
-                _summaries.value = currentPlaces.associate { place ->
-                    val visits = timelineRepository.getVisitsForPlace(place.id)
-                    val completed = visits.mapNotNull { visit ->
-                        visit.departure?.let { departure ->
-                            Duration.between(visit.arrival, departure).toMinutes().coerceAtLeast(0)
-                        }
-                    }
-                    place.id to PlaceSummary(
-                        visitCount = visits.size,
-                        totalStayMinutes = completed.sum(),
-                        averageStayMinutes = if (completed.isEmpty()) 0 else completed.sum() / completed.size,
-                        lastVisit = visits.maxByOrNull { it.arrival }
-                    )
-                }
+                refreshSummaries(currentPlaces)
             }
         }
     }
