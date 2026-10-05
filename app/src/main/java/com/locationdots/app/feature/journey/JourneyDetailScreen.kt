@@ -55,7 +55,7 @@ fun JourneyDetailScreen(journey: TimelineEvent.Journey, onBack: () -> Unit) {
                     Column(Modifier.weight(1f)) {
                         Text("Journey", style = MaterialTheme.typography.headlineMedium)
                         Text(
-                            "\${time(journey.startedAt)} – \${journey.endedAt?.let(::time) ?: "Now"}",
+                            "${time(journey.startedAt)} – ${journey.endedAt?.let(::time) ?: "Now"}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -148,7 +148,7 @@ fun JourneyDetailScreen(journey: TimelineEvent.Journey, onBack: () -> Unit) {
                         ) {
                             DetailValue(
                                 "Avg speed",
-                                speed?.let { "\%.1f km/h".format(it) } ?: "—",
+                                speed?.let { "%.1f km/h".format(it) } ?: "—",
                                 Modifier.weight(1f)
                             )
                             DetailValue("GPS points", journey.path.size.toString(), Modifier.weight(1f))
@@ -170,7 +170,7 @@ fun JourneyDetailScreen(journey: TimelineEvent.Journey, onBack: () -> Unit) {
                             Column(Modifier.weight(1f)) {
                                 Text("Route timeline", style = MaterialTheme.typography.headlineSmall)
                                 Text(
-                                    "\${journey.path.size} GPS points recorded",
+                                    "${journey.path.size} GPS points recorded",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -324,10 +324,10 @@ private fun time(i: java.time.Instant) =
         .format(i.atZone(ZoneId.systemDefault()))
 
 private fun formatMinutes(m: Long) =
-    if (m < 60) "\${m} min" else "\${m / 60}h \${m % 60}m"
+    if (m < 60) "${m} min" else "${m / 60}h ${m % 60}m"
 
 private fun formatDistance(m: Double?) =
-    m?.let { if (it < 1000) "\${it.toInt()} m" else "\%.1f km".format(it / 1000.0) }
+    m?.let { if (it < 1000) "${it.toInt()} m" else "%.1f km".format(it / 1000.0) }
         ?: "Unavailable"
 
 private fun JourneyMode.label() = when (this) {
