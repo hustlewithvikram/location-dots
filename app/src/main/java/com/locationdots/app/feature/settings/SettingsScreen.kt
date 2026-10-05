@@ -367,15 +367,7 @@ fun SettingsScreen(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .height(58.dp)
-                                            .clip(shape)
-                                            .background(
-                                                if (selected) {
-                                                    MaterialTheme.colorScheme.secondaryContainer
-                                                } else {
-                                                    MaterialTheme.colorScheme.surfaceContainerLow
-                                                }
-                                            )
-                                            .clickable { onActionButtonChange(option) }
+                                            
                                             .padding(horizontal = 12.dp),
                                         contentAlignment = Alignment.CenterStart
                                     ) {
