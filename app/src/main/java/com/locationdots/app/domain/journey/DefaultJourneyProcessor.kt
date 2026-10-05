@@ -24,7 +24,7 @@ class DefaultJourneyProcessor(
             .sortedBy { it.timestamp }
             .toList()
 
-        if (sorted.size < MIN_POINTS_PER_VISIT) return emptyList()
+        if (sorted.size < minimumPointsPerVisit()) return emptyList()
 
         val clusters = buildClusters(sorted)
             .filter { isConfirmedVisit(it.points) }
