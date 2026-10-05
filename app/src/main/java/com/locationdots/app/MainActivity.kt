@@ -87,6 +87,8 @@ class MainActivity : ComponentActivity() {
     private var importLoading by mutableStateOf(false)
     private var importError by mutableStateOf<String?>(null)
     private var pendingExportJson: String? = null
+    private var profileName by mutableStateOf("Your name")
+    private var profilePhotoUri by mutableStateOf<String?>(null)
 
     private enum class NavigationDirection { FORWARD, BACK }
     private data class AppDestination(
@@ -94,6 +96,20 @@ class MainActivity : ComponentActivity() {
         val direction: NavigationDirection,
     )
     private var pendingNavigationDirection by mutableStateOf(NavigationDirection.FORWARD)
+
+    private val profilePhotoLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) {
+                runCatching {
+                    contentResolver.takePersistableUriPermission(
+                        uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                }
+                profilePhotoUri = uri.toString()
+                preferences.edit().putString("profile_photo_uri", uri.toString()).apply()
+            }
+        }
 
     private val exportBackupLauncher =
         registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
@@ -183,6 +199,8 @@ class MainActivity : ComponentActivity() {
             it.millis == preferences.getLong("tracking_interval_millis", TrackingInterval.THIRTY_SECONDS.millis)
         } ?: TrackingInterval.THIRTY_SECONDS
         showSplash = !preferences.getBoolean("splash_seen", false)
+        profileName = preferences.getString("profile_name", "Your name") ?: "Your name"
+        profilePhotoUri = preferences.getString("profile_photo_uri", null)
 
         val app = application as LocationDotsApplication
         timelineViewModel = ViewModelProvider(this, TimelineViewModelFactory(app.timelineRepository))[TimelineViewModel::class.java]
@@ -322,6 +340,13 @@ class MainActivity : ComponentActivity() {
                         events = timelineState.events,
                         placesCount = places.size,
                         isTracking = isTracking,
+                        profileName = profileName,
+                        profilePhotoUri = profilePhotoUri,
+                        onNameChange = { name ->
+                            profileName = name
+                            preferences.edit().putString("profile_name", name).apply()
+                        },
+                        onPhotoChange = { profilePhotoLauncher.launch(arrayOf("image/*")) },
                         onBack = {
                             pendingNavigationDirection = NavigationDirection.BACK
                             isProfileOpen = false
