@@ -204,7 +204,8 @@ private fun TimelineDot(event: TimelineEvent) {
 
     Box(
         Modifier
-            .size(12.dp)
+            .size(14.dp)
+            .aspectRatio(1f)
             .clip(CircleShape)
             .background(dotColor)
     )
