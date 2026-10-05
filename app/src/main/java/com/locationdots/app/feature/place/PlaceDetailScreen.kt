@@ -21,9 +21,11 @@ import com.locationdots.app.domain.model.Place
 import com.locationdots.app.domain.model.TimelineEvent
 import com.locationdots.app.ui.components.*
 import java.time.Duration
+import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,6 +56,20 @@ fun PlaceDetailScreen(
                 Duration.between(it.arrival, it.departure!!).toMinutes().coerceAtLeast(0)
             }
             val average = if (completedVisits.isNotEmpty()) totalMinutes / completedVisits.size else 0
+            val activeVisit = sortedVisits.firstOrNull { it.departure == null }
+            var now by remember(activeVisit?.id) { mutableStateOf(Instant.now()) }
+
+            LaunchedEffect(activeVisit?.id) {
+                if (activeVisit == null) return@LaunchedEffect
+                while (true) {
+                    now = Instant.now()
+                    delay(30_000)
+                }
+            }
+
+            val activeMinutes = activeVisit?.let {
+                Duration.between(it.arrival, now).toMinutes().coerceAtLeast(0)
+            }
             val lastVisit = sortedVisits.firstOrNull()
             val points = listOf(LatLng(place.latitude, place.longitude))
 
@@ -169,13 +185,59 @@ fun PlaceDetailScreen(
                             { Icon(Icons.Default.Timelapse, null) }
                         )
                     }
+                    if (completedVisits.isNotEmpty()) {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            if (activeVisit != null)
+                                "Stay totals and average are based on " + completedVisits.size + " completed visits. Your current stay is shown separately below."
+                            else
+                                "Stay totals and average are based on " + completedVisits.size + " completed visits.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    if (activeVisit != null && activeMinutes != null) {
+                        Spacer(Modifier.height(10.dp))
+                        ExpressiveCard {
+                            Row(
+                                Modifier.fillMaxWidth().padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                ExpressiveIconBadge(
+                                    icon = { Icon(Icons.Default.LocationOn, null) }
+                                )
+                                Spacer(Modifier.width(12.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        "Currently here",
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Text(
+                                        "Started " + DateTimeFormatter.ofPattern("HH:mm", currentLocale)
+                                            .format(activeVisit.arrival.atZone(zone)),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Text(
+                                    formatMinutes(activeMinutes),
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            }
+                        }
+                    }
                 }
 
                 item {
                     ExpressiveSectionHeader(
                         "Visit history",
-                        if (lastVisit == null) "No visits recorded yet."
-                        else "Most recent first."
+                        when {
+                            lastVisit == null -> "No visits recorded yet."
+                            activeVisit != null -> sortedVisits.size.toString() + " sessions · " +
+                                completedVisits.size + " completed · 1 current"
+                            else -> completedVisits.size.toString() + " completed sessions · Most recent first."
+                        }
                     )
                 }
 
@@ -199,7 +261,7 @@ fun PlaceDetailScreen(
                     }
                 } else {
                     items(sortedVisits, key = { it.id }) { visit ->
-                        val end = visit.departure ?: java.time.Instant.now()
+                        val end = visit.departure ?: now
                         val duration = formatMinutes(
                             Duration.between(visit.arrival, end).toMinutes().coerceAtLeast(0)
                         )
