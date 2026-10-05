@@ -42,6 +42,18 @@ private enum class SettingsPage {
 
 private enum class NavigationDirection { FORWARD, BACK }
 
+enum class ActionButton {
+    THEME, REFRESH, PLACES, INSIGHTS, SETTINGS;
+
+    fun label(): String = when (this) {
+        THEME -> "Theme"
+        REFRESH -> "Refresh timeline"
+        PLACES -> "Places"
+        INSIGHTS -> "Insights"
+        SETTINGS -> "Settings"
+    }
+}
+
 private enum class MapStyleChoice(val key: String, val label: String) {
     LIBERTY("liberty", "Liberty"),
     BRIGHT("bright", "Bright"),
@@ -67,6 +79,8 @@ fun SettingsScreen(
     locationPermissionGranted: Boolean,
     trackingAccuracy: TrackingAccuracy,
     trackingInterval: TrackingInterval,
+    actionButton: ActionButton,
+    onActionButtonChange: (ActionButton) -> Unit,
     onThemeChange: (ThemeChoice) -> Unit,
     onTrackingChange: (Boolean) -> Unit,
     onTrackingAccuracyChange: (TrackingAccuracy) -> Unit,
@@ -320,6 +334,42 @@ fun SettingsScreen(
                                 icon = { Icon(Icons.Default.Animation, null) },
                                 trailing = { Switch(animationsEnabled, onAnimationsChange) }
                             )
+                        }
+                    }
+                }
+                item {
+                    ExpressiveCard {
+                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text("Timeline action button", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                "Choose which quick action appears in the empty space at the top-left of your timeline.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            ActionButton.entries.forEach { option ->
+                                ExpressiveListRow(
+                                    title = option.label(),
+                                    icon = {
+                                        Icon(
+                                            when (option) {
+                                                ActionButton.THEME -> Icons.Default.Brightness6
+                                                ActionButton.REFRESH -> Icons.Default.Refresh
+                                                ActionButton.PLACES -> Icons.Default.Place
+                                                ActionButton.INSIGHTS -> Icons.Default.Insights
+                                                ActionButton.SETTINGS -> Icons.Default.Settings
+                                            },
+                                            null
+                                        )
+                                    },
+                                    trailing = {
+                                        RadioButton(
+                                            selected = actionButton == option,
+                                            onClick = { onActionButtonChange(option) }
+                                        )
+                                    },
+                                    onClick = { onActionButtonChange(option) }
+                                )
+                            }
                         }
                     }
                 }
