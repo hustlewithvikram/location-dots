@@ -50,6 +50,14 @@ class LocationTrackingService : LifecycleService() {
             app.locationProvider.locations.collect { point ->
                 runCatching {
                     app.locationRepository.saveLocationPoint(point)
+                    getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE).edit()
+                        .putLong("last_location_timestamp", point.timestamp.toEpochMilli())
+                        .apply()
+                    point.accuracyMeters?.let { accuracy ->
+                        getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE).edit()
+                            .putFloat("last_location_accuracy", accuracy.toFloat())
+                            .apply()
+                    }
 
                     val to = point.timestamp
                     val from = to.minus(PROCESSING_WINDOW)
