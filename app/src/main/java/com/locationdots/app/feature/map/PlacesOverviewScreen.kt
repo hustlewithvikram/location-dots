@@ -182,12 +182,13 @@ fun PlacesOverviewScreen(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
+                            } else {
+                                Text(
+                                    "Saved " + formatPlaceDate(place.createdAt),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
-                            Text(
-                                "Saved " + formatPlaceDate(place.createdAt),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
                         }
                         Icon(
                             Icons.Default.ChevronRight,
