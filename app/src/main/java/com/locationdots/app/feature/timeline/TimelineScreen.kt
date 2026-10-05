@@ -248,6 +248,7 @@ private fun TodayCard(
     onSearchClick: () -> Unit,
     onProfileClick: () -> Unit,
     actionButton: com.locationdots.app.feature.settings.ActionButton,
+    themeChoice: com.locationdots.app.feature.settings.ThemeChoice,
     onActionButtonClick: () -> Unit
 ) {
     val zone = ZoneId.systemDefault()
