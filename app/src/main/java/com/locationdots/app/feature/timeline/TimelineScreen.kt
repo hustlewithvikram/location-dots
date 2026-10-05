@@ -126,7 +126,7 @@ private fun DayHeader(date: LocalDate) {
         Text(
             title,
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.widthIn(min = 64.dp),
+            modifier = Modifier.width(76.dp),
             maxLines = 1,
             softWrap = false
         )
