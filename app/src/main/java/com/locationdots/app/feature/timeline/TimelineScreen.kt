@@ -32,6 +32,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private sealed interface TimelineItem { data class Day(val date: LocalDate) : TimelineItem; data class Event(val event: TimelineEvent) : TimelineItem }
 
@@ -49,7 +50,6 @@ fun TimelineScreen(
     onSearchClick: () -> Unit,
     onProfileClick: () -> Unit,
     actionButton: com.locationdots.app.feature.settings.ActionButton,
-    themeChoice: com.locationdots.app.feature.settings.ThemeChoice,
     themeChoice: com.locationdots.app.feature.settings.ThemeChoice,
     onActionButtonClick: () -> Unit,
     onPlacesClick: () -> Unit,
