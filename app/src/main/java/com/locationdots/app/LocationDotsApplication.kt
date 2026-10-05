@@ -45,7 +45,10 @@ class LocationDotsApplication : Application() {
     val placeEngine: PlaceEngine by lazy { PlaceEngine(placeRepository) }
 
     val journeyProcessor: JourneyProcessor by lazy {
-        DefaultJourneyProcessor(placeEngine)
+        DefaultJourneyProcessor(
+            placeEngine = placeEngine,
+            preferences = getSharedPreferences("location_dots_ui", MODE_PRIVATE)
+        )
     }
 
     val timelineRepository: TimelineRepository by lazy {
