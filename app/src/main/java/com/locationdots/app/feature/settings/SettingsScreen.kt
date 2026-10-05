@@ -5,6 +5,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
@@ -43,14 +45,14 @@ private enum class SettingsPage {
 private enum class NavigationDirection { FORWARD, BACK }
 
 enum class ActionButton {
-    THEME, REFRESH, PLACES, INSIGHTS, SETTINGS;
+    THEME, REFRESH, TRACKING, TODAY, EXPORT;
 
     fun label(): String = when (this) {
         THEME -> "Theme"
         REFRESH -> "Refresh timeline"
-        PLACES -> "Places"
-        INSIGHTS -> "Insights"
-        SETTINGS -> "Settings"
+        TRACKING -> "Tracking"
+        TODAY -> "Today"
+        EXPORT -> "Export data"
     }
 }
 
@@ -339,36 +341,88 @@ fun SettingsScreen(
                 }
                 item {
                     ExpressiveCard {
-                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Text("Timeline action button", style = MaterialTheme.typography.titleMedium)
                             Text(
-                                "Choose which quick action appears in the empty space at the top-left of your timeline.",
+                                "Choose the quick action shown in the empty space at the top-left of your timeline.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            ActionButton.entries.forEach { option ->
-                                ExpressiveListRow(
-                                    title = option.label(),
-                                    icon = {
-                                        Icon(
-                                            when (option) {
-                                                ActionButton.THEME -> Icons.Default.Brightness6
-                                                ActionButton.REFRESH -> Icons.Default.Refresh
-                                                ActionButton.PLACES -> Icons.Default.Place
-                                                ActionButton.INSIGHTS -> Icons.Default.Insights
-                                                ActionButton.SETTINGS -> Icons.Default.Settings
-                                            },
-                                            null
-                                        )
-                                    },
-                                    trailing = {
-                                        RadioButton(
-                                            selected = actionButton == option,
-                                            onClick = { onActionButtonChange(option) }
-                                        )
-                                    },
-                                    onClick = { onActionButtonChange(option) }
-                                )
+
+                            Column(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                ActionButton.entries.forEachIndexed { index, option ->
+                                    val rowShape = when (index) {
+                                        0 -> RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+                                        ActionButton.entries.lastIndex ->
+                                            RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+                                        else -> RoundedCornerShape(0.dp)
+                                    }
+                                    val selected = actionButton == option
+
+                                    Surface(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = rowShape,
+                                        color = if (selected) {
+                                            MaterialTheme.colorScheme.secondaryContainer
+                                        } else {
+                                            MaterialTheme.colorScheme.surfaceContainerLow
+                                        },
+                                        onClick = { onActionButtonChange(option) }
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(60.dp)
+                                                .padding(horizontal = 14.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Surface(
+                                                modifier = Modifier.size(40.dp),
+                                                shape = CircleShape,
+                                                color = if (selected) {
+                                                    MaterialTheme.colorScheme.secondary
+                                                } else {
+                                                    MaterialTheme.colorScheme.surfaceContainerHighest
+                                                },
+                                                contentColor = if (selected) {
+                                                    MaterialTheme.colorScheme.onSecondary
+                                                } else {
+                                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                                }
+                                            ) {
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Icon(
+                                                        when (option) {
+                                                            ActionButton.THEME -> when (themeChoice) {
+                                                                ThemeChoice.SYSTEM -> Icons.Default.BrightnessAuto
+                                                                ThemeChoice.LIGHT -> Icons.Default.LightMode
+                                                                ThemeChoice.DARK -> Icons.Default.DarkMode
+                                                            }
+                                                            ActionButton.REFRESH -> Icons.Default.Refresh
+                                                            ActionButton.TRACKING -> Icons.Default.MyLocation
+                                                            ActionButton.TODAY -> Icons.Default.Today
+                                                            ActionButton.EXPORT -> Icons.Default.FileDownload
+                                                        },
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(21.dp)
+                                                    )
+                                                }
+                                            }
+                                            Spacer(Modifier.width(14.dp))
+                                            Text(
+                                                option.label(),
+                                                style = MaterialTheme.typography.titleSmall,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            RadioButton(
+                                                selected = selected,
+                                                onClick = { onActionButtonChange(option) }
+                                            )
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
