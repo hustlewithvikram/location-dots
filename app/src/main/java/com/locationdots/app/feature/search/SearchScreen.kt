@@ -38,7 +38,7 @@ fun SearchScreen(
 ) {
     val currentLocale = LocalConfiguration.current.locales[0]
     val formatter = remember(currentLocale) {
-        DateTimeFormatter.ofPattern("d MMM · HH:mm", currentLocale)
+        DateTimeFormatter.ofPattern("d MMM · h:mm a", currentLocale)
             .withZone(ZoneId.systemDefault())
     }
 
