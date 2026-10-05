@@ -170,16 +170,28 @@ private fun TimelineEventRow(
         verticalAlignment = Alignment.Top
     ) {
         Column(
-            modifier = Modifier.width(48.dp),
+            modifier = Modifier.width(64.dp),
             horizontalAlignment = Alignment.End
         ) {
-            Text(
-                time(eventTime),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
+            ) {
+                Text(
+                    time(eventTime),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.width(8.dp))
+                TimelineDot(event)
+            }
+            Box(
+                Modifier
+                    .width(2.dp)
+                    .height(74.dp)
+                    .background(MaterialTheme.colorScheme.outlineVariant)
             )
-            Spacer(Modifier.height(10.dp))
-            TimelineRail(event)
         }
 
         Spacer(Modifier.width(12.dp))
@@ -193,28 +205,19 @@ private fun TimelineEventRow(
 }
 
 @Composable
-private fun TimelineRail(event: TimelineEvent) {
+private fun TimelineDot(event: TimelineEvent) {
     val dotColor = if (event is TimelineEvent.Journey) {
         MaterialTheme.colorScheme.tertiary
     } else {
         MaterialTheme.colorScheme.primary
     }
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            Modifier
-                .size(12.dp)
-                .clip(CircleShape)
-                .background(dotColor)
-        )
-        Box(
-            Modifier
-                .padding(top = 5.dp)
-                .width(2.dp)
-                .height(74.dp)
-                .background(MaterialTheme.colorScheme.outlineVariant)
-        )
-    }
+    Box(
+        Modifier
+            .size(12.dp)
+            .clip(CircleShape)
+            .background(dotColor)
+    )
 }
 
 @Composable
@@ -388,22 +391,16 @@ private fun VisitCard(
                     )
                     if (isCurrent) {
                         Spacer(Modifier.width(8.dp))
-                        Surface(
-                            shape = RoundedCornerShape(100.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer
-                        ) {
-                            Text(
-                                "NOW",
-                                Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
+                        Text(
+                            "You're here",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
                 Spacer(Modifier.height(3.dp))
                 Text(
-                    if (isCurrent) "At this place · $duration"
+                    if (isCurrent) "You're here for $duration"
                     else "Stayed $duration",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -453,13 +450,31 @@ private fun JourneyCard(
                 )
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(
-                        (event.startPlace?.name ?: "Unknown") + " → " +
-                            (event.endPlace?.name ?: "Unknown"),
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            event.startPlace?.name ?: "Unknown",
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                        Icon(
+                            Icons.Default.ArrowForward,
+                            contentDescription = "To",
+                            modifier = Modifier.padding(horizontal = 6.dp).size(18.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            event.endPlace?.name ?: "Unknown",
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                    }
                     Spacer(Modifier.height(3.dp))
                     Text(
                         event.mode.label() + " · " +
@@ -599,7 +614,7 @@ private fun buildItems(events: List<TimelineEvent>): List<TimelineItem> {
 
     return result
 }
-private fun time(i: java.time.Instant) = DateTimeFormatter.ofPattern("HH:mm").format(i.atZone(ZoneId.systemDefault()))
+private fun time(i: java.time.Instant) = DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault()).format(i.atZone(ZoneId.systemDefault()))
 private fun formatMinutes(m: Long) = if (m < 60) m.toString() + "m" else (m / 60).toString() + "h " + (m % 60).toString() + "m"
 private fun formatDuration(m: Long): String {
     val minutes = m.coerceAtLeast(0)
