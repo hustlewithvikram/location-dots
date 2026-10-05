@@ -48,6 +48,8 @@ fun TimelineScreen(
     onJourneyClick: (String) -> Unit,
     onSearchClick: () -> Unit,
     onProfileClick: () -> Unit,
+    actionButton: com.locationdots.app.feature.settings.ActionButton,
+    onActionButtonClick: () -> Unit,
     onPlacesClick: () -> Unit,
     onInsightsClick: () -> Unit,
     onSettingsClick: () -> Unit,
@@ -74,7 +76,7 @@ fun TimelineScreen(
             if (items.isEmpty() && !isRefreshing && !isLoadingMore) EmptyTimeline(isTracking)
             else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 12.dp, 16.dp, 112.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 item("summary") {
-                    TodayCard(events, isTracking, onSearchClick, onProfileClick)
+                    TodayCard(events, isTracking, onSearchClick, onProfileClick, actionButton, onActionButtonClick)
                 }
                 items.forEach { item ->
                     when (item) {
@@ -227,7 +229,9 @@ private fun TodayCard(
     events: List<TimelineEvent>,
     isTracking: Boolean,
     onSearchClick: () -> Unit,
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
+    actionButton: com.locationdots.app.feature.settings.ActionButton,
+    onActionButtonClick: () -> Unit
 ) {
     val zone = ZoneId.systemDefault()
     val today = LocalDate.now(zone)
@@ -259,7 +263,8 @@ private fun TodayCard(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(Modifier.weight(1f)) {}
+            ActionButtonIcon(actionButton = actionButton, onClick = onActionButtonClick)
+            Spacer(Modifier.weight(1f))
 
             FilledTonalIconButton(onClick = onSearchClick) {
                 Icon(Icons.Default.Search, "Search your timeline")
@@ -293,6 +298,25 @@ private fun TodayCard(
     }
 }
 
+
+@Composable
+private fun ActionButtonIcon(
+    actionButton: com.locationdots.app.feature.settings.ActionButton,
+    onClick: () -> Unit
+) {
+    FilledTonalIconButton(onClick = onClick) {
+        Icon(
+            when (actionButton) {
+                com.locationdots.app.feature.settings.ActionButton.THEME -> Icons.Default.Brightness6
+                com.locationdots.app.feature.settings.ActionButton.REFRESH -> Icons.Default.Refresh
+                com.locationdots.app.feature.settings.ActionButton.PLACES -> Icons.Default.Place
+                com.locationdots.app.feature.settings.ActionButton.INSIGHTS -> Icons.Default.Insights
+                com.locationdots.app.feature.settings.ActionButton.SETTINGS -> Icons.Default.Settings
+            },
+            contentDescription = actionButton.label()
+        )
+    }
+}
 @Composable
 private fun SummaryMetric(
     value: String,
