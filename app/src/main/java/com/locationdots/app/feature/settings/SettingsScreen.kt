@@ -30,6 +30,28 @@ enum class TrackingInterval(val millis: Long, val label: String) {
     ONE_MINUTE(60_000L, "1 minute"),
     FIVE_MINUTES(300_000L, "5 minutes")
 }
+enum class VisitDuration(val minutes: Long, val label: String) {
+    FIVE(5, "5 min"),
+    EIGHT(8, "8 min"),
+    TEN(10, "10 min"),
+    FIFTEEN(15, "15 min")
+}
+enum class VisitRadius(val meters: Double, val label: String) {
+    FIFTY(50.0, "50m"),
+    HUNDRED(100.0, "100m"),
+    ONE_FIFTY(150.0, "150m"),
+    TWO_FIFTY(250.0, "250m")
+}
+enum class TrackingMaxAccuracy(val meters: Double, val label: String) {
+    FIFTY(50.0, "50m"),
+    HUNDRED(100.0, "100m"),
+    ONE_FIFTY(150.0, "150m")
+}
+enum class MovementThreshold(val meters: Double, val label: String) {
+    TEN(10.0, "10m"),
+    TWENTY_FIVE(25.0, "25m"),
+    FIFTY(50.0, "50m")
+}
 
 data class ImportPreview(
     val uri: Uri,
@@ -82,12 +104,24 @@ fun SettingsScreen(
     locationPermissionGranted: Boolean,
     trackingAccuracy: TrackingAccuracy,
     trackingInterval: TrackingInterval,
+    automaticJourneyDetection: Boolean,
+    stationaryDetection: Boolean,
+    visitDuration: VisitDuration,
+    visitRadius: VisitRadius,
+    maxTrackingAccuracy: TrackingMaxAccuracy,
+    movementThreshold: MovementThreshold,
     actionButton: ActionButton,
     onActionButtonChange: (ActionButton) -> Unit,
     onThemeChange: (ThemeChoice) -> Unit,
     onTrackingChange: (Boolean) -> Unit,
     onTrackingAccuracyChange: (TrackingAccuracy) -> Unit,
     onTrackingIntervalChange: (TrackingInterval) -> Unit,
+    onAutomaticJourneyDetectionChange: (Boolean) -> Unit,
+    onStationaryDetectionChange: (Boolean) -> Unit,
+    onVisitDurationChange: (VisitDuration) -> Unit,
+    onVisitRadiusChange: (VisitRadius) -> Unit,
+    onMaxTrackingAccuracyChange: (TrackingMaxAccuracy) -> Unit,
+    onMovementThresholdChange: (MovementThreshold) -> Unit,
     onAnimationsChange: (Boolean) -> Unit,
     onMapStyleChange: (String) -> Unit,
     onRouteLinesChange: (Boolean) -> Unit,
@@ -226,6 +260,92 @@ fun SettingsScreen(
                 Modifier, "Tracking",
                 onBack = ::closeSettingsPage
             ) {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                var lastLocationTimestamp by remember { mutableLongStateOf(0L) }
+                var lastLocationAccuracy by remember { mutableStateOf<Float?>(null) }
+
+                LaunchedEffect(page, isTracking) {
+                    while (page == SettingsPage.TRACKING) {
+                        val prefs = context.getSharedPreferences("location_dots_ui", android.content.Context.MODE_PRIVATE)
+                        lastLocationTimestamp = prefs.getLong("last_location_timestamp", 0L)
+                        lastLocationAccuracy = if (prefs.contains("last_location_accuracy")) {
+                            prefs.getFloat("last_location_accuracy", 0f)
+                        } else {
+                            null
+                        }
+                        kotlinx.coroutines.delay(2_000L)
+                    }
+                }
+
+                item { SettingsGroupTitle("Tracking status", "See whether Location Dots is currently recording your location.") }
+
+                item {
+                    ExpressiveCard(emphasized = isTracking) {
+                        Column(
+                            Modifier.padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                ExpressiveIconBadge(
+                                    icon = {
+                                        Icon(
+                                            if (isTracking) Icons.Default.LocationOn else Icons.Default.LocationOff,
+                                            null
+                                        )
+                                    },
+                                    containerColor = if (isTracking) {
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.surfaceContainerHighest
+                                    }
+                                )
+                                Spacer(Modifier.width(14.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        if (isTracking) "Tracking active" else "Tracking paused",
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Text(
+                                        if (isTracking) "Location Dots is recording your location."
+                                        else "Location recording is currently paused.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            HorizontalDivider()
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column {
+                                    Text("Last update", style = MaterialTheme.typography.labelMedium)
+                                    Text(
+                                        if (lastLocationTimestamp > 0L) {
+                                            java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT)
+                                                .format(java.util.Date(lastLocationTimestamp))
+                                        } else "Waiting for location",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text("Accuracy", style = MaterialTheme.typography.labelMedium)
+                                    Text(
+                                        lastLocationAccuracy?.let { "%.0f m".format(java.util.Locale.US, it) } ?: "—",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            }
+                            Button(
+                                onClick = { onTrackingChange(!isTracking) },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(if (isTracking) "Pause tracking" else "Start tracking")
+                            }
+                        }
+                    }
+                }
+
                 item { SettingsGroupTitle("Required", "Permissions and Android settings needed for reliable tracking.") }
 
                 item {
@@ -237,15 +357,9 @@ fun SettingsScreen(
                                 { Icon(Icons.Default.LocationOn, null) },
                                 trailing = {
                                     if (locationPermissionGranted) {
-                                        Icon(
-                                            Icons.Default.CheckCircle,
-                                            null,
-                                            tint = MaterialTheme.colorScheme.primary
-                                        )
+                                        Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
                                     } else {
-                                        TextButton(onClick = onRequestLocationPermission) {
-                                            Text("Allow")
-                                        }
+                                        TextButton(onClick = onRequestLocationPermission) { Text("Allow") }
                                     }
                                 },
                                 onClick = if (locationPermissionGranted) null else onRequestLocationPermission
@@ -254,10 +368,21 @@ fun SettingsScreen(
                                 "Location services",
                                 "Android system setting",
                                 { Icon(Icons.Default.GpsFixed, null) },
-                                trailing = {
-                                    Icon(Icons.Default.ChevronRight, null)
-                                },
+                                trailing = { Icon(Icons.Default.ChevronRight, null) },
                                 onClick = onOpenLocationSettings
+                            )
+                            ExpressiveListRow(
+                                "Battery optimization",
+                                if (batteryOptimizationIgnored) "Unrestricted" else "Optimized",
+                                { Icon(Icons.Default.BatteryChargingFull, null) },
+                                trailing = {
+                                    if (batteryOptimizationIgnored) {
+                                        Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
+                                    } else {
+                                        Icon(Icons.Default.ChevronRight, null)
+                                    }
+                                },
+                                onClick = if (batteryOptimizationIgnored) null else onOpenBatterySettings
                             )
                         }
                     }
@@ -280,9 +405,7 @@ fun SettingsScreen(
                                         onClick = { onTrackingAccuracyChange(option) },
                                         shape = SegmentedButtonDefaults.itemShape(index, options.size),
                                         icon = {}
-                                    ) {
-                                        Text(if (option == TrackingAccuracy.HIGH) "High" else "Balanced")
-                                    }
+                                    ) { Text(if (option == TrackingAccuracy.HIGH) "High" else "Balanced") }
                                 }
                             }
                             Text("Update frequency", style = MaterialTheme.typography.titleMedium)
@@ -310,6 +433,112 @@ fun SettingsScreen(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                        }
+                    }
+                }
+
+                item { SettingsGroupTitle("Tracking behavior", "Let Location Dots adapt tracking while you move and stay.") }
+
+                item {
+                    ExpressiveCard {
+                        Column(Modifier.padding(8.dp)) {
+                            ExpressiveListRow(
+                                "Automatic journey detection",
+                                "Detect movement between places automatically",
+                                { Icon(Icons.Default.Route, null) },
+                                trailing = { Switch(automaticJourneyDetection, onAutomaticJourneyDetectionChange) }
+                            )
+                            ExpressiveListRow(
+                                "Stationary detection",
+                                "Reduce strict movement checks while you're still",
+                                { Icon(Icons.Default.Accessibility, null) },
+                                trailing = { Switch(stationaryDetection, onStationaryDetectionChange) }
+                            )
+                            ExpressiveListRow(
+                                "Background tracking",
+                                "Continues while the app is closed",
+                                { Icon(Icons.Default.Sync, null) },
+                                trailing = {
+                                    Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
+                                }
+                            )
+                        }
+                    }
+                }
+
+                item { SettingsGroupTitle("Visit detection", "Decide when a stay becomes a visit on your timeline.") }
+
+                item {
+                    ExpressiveCard {
+                        Column(
+                            Modifier.padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Text("Minimum stay", style = MaterialTheme.typography.titleMedium)
+                            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                                val options = VisitDuration.entries
+                                options.forEachIndexed { index, option ->
+                                    SegmentedButton(
+                                        selected = visitDuration == option,
+                                        onClick = { onVisitDurationChange(option) },
+                                        shape = SegmentedButtonDefaults.itemShape(index, options.size),
+                                        icon = {}
+                                    ) { Text(option.label) }
+                                }
+                            }
+                            Text("Detection radius", style = MaterialTheme.typography.titleMedium)
+                            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                                val options = VisitRadius.entries
+                                options.forEachIndexed { index, option ->
+                                    SegmentedButton(
+                                        selected = visitRadius == option,
+                                        onClick = { onVisitRadiusChange(option) },
+                                        shape = SegmentedButtonDefaults.itemShape(index, options.size),
+                                        icon = {}
+                                    ) { Text(option.label) }
+                                }
+                            }
+                            Text(
+                                "A visit is created after you remain within the selected area for the minimum stay.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+                item { SettingsGroupTitle("Advanced tracking", "Fine-tune location quality and stationary detection.") }
+
+                item {
+                    ExpressiveCard {
+                        Column(
+                            Modifier.padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Text("Maximum GPS accuracy", style = MaterialTheme.typography.titleMedium)
+                            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                                val options = TrackingMaxAccuracy.entries
+                                options.forEachIndexed { index, option ->
+                                    SegmentedButton(
+                                        selected = maxTrackingAccuracy == option,
+                                        onClick = { onMaxTrackingAccuracyChange(option) },
+                                        shape = SegmentedButtonDefaults.itemShape(index, options.size),
+                                        icon = {}
+                                    ) { Text(option.label) }
+                                }
+                            }
+                            Text("Movement threshold", style = MaterialTheme.typography.titleMedium)
+                            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                                val options = MovementThreshold.entries
+                                options.forEachIndexed { index, option ->
+                                    SegmentedButton(
+                                        selected = movementThreshold == option,
+                                        onClick = { onMovementThresholdChange(option) },
+                                        shape = SegmentedButtonDefaults.itemShape(index, options.size),
+                                        icon = {}
+                                    ) { Text(option.label) }
+                                }
+                            }
                         }
                     }
                 }
