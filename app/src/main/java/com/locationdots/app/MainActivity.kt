@@ -555,7 +555,7 @@ class MainActivity : ComponentActivity() {
                                     themeChoice = when (themeChoice) {
                                         ThemeChoice.DARK -> ThemeChoice.LIGHT
                                         ThemeChoice.LIGHT -> ThemeChoice.DARK
-                                        ThemeChoice.SYSTEM -> if (isSystemInDarkTheme()) ThemeChoice.LIGHT else ThemeChoice.DARK
+                                        ThemeChoice.SYSTEM -> ThemeChoice.DARK
                                     }
                                     preferences.edit { putString("theme", themeChoice.name) }
                                 }
