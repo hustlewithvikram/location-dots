@@ -9,22 +9,64 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 
+// Location Dots brand seed: #0F52BA
+// The palette below is the fixed fallback; Android 12+ can replace it with
+// wallpaper-derived Material 3 dynamic colors through LocationDotsTheme.
 private val DarkColors = darkColorScheme(
-    primary = Color(0xFFB7C4E8), onPrimary = Color(0xFF17213A), primaryContainer = Color(0xFF2E3D63), onPrimaryContainer = Color(0xFFDCE4FF),
-    secondary = Color(0xFFCBC3F8), onSecondary = Color(0xFF302C4C), secondaryContainer = Color(0xFF45405F), onSecondaryContainer = Color(0xFFE8E0FF),
-    tertiary = Color(0xFFF0B7D6), onTertiary = Color(0xFF49253B), tertiaryContainer = Color(0xFF633D54), onTertiaryContainer = Color(0xFFFFD9EC),
-    background = Color(0xFF0D0F14), onBackground = Color(0xFFE4E2E9), surface = Color(0xFF0D0F14), onSurface = Color(0xFFE4E2E9),
-    surfaceContainerLowest = Color(0xFF08090D), surfaceContainerLow = Color(0xFF14161C), surfaceContainer = Color(0xFF191B22), surfaceContainerHigh = Color(0xFF23252D), surfaceContainerHighest = Color(0xFF2D2F38),
-    onSurfaceVariant = Color(0xFFC4C4CF), outline = Color(0xFF8E8E99), outlineVariant = Color(0xFF45464F)
+    primary = Color(0xFFB3C5FF),
+    onPrimary = Color(0xFF002A6B),
+    primaryContainer = Color(0xFF0F3B82),
+    onPrimaryContainer = Color(0xFFD9E2FF),
+    secondary = Color(0xFFB9C6E9),
+    onSecondary = Color(0xFF24314A),
+    secondaryContainer = Color(0xFF3A4965),
+    onSecondaryContainer = Color(0xFFD9E2FF),
+    tertiary = Color(0xFFC2C4E0),
+    onTertiary = Color(0xFF2B2E43),
+    tertiaryContainer = Color(0xFF42455B),
+    onTertiaryContainer = Color(0xFFDEE0FC),
+    background = Color(0xFF0C111A),
+    onBackground = Color(0xFFE1E6F0),
+    surface = Color(0xFF0C111A),
+    onSurface = Color(0xFFE1E6F0),
+    surfaceContainerLowest = Color(0xFF080D15),
+    surfaceContainerLow = Color(0xFF111A29),
+    surfaceContainer = Color(0xFF162238),
+    surfaceContainerHigh = Color(0xFF1C2A44),
+    surfaceContainerHighest = Color(0xFF263754),
+    onSurfaceVariant = Color(0xFFC2C9D8),
+    outline = Color(0xFF8C94A6),
+    outlineVariant = Color(0xFF414B5F)
 )
+
 private val LightColors = lightColorScheme(
-    primary = Color(0xFF5A6F9F), onPrimary = Color.White, primaryContainer = Color(0xFFE2E7F3), onPrimaryContainer = Color(0xFF18233C),
-    secondary = Color(0xFF625A7D), onSecondary = Color.White, secondaryContainer = Color(0xFFE8E0FF), onSecondaryContainer = Color(0xFF1D1835),
-    tertiary = Color(0xFF87506E), onTertiary = Color.White, tertiaryContainer = Color(0xFFFFD9EC), onTertiaryContainer = Color(0xFF351027),
-    background = Color(0xFFFAF8FF), onBackground = Color(0xFF1A1B20), surface = Color(0xFFFAF8FF), onSurface = Color(0xFF1A1B20),
-    surfaceContainerLowest = Color.White, surfaceContainerLow = Color(0xFFF3F1F7), surfaceContainer = Color(0xFFEDEBF1), surfaceContainerHigh = Color(0xFFE7E5EB), surfaceContainerHighest = Color(0xFFE1DFE6),
-    onSurfaceVariant = Color(0xFF46464F), outline = Color(0xFF777780), outlineVariant = Color(0xFFC7C5CC)
+    primary = Color(0xFF0F52BA),
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFFD8E5FF),
+    onPrimaryContainer = Color(0xFF001A41),
+    secondary = Color(0xFF4E6290),
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFFDCE5FF),
+    onSecondaryContainer = Color(0xFF0B1A36),
+    tertiary = Color(0xFF5D5F7D),
+    onTertiary = Color.White,
+    tertiaryContainer = Color(0xFFE1E1FA),
+    onTertiaryContainer = Color(0xFF191A35),
+    background = Color(0xFFF8FAFF),
+    onBackground = Color(0xFF171A21),
+    surface = Color(0xFFF8FAFF),
+    onSurface = Color(0xFF171A21),
+    // Soft blue-tinted surfaces replace the previous neutral white/grey cards.
+    surfaceContainerLowest = Color(0xFFFCFDFF),
+    surfaceContainerLow = Color(0xFFF1F5FF),
+    surfaceContainer = Color(0xFFECF2FC),
+    surfaceContainerHigh = Color(0xFFE6EDF9),
+    surfaceContainerHighest = Color(0xFFDDE6F5),
+    onSurfaceVariant = Color(0xFF46505F),
+    outline = Color(0xFF747D8E),
+    outlineVariant = Color(0xFFC4CBD7)
 )
+
 @SuppressLint("NewApi")
 @Composable
 fun LocationDotsTheme(
@@ -39,5 +81,16 @@ fun LocationDotsTheme(
         else -> LightColors
     }
 
-    MaterialTheme(colorScheme = colors, typography = Typography(), shapes = Shapes(extraLarge = RoundedCornerShape(32.dp), large = RoundedCornerShape(28.dp), medium = RoundedCornerShape(20.dp), small = RoundedCornerShape(16.dp), extraSmall = RoundedCornerShape(12.dp)), content = content)
+    MaterialTheme(
+        colorScheme = colors,
+        typography = Typography(),
+        shapes = Shapes(
+            extraLarge = RoundedCornerShape(32.dp),
+            large = RoundedCornerShape(28.dp),
+            medium = RoundedCornerShape(20.dp),
+            small = RoundedCornerShape(16.dp),
+            extraSmall = RoundedCornerShape(12.dp)
+        ),
+        content = content
+    )
 }
