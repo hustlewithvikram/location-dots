@@ -108,7 +108,7 @@ fun PlaceDetailScreen(
 
                 item {
                     ExpressiveCard(emphasized = true) {
-                        Box(Modifier.fillMaxWidth().height(240.dp)) {
+                        Box(Modifier.fillMaxWidth().height(210.dp)) {
                             LocationMap(
                                 points = points,
                                 modifier = Modifier.fillMaxSize(),
@@ -138,25 +138,27 @@ fun PlaceDetailScreen(
 
                 item {
                     ExpressiveCard {
-                        Column(
-                            Modifier.padding(18.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        Row(
+                            Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                place.name ?: "Unnamed place",
-                                style = MaterialTheme.typography.titleLarge
+                            ExpressiveIconBadge(
+                                modifier = Modifier.size(40.dp),
+                                icon = { Icon(Icons.Default.LocationOn, null) }
                             )
-                            Text(
-                                String.format(Locale.US, "%.5f, %.5f", place.latitude, place.longitude),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                "Saved " + DateTimeFormatter.ofPattern("d MMM yyyy", currentLocale)
-                                    .format(place.createdAt.atZone(zone)),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    String.format(Locale.US, "%.5f, %.5f", place.latitude, place.longitude),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    "Saved " + DateTimeFormatter.ofPattern("d MMM yyyy", currentLocale)
+                                        .format(place.createdAt.atZone(zone)),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
@@ -186,13 +188,11 @@ fun PlaceDetailScreen(
                         )
                     }
                     if (completedVisits.isNotEmpty()) {
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(6.dp))
                         Text(
-                            if (activeVisit != null)
-                                "Stay totals and average are based on " + completedVisits.size + " completed visits. Your current stay is shown separately below."
-                            else
-                                "Stay totals and average are based on " + completedVisits.size + " completed visits.",
-                            style = MaterialTheme.typography.bodySmall,
+                            completedVisits.size.toString() + " completed · " +
+                                if (activeVisit != null) "1 current" else "historical",
+                            style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -209,10 +209,24 @@ fun PlaceDetailScreen(
                                 )
                                 Spacer(Modifier.width(12.dp))
                                 Column(Modifier.weight(1f)) {
-                                    Text(
-                                        "Currently here",
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            "Currently here",
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Surface(
+                                            shape = RoundedCornerShape(50.dp),
+                                            color = MaterialTheme.colorScheme.primaryContainer
+                                        ) {
+                                            Text(
+                                                "LIVE",
+                                                Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                        }
+                                    }
                                     Text(
                                         "Started " + DateTimeFormatter.ofPattern("HH:mm", currentLocale)
                                             .format(activeVisit.arrival.atZone(zone)),
@@ -236,7 +250,7 @@ fun PlaceDetailScreen(
                             lastVisit == null -> "No visits recorded yet."
                             activeVisit != null -> sortedVisits.size.toString() + " sessions · " +
                                 completedVisits.size + " completed · 1 current"
-                            else -> completedVisits.size.toString() + " completed sessions · Most recent first."
+                            else -> completedVisits.size.toString() + " sessions · Most recent first."
                         }
                     )
                 }
