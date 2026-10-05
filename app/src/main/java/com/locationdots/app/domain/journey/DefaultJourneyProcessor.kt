@@ -3,6 +3,7 @@ package com.locationdots.app.domain.journey
 import com.locationdots.app.domain.model.JourneyMode
 import com.locationdots.app.domain.model.LocationPoint
 import com.locationdots.app.domain.model.TimelineEvent
+import android.content.SharedPreferences
 import com.locationdots.app.domain.places.PlaceEngine
 import java.time.Duration
 import java.time.Instant
@@ -11,7 +12,10 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyProcessor {
+class DefaultJourneyProcessor(
+    private val placeEngine: PlaceEngine,
+    private val preferences: SharedPreferences
+) : JourneyProcessor {
 
     override suspend fun process(points: List<LocationPoint>): List<TimelineEvent> {
         val sorted = points
@@ -46,7 +50,7 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
                 val next = visits.getOrNull(index + 1) ?: return@forEachIndexed
                 val journeyStart = visit.departure ?: return@forEachIndexed
 
-                if (next.arrival.isAfter(journeyStart)) {
+                if (automaticJourneyDetection() && next.arrival.isAfter(journeyStart)) {
                     val path = sorted.filter {
                         !it.timestamp.isBefore(journeyStart) &&
                             !it.timestamp.isAfter(next.arrival)
@@ -112,13 +116,13 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
             )
 
             when {
-                distance <= STAY_RADIUS_METERS -> {
+                distance <= stayRadiusMeters() -> {
                     departureCandidates.clear()
                     departureTimestamp = null
                     current.add(point)
                 }
 
-                distance <= DEPARTURE_RADIUS_METERS -> {
+                distance <= departureRadiusMeters() -> {
                     departureCandidates.clear()
                 }
 
@@ -154,20 +158,56 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
     }
 
     private fun isConfirmedVisit(cluster: List<LocationPoint>): Boolean {
-        if (cluster.size < MIN_POINTS_PER_VISIT) return false
+        if (cluster.size < minimumPointsPerVisit()) return false
 
         val dwell = Duration.between(cluster.first().timestamp, cluster.last().timestamp)
-        if (dwell < MIN_DWELL) return false
+        if (dwell < minDwell()) return false
+
+        if (!stationaryDetection()) return true
 
         val transitions = cluster.zipWithNext()
         if (transitions.isEmpty()) return false
 
         val stationaryTransitions = transitions.count { (from, to) ->
-            speedKmh(from, to) <= STATIONARY_MAX_KMH
+            distanceMeters(
+                from.latitude,
+                from.longitude,
+                to.latitude,
+                to.longitude
+            ) <= movementThresholdMeters() && speedKmh(from, to) <= STATIONARY_MAX_KMH
         }
 
         return stationaryTransitions.toDouble() / transitions.size >= STATIONARY_RATIO
     }
+
+    private fun minDwell(): Duration =
+        Duration.ofMinutes(
+            preferences.getLong("visit_duration_minutes", DEFAULT_MIN_DWELL_MINUTES)
+                .coerceIn(5L, 60L)
+        )
+
+    private fun stayRadiusMeters(): Double =
+        preferences.getFloat("visit_radius_meters", DEFAULT_STAY_RADIUS_METERS.toFloat()).toDouble()
+            .coerceIn(25.0, 500.0)
+
+    private fun departureRadiusMeters(): Double =
+        maxOf(stayRadiusMeters() + 50.0, stayRadiusMeters() * 1.5)
+
+    private fun maxAccuracyMeters(): Double =
+        preferences.getFloat("max_tracking_accuracy_meters", DEFAULT_MAX_ACCURACY_METERS.toFloat()).toDouble()
+            .coerceIn(25.0, 250.0)
+
+    private fun movementThresholdMeters(): Double =
+        preferences.getFloat("movement_threshold_meters", DEFAULT_MOVEMENT_THRESHOLD_METERS.toFloat()).toDouble()
+            .coerceIn(5.0, 100.0)
+
+    private fun stationaryDetection(): Boolean =
+        preferences.getBoolean("stationary_detection", true)
+
+    private fun automaticJourneyDetection(): Boolean =
+        preferences.getBoolean("automatic_journey_detection", true)
+
+    private fun minimumPointsPerVisit(): Int = 2
 
     private fun speedKmh(from: LocationPoint, to: LocationPoint): Double {
         val seconds = Duration.between(from.timestamp, to.timestamp).toMillis() / 1000.0
@@ -212,7 +252,7 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
             return false
         }
 
-        return point.accuracyMeters == null || point.accuracyMeters <= MAX_ACCURACY_METERS
+        return point.accuracyMeters == null || point.accuracyMeters <= maxAccuracyMeters()
     }
 
     private fun robustCenter(points: List<LocationPoint>): Pair<Double, Double> {
@@ -253,13 +293,11 @@ class DefaultJourneyProcessor(private val placeEngine: PlaceEngine) : JourneyPro
     )
 
     private companion object {
-        val MIN_DWELL: Duration = Duration.ofMinutes(8)
-
-        const val STAY_RADIUS_METERS = 100.0
-        const val DEPARTURE_RADIUS_METERS = 150.0
+        const val DEFAULT_MIN_DWELL_MINUTES = 8L
+        const val DEFAULT_STAY_RADIUS_METERS = 100.0
+        const val DEFAULT_MAX_ACCURACY_METERS = 100.0
+        const val DEFAULT_MOVEMENT_THRESHOLD_METERS = 25.0
         const val DEPARTURE_CONFIRMATION_POINTS = 2
-        const val MAX_ACCURACY_METERS = 100.0
-        const val MIN_POINTS_PER_VISIT = 5
         const val STATIONARY_MAX_KMH = 3.0
         const val STATIONARY_RATIO = 0.70
 
