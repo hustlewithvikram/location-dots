@@ -120,16 +120,6 @@ private fun DayHeader(date: LocalDate) {
             .padding(horizontal = 4.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            Modifier
-                .size(10.dp)
-                .clip(CircleShape)
-                .background(
-                    if (isToday) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.outlineVariant
-                )
-        )
-        Spacer(Modifier.width(10.dp))
         Text(title, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.width(8.dp))
         Text(
@@ -174,10 +164,17 @@ private fun TimelineEventRow(
             }
             Box(
                 Modifier
-                    .width(2.dp)
-                    .height(74.dp)
-                    .background(MaterialTheme.colorScheme.outlineVariant)
-            )
+                    .width(12.dp)
+                    .height(74.dp),
+                contentAlignment = Alignment.TopCenter
+            ) {
+                Box(
+                    Modifier
+                        .width(2.dp)
+                        .fillMaxHeight()
+                        .background(MaterialTheme.colorScheme.outlineVariant)
+                )
+            }
         }
 
         Spacer(Modifier.width(12.dp))
