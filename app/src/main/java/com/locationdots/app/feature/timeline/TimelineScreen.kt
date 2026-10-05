@@ -105,7 +105,10 @@ fun TimelineScreen(
 private fun DayHeader(date: LocalDate) {
     val today = LocalDate.now(ZoneId.systemDefault())
     val locale = LocalConfiguration.current.locales[0]
-    val formatted = DateTimeFormatter.ofPattern("EEE, d MMM", locale).format(date)
+    val formatted = DateTimeFormatter.ofPattern(
+        if (date == today) "EEE, d MMM" else "d MMM",
+        locale
+    ).format(date)
     val isToday = date == today
     val isYesterday = date == today.minusDays(1)
     val title = when {
