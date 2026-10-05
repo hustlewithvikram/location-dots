@@ -51,7 +51,7 @@ fun PlaceDetailScreen(
             val sortedVisits = remember(visits) { visits.sortedByDescending { it.arrival } }
             val completedVisits = sortedVisits.filter { it.departure != null }
             val totalMinutes = completedVisits.sumOf {
-                Duration.between(it.arrival, it.departure).toMinutes().coerceAtLeast(0)
+                Duration.between(it.arrival, it.departure!!).toMinutes().coerceAtLeast(0)
             }
             val average = if (completedVisits.isNotEmpty()) totalMinutes / completedVisits.size else 0
             val lastVisit = sortedVisits.firstOrNull()
