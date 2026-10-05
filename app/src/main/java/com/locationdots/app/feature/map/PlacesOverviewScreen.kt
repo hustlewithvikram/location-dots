@@ -210,10 +210,10 @@ fun PlacesOverviewScreen(
 
 
 private fun savedPlacesLabel(count: Int) =
-    "$count saved \${if (count == 1) "place" else "places"}"
+    "$count saved ${if (count == 1) "place" else "places"}"
 
 private fun savedPlacesStoryLabel(count: Int) =
-    "$count \${if (count == 1) "place" else "places"} in your story"
+    "$count ${if (count == 1) "place" else "places"} in your story"
 
 private fun formatPlaceDate(instant: java.time.Instant): String =
     DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())
