@@ -137,20 +137,6 @@ private fun DayHeader(date: LocalDate) {
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        if (isToday) {
-            Spacer(Modifier.weight(1f))
-            Surface(
-                shape = RoundedCornerShape(100.dp),
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Text(
-                    "LIVE",
-                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-        }
     }
 }
 
