@@ -5,6 +5,8 @@ import com.locationdots.app.domain.model.Place
 import com.locationdots.app.domain.model.TimelineEvent
 import com.locationdots.app.domain.places.PlaceRepository
 import com.locationdots.app.domain.places.PlaceEngine
+import android.content.SharedPreferences
+import java.lang.reflect.Proxy
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.flow.Flow
@@ -31,7 +33,34 @@ class DefaultJourneyProcessorTest {
             error("Not used by this test")
     }
 
-    private val processor = DefaultJourneyProcessor(PlaceEngine(placeRepository))
+    private val processor = DefaultJourneyProcessor(
+        PlaceEngine(placeRepository),
+        testPreferences()
+    )
+
+    private fun testPreferences(): SharedPreferences =
+        Proxy.newProxyInstance(
+            SharedPreferences::class.java.classLoader,
+            arrayOf(SharedPreferences::class.java)
+        ) { _, method, _ ->
+            when (method.name) {
+                "getLong" -> method.defaultValue(0L)
+                "getFloat" -> method.defaultValue(0f)
+                "getBoolean" -> method.defaultValue(true)
+                else -> method.defaultValue(null)
+            }
+        } as SharedPreferences
+
+    private fun java.lang.reflect.Method.defaultValue(fallback: Any?): Any? =
+        when (returnType) {
+            java.lang.Boolean.TYPE -> fallback as? Boolean ?: false
+            java.lang.Long.TYPE -> fallback as? Long ?: 0L
+            java.lang.Float.TYPE -> fallback as? Float ?: 0f
+            java.lang.Integer.TYPE -> 0
+            java.lang.Double.TYPE -> 0.0
+            java.lang.Void.TYPE -> null
+            else -> fallback
+        }
 
     @Test
     fun stationaryStayMustReachEightMinutes() = runBlocking {
