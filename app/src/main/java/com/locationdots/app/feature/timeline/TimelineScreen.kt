@@ -25,10 +25,12 @@ import com.locationdots.app.domain.model.JourneyMode
 import com.locationdots.app.domain.model.TimelineEvent
 import com.locationdots.app.ui.components.*
 import java.time.Duration
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.coroutines.delay
 
 private sealed interface TimelineItem { data class Day(val date: LocalDate) : TimelineItem; data class Event(val event: TimelineEvent) : TimelineItem }
 
@@ -347,10 +349,21 @@ private fun VisitCard(
     onPlaceClick: (String) -> Unit,
     modifier: Modifier
 ) {
-    val duration = event.departure?.let {
-        formatMinutes(Duration.between(event.arrival, it).toMinutes().coerceAtLeast(0))
-    } ?: "Still here"
     val isCurrent = event.departure == null
+    var now by remember(isCurrent) { mutableStateOf(Instant.now()) }
+
+    LaunchedEffect(isCurrent) {
+        if (!isCurrent) return@LaunchedEffect
+        while (true) {
+            now = Instant.now()
+            delay(30_000)
+        }
+    }
+
+    val end = event.departure ?: now
+    val duration = formatMinutes(
+        Duration.between(event.arrival, end).toMinutes().coerceAtLeast(0)
+    )
 
     ExpressiveCard(
         modifier = modifier,
