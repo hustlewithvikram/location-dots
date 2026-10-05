@@ -49,6 +49,8 @@ fun TimelineScreen(
     onSearchClick: () -> Unit,
     onProfileClick: () -> Unit,
     actionButton: com.locationdots.app.feature.settings.ActionButton,
+    themeChoice: com.locationdots.app.feature.settings.ThemeChoice,
+    themeChoice: com.locationdots.app.feature.settings.ThemeChoice,
     onActionButtonClick: () -> Unit,
     onPlacesClick: () -> Unit,
     onInsightsClick: () -> Unit,
@@ -83,6 +85,7 @@ fun TimelineScreen(
                         onSearchClick = onSearchClick,
                         onProfileClick = onProfileClick,
                         actionButton = actionButton,
+                        themeChoice = themeChoice,
                         onActionButtonClick = {
                             if (actionButton == com.locationdots.app.feature.settings.ActionButton.TODAY) {
                                 scope.launch { listState.animateScrollToItem(0) }
@@ -277,7 +280,11 @@ private fun TodayCard(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ActionButtonIcon(actionButton = actionButton, onClick = onActionButtonClick)
+            ActionButtonIcon(
+                actionButton = actionButton,
+                themeChoice = themeChoice,
+                onClick = onActionButtonClick
+            )
             Spacer(Modifier.weight(1f))
 
             FilledTonalIconButton(onClick = onSearchClick) {
@@ -316,16 +323,21 @@ private fun TodayCard(
 @Composable
 private fun ActionButtonIcon(
     actionButton: com.locationdots.app.feature.settings.ActionButton,
+    themeChoice: com.locationdots.app.feature.settings.ThemeChoice,
     onClick: () -> Unit
 ) {
     FilledTonalIconButton(onClick = onClick) {
         Icon(
             when (actionButton) {
-                com.locationdots.app.feature.settings.ActionButton.THEME -> Icons.Default.Brightness6
+                com.locationdots.app.feature.settings.ActionButton.THEME -> when (themeChoice) {
+                    com.locationdots.app.feature.settings.ThemeChoice.SYSTEM -> Icons.Default.BrightnessAuto
+                    com.locationdots.app.feature.settings.ThemeChoice.LIGHT -> Icons.Default.LightMode
+                    com.locationdots.app.feature.settings.ThemeChoice.DARK -> Icons.Default.DarkMode
+                }
                 com.locationdots.app.feature.settings.ActionButton.REFRESH -> Icons.Default.Refresh
-                com.locationdots.app.feature.settings.ActionButton.PLACES -> Icons.Default.Place
-                com.locationdots.app.feature.settings.ActionButton.INSIGHTS -> Icons.Default.Insights
-                com.locationdots.app.feature.settings.ActionButton.SETTINGS -> Icons.Default.Settings
+                com.locationdots.app.feature.settings.ActionButton.TRACKING -> Icons.Default.MyLocation
+                com.locationdots.app.feature.settings.ActionButton.TODAY -> Icons.Default.Today
+                com.locationdots.app.feature.settings.ActionButton.EXPORT -> Icons.Default.FileDownload
             },
             contentDescription = actionButton.label()
         )
