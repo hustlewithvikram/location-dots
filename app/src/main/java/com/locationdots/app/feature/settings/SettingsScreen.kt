@@ -674,7 +674,6 @@ fun SettingsScreen(
             SettingsPage.INTERFACE -> SettingsSubPage(
                 Modifier,
                 "Interface",
-                "Customize quick controls used around your timeline.",
                 onBack = ::closeSettingsPage
             ) {
                 item {
