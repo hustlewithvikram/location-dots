@@ -549,6 +549,7 @@ class MainActivity : ComponentActivity() {
                             isProfileOpen = true
                         },
                         actionButton = actionButton,
+                        themeChoice = themeChoice,
                         onActionButtonClick = {
                             when (actionButton) {
                                 ActionButton.THEME -> {
