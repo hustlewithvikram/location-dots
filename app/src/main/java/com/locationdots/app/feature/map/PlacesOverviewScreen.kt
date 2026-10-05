@@ -25,11 +25,14 @@ import androidx.compose.ui.window.DialogProperties
 fun PlacesOverviewScreen(
     places: List<Place>,
     onBack: () -> Unit,
+    summaries: Map<String, PlaceSummary>,
     onPlaceClick: (String) -> Unit,
     onTabSelected: (AppTab) -> Unit = {}
 ) {
     val points = remember(places) { places.map { LatLng(it.latitude, it.longitude) } }
     var isMapFullscreen by remember { mutableStateOf(false) }
+    val totalVisits = remember(summaries) { summaries.values.sumOf { it.visitCount } }
+    val totalStayMinutes = remember(summaries) { summaries.values.sumOf { it.totalStayMinutes } }
 
     LazyColumn(
         Modifier.fillMaxSize().statusBarsPadding(),
@@ -99,8 +102,24 @@ fun PlacesOverviewScreen(
         }
 
         item {
+            ExpressiveCard(Modifier.fillMaxWidth()) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    PlaceMetric(places.size.toString(), if (places.size == 1) "saved place" else "saved places")
+                    VerticalDivider(Modifier.height(44.dp))
+                    PlaceMetric(totalVisits.toString(), if (totalVisits == 1) "visit" else "visits")
+                    VerticalDivider(Modifier.height(44.dp))
+                    PlaceMetric(formatMinutes(totalStayMinutes), "time here")
+                }
+            }
+        }
+
+        item {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("Saved places", style = MaterialTheme.typography.headlineSmall)
+                Text("Your places", style = MaterialTheme.typography.headlineSmall)
                 Text(
                     savedPlacesStoryLabel(places.size),
                     style = MaterialTheme.typography.bodyMedium,
@@ -141,15 +160,31 @@ fun PlacesOverviewScreen(
                             icon = { Icon(Icons.Default.Place, null) }
                         )
                         Spacer(Modifier.width(14.dp))
-                        Column(Modifier.weight(1f)) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                             Text(
                                 place.name ?: "Unnamed place",
-                                style = MaterialTheme.typography.titleMedium,
+                                style = MaterialTheme.typography.titleLarge,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
+                            val summary = summaries[place.id]
+                            if (summary != null && summary.visitCount > 0) {
+                                Text(
+                                    summary.visitCount.toString() + " " +
+                                        if (summary.visitCount == 1) "visit" else "visits" +
+                                        " · " + formatMinutes(summary.totalStayMinutes) + " total",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    "Avg " + formatMinutes(summary.averageStayMinutes) +
+                                        " · Last " + formatPlaceDate(summary.lastVisit?.arrival ?: place.updatedAt),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                             Text(
-                                "Saved \${formatPlaceDate(place.createdAt)}",
+                                "Saved " + formatPlaceDate(place.createdAt),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -218,3 +253,18 @@ private fun savedPlacesStoryLabel(count: Int) =
 private fun formatPlaceDate(instant: java.time.Instant): String =
     DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())
         .format(instant.atZone(ZoneId.systemDefault()))
+
+@Composable
+private fun PlaceMetric(value: String, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, style = MaterialTheme.typography.titleLarge)
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+private fun formatMinutes(minutes: Long): String {
+    if (minutes < 60) return minutes.toString() + "m"
+    val hours = minutes / 60
+    val remainder = minutes % 60
+    return if (remainder == 0L) hours.toString() + "h" else hours.toString() + "h " + remainder + "m"
+}
