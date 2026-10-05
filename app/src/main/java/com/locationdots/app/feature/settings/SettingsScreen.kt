@@ -726,7 +726,8 @@ fun SettingsScreen(
                 }
             }
             SettingsPage.PRIVACY_DATA -> SettingsSubPage(
-                Modifier, "Privacy & data",
+                Modifier,
+                "Privacy & data",
                 onBack = ::closeSettingsPage
             ) {
                 item {
