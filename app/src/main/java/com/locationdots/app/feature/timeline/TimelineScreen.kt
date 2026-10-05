@@ -126,7 +126,9 @@ private fun DayHeader(date: LocalDate) {
         Text(
             title,
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.width(64.dp)
+            modifier = Modifier
+                .width(64.dp)
+                .wrapContentWidth(Alignment.Start)
         )
         Spacer(Modifier.width(8.dp))
         Text(
@@ -365,7 +367,7 @@ private fun VisitCard(
         containerColor = if (isCurrent) {
             MaterialTheme.colorScheme.primaryContainer
         } else {
-            MaterialTheme.colorScheme.surfaceContainer
+            MaterialTheme.colorScheme.surfaceContainerHigh
         }
     ) {
         Row(
@@ -426,7 +428,8 @@ private fun JourneyCard(
 
     ExpressiveCard(
         modifier = modifier,
-        onClick = { onJourneyClick(event.id) }
+        onClick = { onJourneyClick(event.id) },
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Column {
             Row(
