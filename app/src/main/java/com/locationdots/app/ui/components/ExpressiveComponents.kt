@@ -166,23 +166,35 @@ fun ExpressiveMetric(
     value: String,
     label: String,
     modifier: Modifier = Modifier,
-    icon: (@Composable () -> Unit)? = null
+    icon: (@Composable () -> Unit)? = null,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    iconContainerColor: Color = MaterialTheme.colorScheme.secondaryContainer,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer
+        color = containerColor
     ) {
         Column(
             Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            if (icon != null) ExpressiveIconBadge(icon = icon)
-            Text(value, style = MaterialTheme.typography.headlineSmall)
+            if (icon != null) {
+                ExpressiveIconBadge(
+                    icon = icon,
+                    containerColor = iconContainerColor
+                )
+            }
+            Text(
+                value,
+                style = MaterialTheme.typography.headlineSmall,
+                color = contentColor
+            )
             Text(
                 label,
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = contentColor.copy(alpha = 0.78f)
             )
         }
     }
