@@ -44,8 +44,26 @@ class DefaultJourneyProcessorTest {
             arrayOf(SharedPreferences::class.java)
         ) { _, method, _ ->
             when (method.name) {
-                "getLong" -> method.defaultValue(0L)
-                "getFloat" -> method.defaultValue(0f)
+                "getLong" -> {
+                    val key = args?.firstOrNull() as? String
+                    method.defaultValue(
+                        when (key) {
+                            "visit_duration_minutes" -> 8L
+                            else -> 0L
+                        }
+                    )
+                }
+                "getFloat" -> {
+                    val key = args?.firstOrNull() as? String
+                    method.defaultValue(
+                        when (key) {
+                            "visit_radius_meters" -> 100f
+                            "max_tracking_accuracy_meters" -> 100f
+                            "movement_threshold_meters" -> 25f
+                            else -> 0f
+                        }
+                    )
+                }
                 "getBoolean" -> method.defaultValue(true)
                 else -> method.defaultValue(null)
             }
