@@ -89,6 +89,7 @@ class MainActivity : ComponentActivity() {
     private var pendingExportJson: String? = null
     private var profileName by mutableStateOf("Your name")
     private var profilePhotoUri by mutableStateOf<String?>(null)
+    private var actionButton by mutableStateOf(ActionButton.THEME)
 
     private enum class NavigationDirection { FORWARD, BACK }
     private data class AppDestination(
@@ -201,6 +202,9 @@ class MainActivity : ComponentActivity() {
         showSplash = !preferences.getBoolean("splash_seen", false)
         profileName = preferences.getString("profile_name", "Your name") ?: "Your name"
         profilePhotoUri = preferences.getString("profile_photo_uri", null)
+        actionButton = runCatching {
+            ActionButton.valueOf(preferences.getString("action_button", ActionButton.THEME.name) ?: ActionButton.THEME.name)
+        }.getOrDefault(ActionButton.THEME)
 
         val app = application as LocationDotsApplication
         timelineViewModel = ViewModelProvider(this, TimelineViewModelFactory(app.timelineRepository))[TimelineViewModel::class.java]
@@ -448,6 +452,11 @@ class MainActivity : ComponentActivity() {
                         locationPermissionGranted = hasLocationPermission,
                         trackingAccuracy = trackingAccuracy,
                         trackingInterval = trackingInterval,
+                        actionButton = actionButton,
+                        onActionButtonChange = {
+                            actionButton = it
+                            preferences.edit { putString("action_button", it.name) }
+                        },
                         onThemeChange = {
                             themeChoice = it
                             preferences.edit { putString("theme", it.name) }
@@ -538,6 +547,32 @@ class MainActivity : ComponentActivity() {
                         onProfileClick = {
                             pendingNavigationDirection = NavigationDirection.FORWARD
                             isProfileOpen = true
+                        },
+                        actionButton = actionButton,
+                        onActionButtonClick = {
+                            when (actionButton) {
+                                ActionButton.THEME -> {
+                                    themeChoice = when (themeChoice) {
+                                        ThemeChoice.DARK -> ThemeChoice.LIGHT
+                                        ThemeChoice.LIGHT -> ThemeChoice.DARK
+                                        ThemeChoice.SYSTEM -> if (isSystemInDarkTheme()) ThemeChoice.LIGHT else ThemeChoice.DARK
+                                    }
+                                    preferences.edit { putString("theme", themeChoice.name) }
+                                }
+                                ActionButton.REFRESH -> timelineViewModel.refresh()
+                                ActionButton.PLACES -> {
+                                    pendingNavigationDirection = NavigationDirection.FORWARD
+                                    currentTab = AppTab.MAP
+                                }
+                                ActionButton.INSIGHTS -> {
+                                    pendingNavigationDirection = NavigationDirection.FORWARD
+                                    currentTab = AppTab.INSIGHTS
+                                }
+                                ActionButton.SETTINGS -> {
+                                    pendingNavigationDirection = NavigationDirection.FORWARD
+                                    currentTab = AppTab.SETTINGS
+                                }
+                            }
                         },
                         onPlacesClick = {
                             pendingNavigationDirection = NavigationDirection.FORWARD
@@ -888,6 +923,7 @@ class MainActivity : ComponentActivity() {
             .putBoolean("show_place_markers", true)
             .putString("tracking_accuracy", TrackingAccuracy.HIGH.name)
             .putLong("tracking_interval_millis", TrackingInterval.THIRTY_SECONDS.millis)
+            .putString("action_button", ActionButton.THEME.name)
             .apply()
         themeChoice = ThemeChoice.SYSTEM
         animationsEnabled = true
@@ -896,6 +932,7 @@ class MainActivity : ComponentActivity() {
         showPlaceMarkers = true
         trackingAccuracy = TrackingAccuracy.HIGH
         trackingInterval = TrackingInterval.THIRTY_SECONDS
+        actionButton = ActionButton.THEME
     }
 
     private fun exportSummary(snapshot: com.locationdots.app.domain.insights.InsightsSnapshot) {
