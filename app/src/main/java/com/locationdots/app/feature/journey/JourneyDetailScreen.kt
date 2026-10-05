@@ -97,7 +97,7 @@ private fun JourneyMap(
 }
 
 @Composable private fun Stat(label: String, value: String) { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant); Text(value, style = MaterialTheme.typography.titleMedium) } }
-private fun time(i: java.time.Instant) = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault()).format(i.atZone(ZoneId.systemDefault()))
+private fun time(i: java.time.Instant) = DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault()).format(i.atZone(ZoneId.systemDefault()))
 private fun formatMinutes(m: Long) = if (m < 60) m.toString() + " min" else (m / 60).toString() + "h " + (m % 60).toString() + "m"
 private fun formatDistance(m: Double?) = m?.let { if (it < 1000) it.toInt().toString() + " m" else "%.1f km".format(it / 1000.0) } ?: "Unavailable"
 private fun JourneyMode.label() = when (this) { JourneyMode.WALKING -> "Walking"; JourneyMode.CYCLING -> "Cycling"; JourneyMode.VEHICLE -> "Driving"; JourneyMode.UNKNOWN -> "Movement" }
