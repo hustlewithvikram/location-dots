@@ -553,25 +553,18 @@ class MainActivity : ComponentActivity() {
                             when (actionButton) {
                                 ActionButton.THEME -> {
                                     themeChoice = when (themeChoice) {
-                                        ThemeChoice.DARK -> ThemeChoice.LIGHT
+                                        ThemeChoice.SYSTEM -> ThemeChoice.LIGHT
                                         ThemeChoice.LIGHT -> ThemeChoice.DARK
-                                        ThemeChoice.SYSTEM -> ThemeChoice.DARK
+                                        ThemeChoice.DARK -> ThemeChoice.SYSTEM
                                     }
                                     preferences.edit { putString("theme", themeChoice.name) }
                                 }
                                 ActionButton.REFRESH -> timelineViewModel.refresh()
-                                ActionButton.PLACES -> {
-                                    pendingNavigationDirection = NavigationDirection.FORWARD
-                                    currentTab = AppTab.MAP
+                                ActionButton.TRACKING -> {
+                                    if (isTracking) stopTracking() else startTracking()
                                 }
-                                ActionButton.INSIGHTS -> {
-                                    pendingNavigationDirection = NavigationDirection.FORWARD
-                                    currentTab = AppTab.INSIGHTS
-                                }
-                                ActionButton.SETTINGS -> {
-                                    pendingNavigationDirection = NavigationDirection.FORWARD
-                                    currentTab = AppTab.SETTINGS
-                                }
+                                ActionButton.TODAY -> Unit
+                                ActionButton.EXPORT -> exportLocalData()
                             }
                         },
                         onPlacesClick = {
