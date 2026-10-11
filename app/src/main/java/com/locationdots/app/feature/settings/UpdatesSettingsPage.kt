@@ -22,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
@@ -105,13 +106,13 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
                 apkUrl = metadata.optString("_downloadUrl").takeIf { it.startsWith("https://") }
                 updateAvailable = candidateCode > currentCode && apkUrl != null && expectedSha256 != null
                 val candidateFile = File(context.cacheDir, "location-dots-update-${candidateCode}.apk")
-                val cachedMatches = candidateFile.isFile && expectedSha256 != null &&
+                val cachedMatches = candidateCode > currentCode && candidateFile.isFile && expectedSha256 != null &&
                     withContext(Dispatchers.IO) { runCatching { sha256(candidateFile).equals(expectedSha256, true) }.getOrDefault(false) }
                 if (cachedMatches) {
                     downloadedApk = candidateFile
                     cachedApkVersionCode = candidateCode
                 } else {
-                    if (downloadedApk?.exists() != true || cachedApkVersionCode != candidateCode) {
+                    if (candidateCode <= currentCode || downloadedApk?.exists() != true || cachedApkVersionCode != candidateCode) {
                         downloadedApk?.delete()
                         downloadedApk = null
                         cachedApkVersionCode = null
@@ -135,8 +136,6 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
     fun cancelDownload() {
         downloadJob?.cancel()
         downloadConnection?.disconnect()
-        downloadJob = null
-        downloading = false
         File(context.cacheDir, "location-dots-update-${latestVersionCode ?: "pending"}.part").delete()
         message = "Download cancelled."
     }
