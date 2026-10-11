@@ -833,34 +833,8 @@ fun SettingsScreen(
             }
             SettingsPage.EXPORT_BACKUP -> SettingsSubPage(
                 Modifier, "Export & backup",
-                subtitle = "Choose what to save, or restore a previous backup.",
                 onBack = ::closeSettingsPage
             ) {
-                item {
-                    ExpressiveCard(emphasized = true) {
-                        Column(
-                            Modifier.fillMaxWidth().padding(18.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                ExpressiveIconBadge(
-                                    icon = { Icon(Icons.Default.Security, null) },
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                                )
-                                Spacer(Modifier.width(14.dp))
-                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                    Text("Your data, your choice", style = MaterialTheme.typography.titleLarge)
-                                    Text(
-                                        "Backups are JSON files saved to a location you choose. Select only the data you need.",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
                 item {
                     SettingsGroupTitle("Choose what to export", "Uncheck any data you don't want in this backup.")
                 }
@@ -882,7 +856,7 @@ fun SettingsScreen(
                                         }
                                     }
                                 ) {
-                                    Text(if (selectedBackupSections.size == BackupSection.entries.size) "Select none" else "Select all")
+                                    Text(if (selectedBackupSections.size == BackupSection.entries.size) "Deselect All" else "Select All")
                                 }
                             }
                             BackupSection.entries.forEachIndexed { index, section ->
@@ -935,16 +909,14 @@ fun SettingsScreen(
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            ExpressiveButton(
+                                "Export Backup",
+                                { onExportData(selectedBackupSections) },
+                                Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
+                                enabled = selectedBackupSections.isNotEmpty()
+                            )
                         }
                     }
-                }
-
-                item {
-                    ExpressiveButton(
-                        "Export selected data",
-                        { onExportData(selectedBackupSections) },
-                        Modifier.fillMaxWidth()
-                    )
                 }
 
                 item {
@@ -979,7 +951,7 @@ fun SettingsScreen(
                                 } else {
                                     Icon(Icons.Default.FolderOpen, null)
                                     Spacer(Modifier.width(8.dp))
-                                    Text("Choose backup file")
+                                    Text("Import Backup")
                                 }
                             }
                         }
