@@ -833,13 +833,14 @@ fun SettingsScreen(
             }
             SettingsPage.EXPORT_BACKUP -> SettingsSubPage(
                 Modifier, "Export & backup",
+                subtitle = "Choose what to save, or restore a previous backup.",
                 onBack = ::closeSettingsPage
             ) {
                 item {
                     ExpressiveCard(emphasized = true) {
                         Column(
-                            Modifier.padding(18.dp),
-                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                            Modifier.fillMaxWidth().padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 ExpressiveIconBadge(
@@ -847,34 +848,13 @@ fun SettingsScreen(
                                     containerColor = MaterialTheme.colorScheme.primaryContainer
                                 )
                                 Spacer(Modifier.width(14.dp))
-                                Column(Modifier.weight(1f)) {
-                                    Text("Your backup", style = MaterialTheme.typography.titleLarge)
+                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                    Text("Your data, your choice", style = MaterialTheme.typography.titleLarge)
                                     Text(
-                                        "JSON file · stored wherever you choose",
-                                        style = MaterialTheme.typography.bodySmall,
+                                        "Backups are JSON files saved to a location you choose. Select only the data you need.",
+                                        style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
-                                }
-                            }
-                            ExpressiveButton(
-                                "Export backup",
-                                onExportData,
-                                Modifier.fillMaxWidth()
-                            )
-                            OutlinedButton(
-                                onClick = onImportData,
-                                enabled = !importLoading,
-                                modifier = Modifier.fillMaxWidth().height(56.dp),
-                                shape = MaterialTheme.shapes.large
-                            ) {
-                                if (importLoading) {
-                                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                                    Spacer(Modifier.width(8.dp))
-                                    Text("Reading backup…")
-                                } else {
-                                    Icon(Icons.Default.FileDownload, null)
-                                    Spacer(Modifier.width(8.dp))
-                                    Text("Import backup")
                                 }
                             }
                         }
@@ -882,40 +862,166 @@ fun SettingsScreen(
                 }
 
                 item {
+                    SettingsGroupTitle("Choose what to export", "Uncheck any data you don't want in this backup.")
+                }
+
+                item {
                     ExpressiveCard {
                         Column(Modifier.padding(8.dp)) {
-                            ExpressiveListRow(
-                                "Activity summary",
-                                icon = { Icon(Icons.Default.Share, null) },
-                                onClick = onExport
+                            Row(
+                                Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Data types", Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
+                                TextButton(
+                                    onClick = {
+                                        selectedBackupSections = if (selectedBackupSections.size == BackupSection.entries.size) {
+                                            emptySet()
+                                        } else {
+                                            BackupSection.entries.toSet()
+                                        }
+                                    }
+                                ) {
+                                    Text(if (selectedBackupSections.size == BackupSection.entries.size) "Select none" else "Select all")
+                                }
+                            }
+                            BackupSection.entries.forEachIndexed { index, section ->
+                                Row(
+                                    Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    ExpressiveIconBadge(
+                                        icon = {
+                                            Icon(
+                                                when (section) {
+                                                    BackupSection.PLACES -> Icons.Default.Place
+                                                    BackupSection.LOCATIONS -> Icons.Default.LocationOn
+                                                    BackupSection.TIMELINE -> Icons.Default.Timeline
+                                                },
+                                                null
+                                            )
+                                        }
+                                    )
+                                    Spacer(Modifier.width(12.dp))
+                                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                        Text(section.title, style = MaterialTheme.typography.bodyLarge)
+                                        Text(
+                                            section.description,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    Checkbox(
+                                        checked = section in selectedBackupSections,
+                                        onCheckedChange = { checked ->
+                                            selectedBackupSections = if (checked) {
+                                                selectedBackupSections + section
+                                            } else {
+                                                selectedBackupSections - section
+                                            }
+                                        }
+                                    )
+                                }
+                                if (index != BackupSection.entries.lastIndex) {
+                                    HorizontalDivider(
+                                        Modifier.padding(horizontal = 12.dp),
+                                        color = MaterialTheme.colorScheme.outlineVariant
+                                    )
+                                }
+                            }
+                            Text(
+                                selectedBackupSections.size.toString() + " of " + BackupSection.entries.size + " data types selected",
+                                Modifier.padding(start = 12.dp, top = 6.dp, bottom = 8.dp),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            ExpressiveListRow(
-                                "What is included",
-                                icon = { Icon(Icons.Default.DataObject, null) },
-                                trailing = {
+                        }
+                    }
+                }
+
+                item {
+                    ExpressiveButton(
+                        "Export selected data",
+                        { onExportData(selectedBackupSections) },
+                        Modifier.fillMaxWidth()
+                    )
+                }
+
+                item {
+                    SettingsGroupTitle("Restore a backup", "Review its contents before adding or replacing data on this device.")
+                }
+
+                item {
+                    ExpressiveCard {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                ExpressiveIconBadge(icon = { Icon(Icons.Default.FileDownload, null) })
+                                Spacer(Modifier.width(12.dp))
+                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text("Import backup", style = MaterialTheme.typography.titleMedium)
                                     Text(
-                                        "Places · locations · timeline",
-                                        style = MaterialTheme.typography.labelMedium,
+                                        "Choose a Location Dots JSON backup. You can merge it or replace only the sections it contains.",
+                                        style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                            )
+                            }
+                            OutlinedButton(
+                                onClick = onImportData,
+                                enabled = !importLoading,
+                                modifier = Modifier.fillMaxWidth().height(52.dp),
+                                shape = MaterialTheme.shapes.large
+                            ) {
+                                if (importLoading) {
+                                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Reading backup…")
+                                } else {
+                                    Icon(Icons.Default.FolderOpen, null)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Choose backup file")
+                                }
+                            }
                         }
+                    }
+                }
+
+                item {
+                    SettingsGroupTitle("Share a summary", "Create a readable overview of your activity. Exact location coordinates are not included.")
+                }
+
+                item {
+                    ExpressiveCard {
+                        Row(
+                            Modifier.fillMaxWidth().padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ExpressiveIconBadge(icon = { Icon(Icons.Default.Share, null) })
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                Text("Activity summary", style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    "A formatted text report with places, visits, journeys, distance, and activity time.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        ExpressiveButton(
+                            "Share activity summary",
+                            onExport,
+                            Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                        )
                     }
                 }
 
                 if (importError != null) {
                     item {
                         Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer
-                            ),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
                             shape = MaterialTheme.shapes.large
                         ) {
-                            Row(
-                                Modifier.padding(14.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.ErrorOutline, null, tint = MaterialTheme.colorScheme.onErrorContainer)
                                 Spacer(Modifier.width(10.dp))
                                 Text(
