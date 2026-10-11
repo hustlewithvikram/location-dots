@@ -138,5 +138,6 @@ jobs:
           generate_release_notes: true
           make_latest: true
           files: |
-            app/build/outputs/apk/release/app-release.apk
-            app/build/outputs/bundle/release/app-release.aab
+            release-assets/location-dots-release.apk
+            release-assets/location-dots-release.aab
+            release-assets/update.json
