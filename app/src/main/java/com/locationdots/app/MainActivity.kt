@@ -604,6 +604,8 @@ class MainActivity : ComponentActivity() {
                             pendingNavigationDirection = NavigationDirection.FORWARD
                             isProfileOpen = true
                         },
+                        profileName = profileName,
+                        profilePhotoUri = profilePhotoUri,
                         actionButton = actionButton,
                         themeChoice = themeChoice,
                         onActionButtonClick = {
