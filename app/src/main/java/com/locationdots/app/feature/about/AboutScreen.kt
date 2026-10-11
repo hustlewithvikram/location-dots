@@ -85,7 +85,10 @@ fun AboutScreen(onBack: () -> Unit) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            "Version 0.1.0 · Android 8.0+",
+                            "Version " + runCatching {
+                                @Suppress("DEPRECATION")
+                                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "Unknown"
+                            }.getOrDefault("Unknown"),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -94,88 +97,43 @@ fun AboutScreen(onBack: () -> Unit) {
             }
         }
 
-        item { AboutSectionTitle("Privacy & security") }
+        item { AboutSectionTitle("What you can do") }
 
         item {
             ExpressiveCard {
                 Column(Modifier.padding(8.dp)) {
                     InfoRow(
-                        "Local by default",
-                        "Location history and saved places stay in the on-device database.",
-                        Icons.Default.Storage
+                        "Timeline",
+                        "Review recorded visits and journeys in chronological order.",
+                        Icons.Default.Timeline
                     )
                     InfoRow(
-                        "No account required",
-                        "The local timeline does not require an account or cloud history.",
-                        Icons.Default.PersonOff
+                        "Places",
+                        "Save meaningful places and recognize visits to them.",
+                        Icons.Default.Place
                     )
                     InfoRow(
-                        "Explicit sharing",
-                        "Data leaves the app only when you choose an export or share action.",
-                        Icons.Default.Share
+                        "Insights",
+                        "Explore activity patterns and travel summaries.",
+                        Icons.Default.Insights
                     )
-                    ExpressiveListRow(
-                        "Open-source project",
-                        "Source code is publicly available.",
-                        { Icon(Icons.Default.Code, null) },
-                        trailing = { Icon(Icons.Default.OpenInNew, "Open") },
-                        onClick = { openUrl(SOURCE_URL) }
+                    InfoRow(
+                        "Personal backups",
+                        "Export selected data or restore a compatible backup.",
+                        Icons.Default.FolderCopy
                     )
                 }
             }
         }
 
-        item { AboutSectionTitle("Permissions") }
+        item { AboutSectionTitle("App details") }
 
         item {
             ExpressiveCard {
-                Column(Modifier.padding(8.dp)) {
-                    InfoRow(
-                        "Location",
-                        "Precise or approximate location is used to record visits and journeys.",
-                        Icons.Default.LocationOn
-                    )
-                    InfoRow(
-                        "Foreground location service",
-                        "Keeps location tracking active while the tracking service is running.",
-                        Icons.Default.MyLocation
-                    )
-                    InfoRow(
-                        "Internet",
-                        "Used for map tiles and location search.",
-                        Icons.Default.Public
-                    )
-                    InfoRow(
-                        "Legacy storage",
-                        "On Android 9 and older, used for local crash-log handling.",
-                        Icons.Default.Folder
-                    )
-                }
-            }
-        }
-
-        item {
-            ExpressiveCard {
-                Column(
-                    Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        ExpressiveIconBadge(
-                            icon = { Icon(Icons.Default.Security, null) },
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
-                        Spacer(Modifier.width(12.dp))
-                        Text(
-                            "Why location access?",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
-                    Text(
-                        "Location access is required to build the timeline. You can control it through Android settings, and no account is required.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                    InfoRow("Platform", "Android 8.0 and newer", Icons.Default.PhoneAndroid)
+                    InfoRow("Data storage", "On-device database", Icons.Default.Storage)
+                    InfoRow("Map technology", "MapLibre with OpenFreeMap", Icons.Default.Map)
                 }
             }
         }
