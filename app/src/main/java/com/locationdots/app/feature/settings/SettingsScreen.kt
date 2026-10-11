@@ -69,7 +69,7 @@ data class ImportPreview(
 )
 
 private enum class SettingsPage {
-    HOME, SAVED_PLACES, TRACKING, MAP_APPEARANCE, INTERFACE, PRIVACY_DATA, EXPORT_BACKUP, DIAGNOSTICS
+    HOME, SAVED_PLACES, TRACKING, MAP_APPEARANCE, INTERFACE, PRIVACY_DATA, EXPORT_BACKUP, DIAGNOSTICS, UPDATES
 }
 
 private enum class NavigationDirection { FORWARD, BACK }
@@ -1326,10 +1326,17 @@ private fun SettingsHome(
                     },
                     modifier = Modifier.padding(vertical = 2.dp),
                     trailing = {
-                        Switch(
-                            checked = isTracking,
-                            onCheckedChange = onTrackingChange
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            VerticalDivider(
+                                Modifier.height(42.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Switch(
+                                checked = isTracking,
+                                onCheckedChange = onTrackingChange
+                            )
+                        }
                     },
                     onClick = { onOpen(SettingsPage.TRACKING) }
                 )
