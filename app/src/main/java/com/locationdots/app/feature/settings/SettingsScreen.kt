@@ -1,6 +1,7 @@
 package com.locationdots.app.feature.settings
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
@@ -1411,8 +1412,14 @@ private fun SettingsHome(
                         "Check for new versions",
                         { Icon(Icons.Default.SystemUpdate, null) },
                         trailing = {
-                            IconButton(onClick = { onOpen(SettingsPage.UPDATES) }) {
-                                Icon(Icons.Default.Refresh, "Check for updates")
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                VerticalDivider(Modifier.height(38.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                                Spacer(Modifier.width(8.dp))
+                                IconButton(onClick = {
+                                    Toast.makeText(context, "Open Updates to check and download the latest build.", Toast.LENGTH_SHORT).show()
+                                }) {
+                                    Icon(Icons.Default.Refresh, "Check for updates")
+                                }
                             }
                         },
                         onClick = { onOpen(SettingsPage.UPDATES) }
