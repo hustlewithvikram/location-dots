@@ -392,10 +392,29 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
                             }
                         }
                     } else if (updateAvailable) {
-                        Button(onClick = ::downloadUpdate, modifier = Modifier.fillMaxWidth()) {
-                            Icon(Icons.Default.Download, null)
-                            Spacer(Modifier.width(8.dp))
-                            Text("Download ${latestVersion ?: "update"}")
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = ::downloadUpdate,
+                                enabled = !checking,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Default.Download, null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Download ${latestVersion ?: "update"}")
+                            }
+                            OutlinedButton(
+                                onClick = ::checkForUpdates,
+                                enabled = !checking && !downloading,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                if (checking) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                                else Icon(Icons.Default.Refresh, null)
+                                Spacer(Modifier.width(8.dp))
+                                Text(if (checking) "Checking…" else "Check again")
+                            }
                         }
                     } else {
                         OutlinedButton(onClick = ::checkForUpdates, enabled = !checking && !downloading, modifier = Modifier.fillMaxWidth()) {
