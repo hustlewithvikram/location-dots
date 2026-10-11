@@ -50,12 +50,21 @@ enum class MovementThreshold(val meters: Double, val label: String) {
     FIFTY(50.0, "50m")
 }
 
+enum class BackupSection(val title: String, val description: String) {
+    PLACES("Saved places", "Names and coordinates for your saved places"),
+    LOCATIONS("Location history", "Recorded location points and timestamps"),
+    TIMELINE("Timeline & journeys", "Visits, journeys, distances, and route paths")
+}
+
 data class ImportPreview(
     val uri: Uri,
     val locations: Int,
     val places: Int,
     val timelineEvents: Int,
-    val generatedAtEpochMillis: Long
+    val generatedAtEpochMillis: Long,
+    val includesLocations: Boolean = true,
+    val includesPlaces: Boolean = true,
+    val includesTimeline: Boolean = true
 )
 
 private enum class SettingsPage {
@@ -124,7 +133,7 @@ fun SettingsScreen(
     onRouteLinesChange: (Boolean) -> Unit,
     onPlaceMarkersChange: (Boolean) -> Unit,
     onExport: () -> Unit,
-    onExportData: () -> Unit,
+    onExportData: (Set<BackupSection>) -> Unit,
     onImportData: () -> Unit,
     importPreview: ImportPreview?,
     importLoading: Boolean,
@@ -150,6 +159,7 @@ fun SettingsScreen(
     var previewMapStyle by remember { mutableStateOf(mapStyle) }
     var showAttributionDialog by remember { mutableStateOf(false) }
     var editingPlace by remember { mutableStateOf<Place?>(null) }
+    var selectedBackupSections by rememberSaveable { mutableStateOf(BackupSection.entries.toSet()) }
 
     fun openPlaceEditor(place: Place?) {
         editingPlace = place
