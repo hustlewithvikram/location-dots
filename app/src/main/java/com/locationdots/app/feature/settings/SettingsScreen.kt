@@ -1302,172 +1302,131 @@ private fun SettingsHome(
     LazyColumn(
         modifier = modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(18.dp, 10.dp, 18.dp, 112.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            Column(Modifier.padding(horizontal = 2.dp)) {
-                Text("Settings", style = MaterialTheme.typography.headlineLarge)
-            }
+            Text(
+                "Settings",
+                Modifier.padding(horizontal = 2.dp, vertical = 2.dp),
+                style = MaterialTheme.typography.headlineLarge
+            )
         }
 
-        // Most-used control stays at the top of Settings.
         item {
             ExpressiveCard(emphasized = isTracking) {
-                Row(
-                    Modifier.fillMaxWidth().padding(18.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    ExpressiveIconBadge(
-                        icon = {
-                            Icon(
-                                if (isTracking) Icons.Default.MyLocation else Icons.Default.LocationOff,
-                                null
-                            )
-                        },
-                        containerColor = if (isTracking) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.surfaceContainerHighest
-                        }
-                    )
-                    Spacer(Modifier.width(14.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            "Location tracking",
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                        Text(
-                            if (isTracking) {
-                                "Recording your location in the background."
-                            } else {
-                                "Tracking is paused. No new location points are recorded."
+                Column(Modifier.padding(16.dp)) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        ExpressiveIconBadge(
+                            icon = {
+                                Icon(
+                                    if (isTracking) Icons.Default.MyLocation else Icons.Default.LocationOff,
+                                    null
+                                )
                             },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            containerColor = if (isTracking) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.surfaceContainerHighest
+                            }
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text("Location tracking", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                if (isTracking) "Tracking is on" else "Tracking is off",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = isTracking,
+                            onCheckedChange = onTrackingChange
                         )
                     }
-                    Spacer(Modifier.width(12.dp))
-                    Switch(
-                        checked = isTracking,
-                        onCheckedChange = onTrackingChange
+                    HorizontalDivider(
+                        Modifier.padding(vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+                    ExpressiveListRow(
+                        "Tracking options",
+                        "Accuracy, update frequency, and detection",
+                        { Icon(Icons.Default.Tune, null) },
+                        trailing = { Icon(Icons.Default.ChevronRight, null) },
+                        onClick = { onOpen(SettingsPage.TRACKING) }
                     )
                 }
             }
         }
 
-        item {
-            SettingsGroupTitle(
-                "Tracking",
-            )
-        }
+        item { SettingsGroupTitle("Appearance") }
         item {
             ExpressiveCard {
-                ExpressiveListRow(
-                    "Tracking settings",
-                    "Accuracy, frequency, and permissions",
-                    { Icon(Icons.Default.LocationOn, null) },
-                    trailing = { Icon(Icons.Default.ChevronRight, null) },
-                    onClick = { onOpen(SettingsPage.TRACKING) }
-                )
+                Column(Modifier.padding(8.dp)) {
+                    ExpressiveListRow(
+                        "Map & theme",
+                        "Colors, map style, routes, and markers",
+                        { Icon(Icons.Default.Palette, null) },
+                        trailing = { Icon(Icons.Default.ChevronRight, null) },
+                        onClick = { onOpen(SettingsPage.MAP_APPEARANCE) }
+                    )
+                    ExpressiveListRow(
+                        "Timeline controls",
+                        "Action button: ${actionButton.label()}",
+                        { Icon(Icons.Default.Tune, null) },
+                        trailing = { Icon(Icons.Default.ChevronRight, null) },
+                        onClick = { onOpen(SettingsPage.INTERFACE) }
+                    )
+                }
             }
         }
 
-        item {
-            SettingsGroupTitle(
-                "Appearance",
-            )
-        }
-        item {
-            ExpressiveCard {
-                ExpressiveListRow(
-                    "Map & appearance",
-                    "Theme, map style, routes, and place markers",
-                    { Icon(Icons.Default.Palette, null) },
-                    trailing = { Icon(Icons.Default.ChevronRight, null) },
-                    onClick = { onOpen(SettingsPage.MAP_APPEARANCE) }
-                )
-            }
-        }
-
-        item {
-            SettingsGroupTitle(
-                "Interface",
-            )
-        }
-        item {
-            ExpressiveCard {
-                ExpressiveListRow(
-                    "Timeline action button",
-                    actionButton.label(),
-                    { Icon(Icons.Default.Tune, null) },
-                    trailing = { Icon(Icons.Default.ChevronRight, null) },
-                    onClick = { onOpen(SettingsPage.INTERFACE) }
-                )
-            }
-        }
-
-        item {
-            SettingsGroupTitle(
-                "Places & data",
-            )
-        }
+        item { SettingsGroupTitle("Places & data") }
         item {
             ExpressiveCard {
                 Column(Modifier.padding(8.dp)) {
                     ExpressiveListRow(
                         "Saved places",
-                        "$placesCount ${if (placesCount == 1) "place" else "places"} saved",
+                        "$placesCount saved ${if (placesCount == 1) "place" else "places"}",
                         { Icon(Icons.Default.Place, null) },
                         trailing = { Icon(Icons.Default.ChevronRight, null) },
                         onClick = { onOpen(SettingsPage.SAVED_PLACES) }
                     )
                     ExpressiveListRow(
                         "Privacy & data",
-                        "Local history, permissions, and data controls",
+                        "History, permissions, and data controls",
                         { Icon(Icons.Default.Lock, null) },
                         trailing = { Icon(Icons.Default.ChevronRight, null) },
                         onClick = { onOpen(SettingsPage.PRIVACY_DATA) }
+                    )
+                    ExpressiveListRow(
+                        "Export & backup",
+                        "Save or restore your data",
+                        { Icon(Icons.Default.FileUpload, null) },
+                        trailing = { Icon(Icons.Default.ChevronRight, null) },
+                        onClick = { onOpen(SettingsPage.EXPORT_BACKUP) }
                     )
                 }
             }
         }
 
-        item {
-            SettingsGroupTitle(
-                "Backup",
-            )
-        }
-        item {
-            ExpressiveCard {
-                ExpressiveListRow(
-                    "Export & backup",
-                    "Import or export your local data",
-                    { Icon(Icons.Default.FileUpload, null) },
-                    trailing = { Icon(Icons.Default.ChevronRight, null) },
-                    onClick = { onOpen(SettingsPage.EXPORT_BACKUP) }
-                )
-            }
-        }
-
-        item {
-            SettingsGroupTitle(
-                "Support",
-            )
-        }
+        item { SettingsGroupTitle("Support") }
         item {
             ExpressiveCard {
                 Column(Modifier.padding(8.dp)) {
                     ExpressiveListRow(
                         "Diagnostics",
-                        "Permissions, battery, maps, and app status",
+                        "Check tracking and app status",
                         { Icon(Icons.Default.Build, null) },
                         trailing = { Icon(Icons.Default.ChevronRight, null) },
                         onClick = { onOpen(SettingsPage.DIAGNOSTICS) }
                     )
                     ExpressiveListRow(
-                        title = "About Location Dots",
-                        subtitle = "All about the Location dots App",
-                        icon = { Icon(Icons.Default.Info, null) },
+                        "About Location Dots",
+                        "App details and project links",
+                        { Icon(Icons.Default.Info, null) },
                         trailing = { Icon(Icons.Default.ChevronRight, null) },
                         onClick = onAbout
                     )
