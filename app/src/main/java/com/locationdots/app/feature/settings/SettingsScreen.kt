@@ -5,6 +5,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
@@ -1314,48 +1315,39 @@ private fun SettingsHome(
 
         item {
             ExpressiveCard(emphasized = isTracking) {
-                Column(Modifier.padding(16.dp)) {
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        ExpressiveIconBadge(
-                            icon = {
-                                Icon(
-                                    if (isTracking) Icons.Default.MyLocation else Icons.Default.LocationOff,
-                                    null
-                                )
-                            },
-                            containerColor = if (isTracking) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.surfaceContainerHighest
-                            }
-                        )
-                        Spacer(Modifier.width(12.dp))
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text("Location tracking", style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                if (isTracking) "Tracking is on" else "Tracking is off",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 18.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    ExpressiveIconBadge(
+                        icon = {
+                            Icon(
+                                if (isTracking) Icons.Default.MyLocation else Icons.Default.LocationOff,
+                                null
                             )
+                        },
+                        containerColor = if (isTracking) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.surfaceContainerHighest
                         }
-                        Switch(
-                            checked = isTracking,
-                            onCheckedChange = onTrackingChange
+                    )
+                    Spacer(Modifier.width(14.dp))
+                    Column(
+                        Modifier.weight(1f).clickable { onOpen(SettingsPage.TRACKING) },
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        Text("Tracking options", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "Accuracy, frequency, and detection",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    HorizontalDivider(
-                        Modifier.padding(vertical = 8.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
-                    ExpressiveListRow(
-                        "Tracking options",
-                        "Accuracy, update frequency, and detection",
-                        { Icon(Icons.Default.Tune, null) },
-                        trailing = { Icon(Icons.Default.ChevronRight, null) },
-                        onClick = { onOpen(SettingsPage.TRACKING) }
+                    Spacer(Modifier.width(12.dp))
+                    Switch(
+                        checked = isTracking,
+                        onCheckedChange = onTrackingChange
                     )
                 }
             }
@@ -1366,7 +1358,7 @@ private fun SettingsHome(
             ExpressiveCard {
                 Column(Modifier.padding(8.dp)) {
                     ExpressiveListRow(
-                        "Map & theme",
+                        "Map & Appearance",
                         "Colors, map style, routes, and markers",
                         { Icon(Icons.Default.Palette, null) },
                         trailing = { Icon(Icons.Default.ChevronRight, null) },
