@@ -1,7 +1,6 @@
 package com.locationdots.app.feature.settings
 
 import android.net.Uri
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
@@ -1303,7 +1302,6 @@ private fun SettingsHome(
     onAbout: () -> Unit,
     onTrackingChange: (Boolean) -> Unit
 ) {
-    val updatesToastContext = androidx.compose.ui.platform.LocalContext.current
     LazyColumn(
         modifier = modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(18.dp, 10.dp, 18.dp, 112.dp),
@@ -1413,17 +1411,7 @@ private fun SettingsHome(
                         "Updates",
                         "Check for new versions",
                         { Icon(Icons.Default.SystemUpdate, null) },
-                        trailing = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                VerticalDivider(Modifier.height(38.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                                Spacer(Modifier.width(8.dp))
-                                IconButton(onClick = {
-                                    Toast.makeText(updatesToastContext, "Open Updates to check and download the latest build.", Toast.LENGTH_SHORT).show()
-                                }) {
-                                    Icon(Icons.Default.Refresh, "Check for updates")
-                                }
-                            }
-                        },
+                        trailing = { Icon(Icons.Default.ChevronRight, null) },
                         onClick = { onOpen(SettingsPage.UPDATES) }
                     )
                     ExpressiveListRow(
