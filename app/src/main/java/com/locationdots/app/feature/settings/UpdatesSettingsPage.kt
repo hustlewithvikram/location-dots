@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -18,11 +19,14 @@ import com.locationdots.app.ui.components.ExpressiveCard
 import com.locationdots.app.ui.components.ExpressiveIconBadge
 import com.locationdots.app.ui.components.ExpressiveListRow
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
 import java.net.URL
+import java.net.HttpURLConnection
 import java.security.MessageDigest
 
 private const val RELEASES_API = "https://api.github.com/repos/hustlewithvikram/location-dots/releases"
@@ -33,6 +37,8 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     var checking by remember { mutableStateOf(false) }
     var downloading by remember { mutableStateOf(false) }
+    var downloadJob by remember { mutableStateOf<Job?>(null) }
+    var downloadConnection by remember { mutableStateOf<HttpURLConnection?>(null) }
     var progress by remember { mutableFloatStateOf(0f) }
     var updateAvailable by remember { mutableStateOf(false) }
     var latestVersion by remember { mutableStateOf<String?>(null) }
@@ -40,6 +46,7 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
     var expectedSha256 by remember { mutableStateOf<String?>(null) }
     var showInstallDialog by remember { mutableStateOf(false) }
     var downloadedApk by remember { mutableStateOf<File?>(null) }
+    var cachedApkVersionCode by remember { mutableStateOf<Long?>(null) }
     var latestVersionCode by remember { mutableStateOf<Long?>(null) }
     var latestCommit by remember { mutableStateOf<String?>(null) }
     var latestRun by remember { mutableStateOf<String?>(null) }
@@ -49,7 +56,6 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
     fun checkForUpdates() {
         if (checking || downloading) return
         checking = true
-        updateAvailable = false
         apkUrl = null
         message = "Checking the ${updateChannel} update channel…"
         scope.launch {
@@ -98,8 +104,23 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
                 expectedSha256 = metadata.optString("sha256").takeIf { it.matches(Regex("[a-fA-F0-9]{64}")) }
                 apkUrl = metadata.optString("_downloadUrl").takeIf { it.startsWith("https://") }
                 updateAvailable = candidateCode > currentCode && apkUrl != null && expectedSha256 != null
+                val candidateFile = File(context.cacheDir, "location-dots-update-${candidateCode}.apk")
+                val cachedMatches = candidateFile.isFile && expectedSha256 != null &&
+                    withContext(Dispatchers.IO) { runCatching { sha256(candidateFile).equals(expectedSha256, true) }.getOrDefault(false) }
+                if (cachedMatches) {
+                    downloadedApk = candidateFile
+                    cachedApkVersionCode = candidateCode
+                } else {
+                    if (downloadedApk?.exists() != true || cachedApkVersionCode != candidateCode) {
+                        downloadedApk?.delete()
+                        downloadedApk = null
+                        cachedApkVersionCode = null
+                    }
+                    if (candidateFile.exists()) candidateFile.delete()
+                }
                 message = when {
                     candidateCode <= currentCode -> "You are using the latest ${updateChannel} build (${installedVersion(context)})."
+                    downloadedApk != null && cachedApkVersionCode == candidateCode -> "Version ${candidateName} is downloaded and verified. Ready to install."
                     apkUrl == null -> "A newer build exists, but its APK is missing."
                     expectedSha256 == null -> "Update metadata is incomplete. Download blocked for safety."
                     updateAvailable -> "Version ${candidateName} is available on the ${updateChannel} channel."
@@ -111,50 +132,106 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
             } finally { checking = false }
         }
     }
+    fun cancelDownload() {
+        downloadJob?.cancel()
+        downloadConnection?.disconnect()
+        downloadJob = null
+        downloading = false
+        File(context.cacheDir, "location-dots-update-${latestVersionCode ?: "pending"}.part").delete()
+        message = "Download cancelled."
+    }
+    fun discardDownloadedApk() {
+        downloadedApk?.delete()
+        downloadedApk = null
+        cachedApkVersionCode = null
+        message = if (updateAvailable) "Downloaded APK discarded. You can download it again." else "Downloaded APK discarded."
+    }
+    fun openInstaller(file: File) {
+        try {
+            if (!file.isFile) {
+                downloadedApk = null
+                cachedApkVersionCode = null
+                message = "The downloaded APK is no longer available. Download it again."
+                return
+            }
+            val uri = FileProvider.getUriForFile(context, context.packageName + ".fileprovider", file)
+            val intent = Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
+                data = uri
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, false)
+                putExtra(Intent.EXTRA_RETURN_RESULT, false)
+            }
+            context.startActivity(intent)
+        } catch (error: Exception) {
+            message = "Could not open Android's package installer. Check that installing unknown apps is allowed for Location Dots."
+        }
+    }
     fun downloadUpdate() {
         val url = apkUrl ?: return
         val expectedHash = expectedSha256 ?: return
-        if (downloading) return
+        val versionCode = latestVersionCode ?: return
+        if (downloading || (downloadedApk?.isFile == true && cachedApkVersionCode == versionCode)) return
         downloading = true
         progress = 0f
         message = "Downloading update…"
-        scope.launch {
+        val target = File(context.cacheDir, "location-dots-update-${versionCode}.apk")
+        val partial = File(context.cacheDir, "location-dots-update-${versionCode}.part")
+        partial.delete()
+        downloadJob = scope.launch {
             try {
                 val apkFile = withContext(Dispatchers.IO) {
-                    val connection = URL(url).openConnection()
-                    connection.connectTimeout = 15000
-                    connection.readTimeout = 30000
-                    val total = connection.contentLengthLong
-                    val target = File(context.cacheDir, "location-dots-update.apk")
-                    connection.getInputStream().use { input -> target.outputStream().use { output ->
-                        val buffer = ByteArray(8192)
-                        var received = 0L
-                        while (true) {
-                            val count = input.read(buffer)
-                            if (count < 0) break
-                            output.write(buffer, 0, count)
-                            received += count
-                            if (total > 0) {
-                                val value = (received.toFloat() / total).coerceIn(0f, 1f)
-                                withContext(Dispatchers.Main) { progress = value }
+                    val connection = (URL(url).openConnection() as HttpURLConnection).apply {
+                        connectTimeout = 15000
+                        readTimeout = 15000
+                        instanceFollowRedirects = true
+                    }
+                    downloadConnection = connection
+                    try {
+                        connection.connect()
+                        if (connection.responseCode !in 200..299) throw IllegalStateException("Download server returned an error")
+                        val total = connection.contentLengthLong
+                        connection.inputStream.use { input ->
+                            partial.outputStream().buffered().use { output ->
+                                val buffer = ByteArray(32 * 1024)
+                                var received = 0L
+                                while (true) {
+                                    kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                                    val count = input.read(buffer)
+                                    if (count < 0) break
+                                    output.write(buffer, 0, count)
+                                    received += count
+                                    if (total > 0L) {
+                                        val value = (received.toFloat() / total).coerceIn(0f, 1f)
+                                        withContext(Dispatchers.Main) { progress = value }
+                                    }
+                                }
                             }
                         }
-                    } }
-                    val hash = MessageDigest.getInstance("SHA-256").digest(target.readBytes()).joinToString("") { "%02x".format(it) }
-                    if (!hash.equals(expectedHash, true)) { target.delete(); throw IllegalStateException("checksum mismatch") }
+                    } finally {
+                        connection.disconnect()
+                        downloadConnection = null
+                    }
+                    if (!sha256(partial).equals(expectedHash, true)) throw IllegalStateException("checksum mismatch")
+                    if (target.exists() && !target.delete()) throw IllegalStateException("Could not replace previous APK")
+                    if (!partial.renameTo(target)) throw IllegalStateException("Could not save the verified APK")
                     target
                 }
-                val uri = FileProvider.getUriForFile(context, context.packageName + ".fileprovider", apkFile)
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(uri, "application/vnd.android.package-archive")
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
                 downloadedApk = apkFile
-                showInstallDialog = true
+                cachedApkVersionCode = versionCode
+                progress = 1f
                 message = "Download verified. Ready to install ${latestVersion ?: "update"}."
+            } catch (error: CancellationException) {
+                partial.delete()
+                message = "Download cancelled."
             } catch (error: Exception) {
-                message = if (error.message?.contains("checksum", true) == true) "The downloaded APK failed verification and was discarded." else "Could not download the update. Please try again."
-            } finally { downloading = false }
+                partial.delete()
+                message = if (error.message?.contains("checksum", true) == true) "The downloaded APK failed verification and was discarded."
+                    else "Could not download the update. Please try again."
+            } finally {
+                downloading = false
+                downloadJob = null
+                downloadConnection = null
+            }
         }
     }
     LaunchedEffect(Unit) { checkForUpdates() }
@@ -209,28 +286,48 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
                         }
                     }
                     if (downloading) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            CircularProgressIndicator(progress = { progress }, modifier = Modifier.size(36.dp), strokeWidth = 4.dp)
-                            Text("${(progress * 100).toInt()}%", style = MaterialTheme.typography.labelLarge)
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("Downloading APK", style = MaterialTheme.typography.labelLarge)
+                                    Spacer(Modifier.weight(1f))
+                                    Text(if (progress > 0f) "${(progress * 100).toInt()}%" else "Connecting…",
+                                        style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                LinearProgressIndicator(
+                                    progress = { progress },
+                                    modifier = Modifier.fillMaxWidth().height(8.dp),
+                                    strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
+                                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                                )
+                            }
+                            IconButton(onClick = ::cancelDownload, modifier = Modifier.size(44.dp)) {
+                                Icon(Icons.Default.Close, contentDescription = "Cancel download", tint = MaterialTheme.colorScheme.error)
+                            }
                         }
-                    }
-                    if (updateAvailable && !downloading) {
+                    } else if (downloadedApk?.isFile == true && cachedApkVersionCode == latestVersionCode) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                            OutlinedButton(onClick = ::discardDownloadedApk, modifier = Modifier.weight(1f), shape = MaterialTheme.shapes.large) {
+                                Icon(Icons.Default.DeleteOutline, null)
+                                Spacer(Modifier.width(6.dp))
+                                Text("Discard")
+                            }
+                            Button(onClick = { openInstaller(downloadedApk!!) }, modifier = Modifier.weight(1f), shape = MaterialTheme.shapes.large) {
+                                Icon(Icons.Default.InstallMobile, null)
+                                Spacer(Modifier.width(6.dp))
+                                Text("Install")
+                            }
+                        }
+                    } else if (updateAvailable) {
                         Button(onClick = ::downloadUpdate, modifier = Modifier.fillMaxWidth()) {
                             Icon(Icons.Default.Download, null)
                             Spacer(Modifier.width(8.dp))
                             Text("Download ${latestVersion ?: "update"}")
                         }
                     } else {
-                        OutlinedButton(
-                            onClick = ::checkForUpdates,
-                            enabled = !checking && !downloading,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            if (checking) {
-                                CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                            } else {
-                                Icon(Icons.Default.Refresh, null)
-                            }
+                        OutlinedButton(onClick = ::checkForUpdates, enabled = !checking && !downloading, modifier = Modifier.fillMaxWidth()) {
+                            if (checking) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                            else Icon(Icons.Default.Refresh, null)
                             Spacer(Modifier.width(8.dp))
                             Text(if (checking) "Checking…" else "Check for updates")
                         }
@@ -288,29 +385,20 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
             }
         }
     }
-    if (showInstallDialog) {
-        AlertDialog(
-            onDismissRequest = { showInstallDialog = false },
-            icon = { Icon(Icons.Default.SystemUpdate, null) },
-            title = { Text("Install update?") },
-            text = { Text("The APK was downloaded and its SHA-256 checksum verified. Install Location Dots ${latestVersion ?: ""} now? Android will ask you to confirm installation.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    showInstallDialog = false
-                    val file = downloadedApk ?: return@TextButton
-                    runCatching {
-                        val uri = FileProvider.getUriForFile(context, context.packageName + ".fileprovider", file)
-                        val intent = Intent(Intent.ACTION_VIEW).apply {
-                            setDataAndType(uri, "application/vnd.android.package-archive")
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        }
-                        context.startActivity(intent)
-                    }.onFailure { message = "Could not open Android's package installer." }
-                }) { Text("Install") }
-            },
-            dismissButton = { TextButton(onClick = { showInstallDialog = false }) { Text("Cancel") } }
-        )
+
+}
+
+private fun sha256(file: File): String {
+    val digest = MessageDigest.getInstance("SHA-256")
+    file.inputStream().buffered().use { input ->
+        val buffer = ByteArray(32 * 1024)
+        while (true) {
+            val count = input.read(buffer)
+            if (count < 0) break
+            digest.update(buffer, 0, count)
+        }
     }
+    return digest.digest().joinToString("") { "%02x".format(it) }
 }
 
 private fun installedVersion(context: android.content.Context): String = runCatching {
