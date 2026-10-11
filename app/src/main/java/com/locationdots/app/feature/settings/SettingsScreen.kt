@@ -793,19 +793,10 @@ fun SettingsScreen(
                 }
 
                 item {
-                    SettingsGroupTitle("Data management")
-                }
-
-                item {
-                    ExpressiveCard {
-                        ExpressiveListRow(
-                            title = "Export & backup",
-                            subtitle = "Export a JSON backup or restore one",
-                            icon = { Icon(Icons.Default.FileUpload, null) },
-                            trailing = { Icon(Icons.Default.ChevronRight, null) },
-                            onClick = { openSettingsPage(SettingsPage.EXPORT_BACKUP) }
-                        )
-                    }
+                    SettingsGroupTitle(
+                        "Your data",
+                        "Your recorded history stays on this device until you delete it."
+                    )
                 }
 
                 item {
