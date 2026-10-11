@@ -1011,6 +1011,7 @@ fun SettingsScreen(
                     }
                 }
             }
+            SettingsPage.UPDATES -> UpdatesSettingsPage(onBack = ::closeSettingsPage)
             SettingsPage.DIAGNOSTICS -> SettingsSubPage(
                 Modifier, "Diagnostics",
                 onBack = ::closeSettingsPage
@@ -1404,6 +1405,17 @@ private fun SettingsHome(
                         { Icon(Icons.Default.Build, null) },
                         trailing = { Icon(Icons.Default.ChevronRight, null) },
                         onClick = { onOpen(SettingsPage.DIAGNOSTICS) }
+                    )
+                    ExpressiveListRow(
+                        "Updates",
+                        "Check for new versions",
+                        { Icon(Icons.Default.SystemUpdate, null) },
+                        trailing = {
+                            IconButton(onClick = { onOpen(SettingsPage.UPDATES) }) {
+                                Icon(Icons.Default.Refresh, "Check for updates")
+                            }
+                        },
+                        onClick = { onOpen(SettingsPage.UPDATES) }
                     )
                     ExpressiveListRow(
                         "About Location Dots",
