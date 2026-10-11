@@ -98,7 +98,7 @@ jobs:
             "versionCode": $VERSION_CODE,
             "commit": "${{ github.sha }}",
             "runNumber": ${{ github.run_number }},
-            "apk": "location-dots-debug.apk",
+            "apk": "app-debug.apk",
             "sha256": "$SHA256"
           }
           EOF
