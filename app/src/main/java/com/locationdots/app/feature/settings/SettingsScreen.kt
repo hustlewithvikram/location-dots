@@ -737,7 +737,7 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             ExpressiveIconBadge(
-                                icon = { Icon(Icons.Default.Shield, null) },
+                                icon = { Icon(Icons.Default.Security, null) },
                                 containerColor = MaterialTheme.colorScheme.primaryContainer
                             )
                             Spacer(Modifier.width(14.dp))
@@ -801,7 +801,7 @@ fun SettingsScreen(
                         ExpressiveListRow(
                             title = "Export & backup",
                             subtitle = "Export a JSON backup or restore one",
-                            icon = { Icon(Icons.Default.FolderZip, null) },
+                            icon = { Icon(Icons.Default.FileUpload, null) },
                             trailing = { Icon(Icons.Default.ChevronRight, null) },
                             onClick = { openSettingsPage(SettingsPage.EXPORT_BACKUP) }
                         )
