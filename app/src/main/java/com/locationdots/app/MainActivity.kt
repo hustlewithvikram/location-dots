@@ -621,7 +621,7 @@ class MainActivity : ComponentActivity() {
                                     if (isTracking) stopTracking() else startTracking()
                                 }
                                 ActionButton.TODAY -> Unit
-                                ActionButton.EXPORT -> exportLocalData()
+                                ActionButton.EXPORT -> exportLocalData(BackupSection.entries.toSet())
                             }
                         },
                         onPlacesClick = {
