@@ -1104,7 +1104,14 @@ fun SettingsScreen(
                 item {
                     ExpressiveCard {
                         Column(Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
-                            DiagnosticRow("App version", com.locationdots.app.BuildConfig.VERSION_NAME, Icons.Default.Info)
+                            DiagnosticRow(
+                                "App version",
+                                runCatching {
+                                    @Suppress("DEPRECATION")
+                                    context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "Unknown"
+                                }.getOrDefault("Unknown"),
+                                Icons.Default.Info
+                            )
                             DiagnosticRow("Android version", android.os.Build.VERSION.RELEASE ?: "Unknown", Icons.Default.Android)
                             DiagnosticRow(
                                 "Device",
