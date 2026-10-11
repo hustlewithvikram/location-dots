@@ -153,6 +153,7 @@ fun SettingsScreen(
     onSaveNamedPlace: (String, Double, Double) -> Unit,
     onRequestCurrentLocation: ((onLocation: (Double, Double) -> Unit) -> Unit)
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var page by rememberSaveable { mutableStateOf(SettingsPage.HOME) }
     var settingsNavigationDirection by remember { mutableStateOf(NavigationDirection.FORWARD) }
     var showClearDialog by remember { mutableStateOf(false) }
