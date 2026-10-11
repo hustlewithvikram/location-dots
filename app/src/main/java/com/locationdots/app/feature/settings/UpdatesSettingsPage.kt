@@ -1,6 +1,9 @@
 package com.locationdots.app.feature.settings
 
 import android.content.Intent
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import androidx.activity.compose.BackHandler
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -510,6 +513,11 @@ private fun postInstallNotification(file: File, version: String, context: Contex
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .build()
-        NotificationManagerCompat.from(context).notify(7401, notification)
+        if (
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        ) {
+            NotificationManagerCompat.from(context).notify(7401, notification)
+        }
     }
 }
