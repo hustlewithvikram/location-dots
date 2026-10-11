@@ -5,6 +5,12 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
+    <group
+        android:scaleX="0.72"
+        android:scaleY="0.72"
+        android:pivotX="54"
+        android:pivotY="54">
+    <!-- Scaled into the adaptive launcher icon safe zone so launchers do not crop it. -->
     <!-- Recreated from the exact icon artwork embedded in the README hero banner. -->
     <path
         android:fillColor="#FFFFFF"
@@ -42,4 +48,5 @@
     <path android:fillColor="#FFFFFF" android:pathData="M32.53,28.08 A3.03,3.03 0,1 0,32.53 34.14 A3.03,3.03 0,1 0,32.53 28.08" />
     <path android:fillColor="#FFFFFF" android:pathData="M54,50.97 A3.03,3.03 0,1 0,54 57.03 A3.03,3.03 0,1 0,54 50.97" />
     <path android:fillColor="#FFFFFF" android:pathData="M75.47,73.86 A3.03,3.03 0,1 0,75.47 79.92 A3.03,3.03 0,1 0,75.47 73.86" />
+    </group>
 </vector>
