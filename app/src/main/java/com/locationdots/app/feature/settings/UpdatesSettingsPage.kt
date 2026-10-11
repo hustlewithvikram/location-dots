@@ -38,6 +38,11 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
     var latestVersion by remember { mutableStateOf<String?>(null) }
     var apkUrl by remember { mutableStateOf<String?>(null) }
     var expectedSha256 by remember { mutableStateOf<String?>(null) }
+    var showInstallDialog by remember { mutableStateOf(false) }
+    var downloadedApk by remember { mutableStateOf<File?>(null) }
+    var latestVersionCode by remember { mutableStateOf<Long?>(null) }
+    var latestCommit by remember { mutableStateOf<String?>(null) }
+    var latestRun by remember { mutableStateOf<String?>(null) }
     val updateChannel = BuildConfig.UPDATE_CHANNEL
     var message by remember { mutableStateOf("Check whether a newer version is available.") }
 
@@ -87,6 +92,9 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
                 val candidateName = metadata.optString("versionName", "Unknown")
                 if (candidateCode <= 0L) throw IllegalStateException("Invalid version metadata")
                 latestVersion = candidateName
+                latestVersionCode = candidateCode
+                latestCommit = metadata.optString("commit").takeIf { it.isNotBlank() }
+                latestRun = metadata.optString("runNumber").takeIf { it.isNotBlank() }
                 expectedSha256 = metadata.optString("sha256").takeIf { it.matches(Regex("[a-fA-F0-9]{64}")) }
                 apkUrl = metadata.optString("_downloadUrl").takeIf { it.startsWith("https://") }
                 updateAvailable = candidateCode > currentCode && apkUrl != null && expectedSha256 != null
@@ -141,8 +149,9 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
                     setDataAndType(uri, "application/vnd.android.package-archive")
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
-                context.startActivity(intent)
-                message = "Download verified. Follow Android installer to update."
+                downloadedApk = apkFile
+                showInstallDialog = true
+                message = "Download verified. Ready to install ${latestVersion ?: "update"}."
             } catch (error: Exception) {
                 message = if (error.message?.contains("checksum", true) == true) "The downloaded APK failed verification and was discarded." else "Could not download the update. Please try again."
             } finally { downloading = false }
@@ -233,20 +242,43 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
             ExpressiveCard {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Update details", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        if (updateChannel == "debug") "Development channel · GitHub Actions" else "Stable channel · GitHub Releases",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    val installedInfo = remember { runCatching { context.packageManager.getPackageInfo(context.packageName, 0) }.getOrNull() }
+                    val installedCode = installedInfo?.let {
+                        @Suppress("DEPRECATION")
+                        if (android.os.Build.VERSION.SDK_INT >= 28) it.longVersionCode else it.versionCode.toLong()
+                    } ?: -1L
                     ExpressiveListRow(
-                        "Installed version",
-                        installedVersion(context),
+                        "Installed APK",
+                        "${installedVersion(context)} · version code $installedCode",
                         { Icon(Icons.Default.PhoneAndroid, null) },
+                        trailing = { }
+                    )
+                    ExpressiveListRow(
+                        "Update channel",
+                        if (updateChannel == "debug") "Debug / development" else "Release / stable",
+                        { Icon(Icons.Default.AccountTree, null) },
                         trailing = { }
                     )
                     if (latestVersion != null) {
                         ExpressiveListRow(
                             if (updateChannel == "debug") "Latest debug build" else "Latest release",
-                            latestVersion!!,
+                            "${latestVersion!!} · version code ${latestVersionCode ?: "—"}",
                             { Icon(Icons.Default.NewReleases, null) },
                             trailing = { }
                         )
                     }
+                    if (latestCommit != null) {
+                        ExpressiveListRow("Published commit", latestCommit!!.take(10), { Icon(Icons.Default.Commit, null) }, trailing = { })
+                    }
+                    if (latestRun != null && updateChannel == "debug") {
+                        ExpressiveListRow("Workflow run", "#$latestRun", { Icon(Icons.Default.Terminal, null) }, trailing = { })
+                    }
+                    ExpressiveListRow("Package", context.packageName, { Icon(Icons.Default.Apps, null) }, trailing = { })
                     Text(
                         "Updates follow the installed build channel. Downloads are verified before Android is asked to install them.",
                         style = MaterialTheme.typography.bodySmall,
@@ -255,6 +287,29 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
                 }
             }
         }
+    }
+    if (showInstallDialog) {
+        AlertDialog(
+            onDismissRequest = { showInstallDialog = false },
+            icon = { Icon(Icons.Default.SystemUpdate, null) },
+            title = { Text("Install update?") },
+            text = { Text("The APK was downloaded and its SHA-256 checksum verified. Install Location Dots ${latestVersion ?: ""} now? Android will ask you to confirm installation.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showInstallDialog = false
+                    val file = downloadedApk ?: return@TextButton
+                    runCatching {
+                        val uri = FileProvider.getUriForFile(context, context.packageName + ".fileprovider", file)
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            setDataAndType(uri, "application/vnd.android.package-archive")
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        context.startActivity(intent)
+                    }.onFailure { message = "Could not open Android's package installer." }
+                }) { Text("Install") }
+            },
+            dismissButton = { TextButton(onClick = { showInstallDialog = false }) { Text("Cancel") } }
+        )
     }
 }
 
