@@ -54,7 +54,6 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
     var expectedSha256 by remember { mutableStateOf<String?>(null) }
     var showInstallDialog by remember { mutableStateOf(false) }
     var showInstallPermissionDialog by remember { mutableStateOf(false) }
-    var pendingInstallFile by remember { mutableStateOf<File?>(null) }
     var downloadedApk by remember { mutableStateOf<File?>(null) }
     var cachedApkVersionCode by remember { mutableStateOf<Long?>(null) }
     var latestVersionCode by remember { mutableStateOf<Long?>(null) }
@@ -166,7 +165,6 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                 !context.packageManager.canRequestPackageInstalls()
             ) {
-                pendingInstallFile = file
                 showInstallPermissionDialog = true
                 message = "Installation permission is required before Android can install this update."
                 return
