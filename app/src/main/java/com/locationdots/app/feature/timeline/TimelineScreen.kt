@@ -251,6 +251,8 @@ private fun TodayCard(
     isTracking: Boolean,
     onSearchClick: () -> Unit,
     onProfileClick: () -> Unit,
+    profileName: String,
+    profilePhotoUri: String?,
     actionButton: com.locationdots.app.feature.settings.ActionButton,
     themeChoice: com.locationdots.app.feature.settings.ThemeChoice,
     onActionButtonClick: () -> Unit
