@@ -1,7 +1,6 @@
 package com.locationdots.app.feature.settings
 
 import android.content.Intent
-import android.app.AlertDialog as PlatformAlertDialog
 import androidx.activity.compose.BackHandler
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -54,6 +53,8 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
     var apkUrl by remember { mutableStateOf<String?>(null) }
     var expectedSha256 by remember { mutableStateOf<String?>(null) }
     var showInstallDialog by remember { mutableStateOf(false) }
+    var showInstallPermissionDialog by remember { mutableStateOf(false) }
+    var pendingInstallFile by remember { mutableStateOf<File?>(null) }
     var downloadedApk by remember { mutableStateOf<File?>(null) }
     var cachedApkVersionCode by remember { mutableStateOf<Long?>(null) }
     var latestVersionCode by remember { mutableStateOf<Long?>(null) }
@@ -165,11 +166,9 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                 !context.packageManager.canRequestPackageInstalls()
             ) {
-                message = "Allow Location Dots to install APKs, then tap Install again."
-                context.startActivity(Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
-                    data = android.net.Uri.parse("package:${context.packageName}")
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                })
+                pendingInstallFile = file
+                showInstallPermissionDialog = true
+                message = "Installation permission is required before Android can install this update."
                 return
             }
             val uri = FileProvider.getUriForFile(context, context.packageName + ".fileprovider", file)
@@ -278,6 +277,35 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
                 }) { Text("Install") }
             },
             dismissButton = { TextButton(onClick = { showInstallDialog = false }) { Text("Later") } }
+        )
+    }
+
+    if (showInstallPermissionDialog) {
+        AlertDialog(
+            onDismissRequest = { showInstallPermissionDialog = false },
+            icon = { Icon(Icons.Default.Security, null, tint = MaterialTheme.colorScheme.primary) },
+            title = { Text("Allow app installation") },
+            text = {
+                Text(
+                    "Android requires Location Dots to be allowed to install apps from this source. " +
+                        "This permission is only used to open the verified update you downloaded. " +
+                        "On the next screen, enable “Allow from this source”, then return here and tap Install again."
+                )
+            },
+            confirmButton = {
+                Button(onClick = {
+                    showInstallPermissionDialog = false
+                    val settingsIntent = Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                        data = android.net.Uri.parse("package:${context.packageName}")
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    runCatching { context.startActivity(settingsIntent) }
+                        .onFailure { message = "Could not open Android's app-install permission settings." }
+                }) { Text("Open settings") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showInstallPermissionDialog = false }) { Text("Cancel") }
+            }
         )
     }
 
