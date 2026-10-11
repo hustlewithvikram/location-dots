@@ -1315,41 +1315,24 @@ private fun SettingsHome(
 
         item {
             ExpressiveCard(emphasized = isTracking) {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 18.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    ExpressiveIconBadge(
-                        icon = {
-                            Icon(
-                                if (isTracking) Icons.Default.MyLocation else Icons.Default.LocationOff,
-                                null
-                            )
-                        },
-                        containerColor = if (isTracking) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.surfaceContainerHighest
-                        }
-                    )
-                    Spacer(Modifier.width(14.dp))
-                    Column(
-                        Modifier.weight(1f).clickable { onOpen(SettingsPage.TRACKING) },
-                        verticalArrangement = Arrangement.spacedBy(3.dp)
-                    ) {
-                        Text("Tracking options", style = MaterialTheme.typography.titleMedium)
-                        Text(
-                            "Accuracy, frequency, and detection",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                ExpressiveListRow(
+                    title = "Tracking options",
+                    subtitle = "Accuracy, frequency, and detection",
+                    icon = {
+                        Icon(
+                            if (isTracking) Icons.Default.MyLocation else Icons.Default.LocationOff,
+                            null
                         )
-                    }
-                    Spacer(Modifier.width(12.dp))
-                    Switch(
-                        checked = isTracking,
-                        onCheckedChange = onTrackingChange
-                    )
-                }
+                    },
+                    modifier = Modifier.padding(vertical = 2.dp),
+                    trailing = {
+                        Switch(
+                            checked = isTracking,
+                            onCheckedChange = onTrackingChange
+                        )
+                    },
+                    onClick = { onOpen(SettingsPage.TRACKING) }
+                )
             }
         }
 
