@@ -851,6 +851,9 @@ class MainActivity : ComponentActivity() {
         val root = JSONObject(text)
         require(root.optString("format") == "location-dots-local-export") { "Unsupported backup format." }
         require(root.optInt("version", -1) == 1) { "Unsupported backup version." }
+        require(root.has("places") || root.has("locations") || root.has("timelineEvents")) {
+            "This backup does not contain any restorable data."
+        }
         return ImportPreview(
             uri = uri,
             locations = root.optJSONArray("locations")?.length() ?: 0,
@@ -1031,6 +1034,15 @@ class MainActivity : ComponentActivity() {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, text)
         }, "Share summary"))
+    }
+
+    private fun formatDistanceForSummary(meters: Double): String =
+        if (meters >= 1000.0) String.format(Locale.getDefault(), "%.1f km", meters / 1000.0)
+        else String.format(Locale.getDefault(), "%.0f m", meters)
+
+    private fun formatDurationForSummary(minutes: Long): String = when {
+        minutes >= 60L -> (minutes / 60L).toString() + " hr " + (minutes % 60L) + " min"
+        else -> minutes.toString() + " min"
     }
 
     private fun refreshState() {
