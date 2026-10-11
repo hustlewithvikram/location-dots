@@ -1015,34 +1015,41 @@ fun SettingsScreen(
                 onBack = ::closeSettingsPage
             ) {
                 item {
-                    ExpressiveCard(emphasized = isTracking && locationPermissionGranted) {
+                    ExpressiveCard {
                         Row(
-                            Modifier.fillMaxWidth().padding(18.dp),
+                            Modifier.fillMaxWidth().padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             ExpressiveIconBadge(
                                 icon = {
                                     Icon(
-                                        if (isTracking) Icons.Default.CheckCircle else Icons.Default.PauseCircleOutline,
+                                        if (isTracking && locationPermissionGranted) Icons.Default.CheckCircle
+                                        else Icons.Default.Warning,
                                         null
                                     )
                                 },
-                                containerColor = if (isTracking) {
+                                containerColor = if (isTracking && locationPermissionGranted) {
                                     MaterialTheme.colorScheme.primaryContainer
                                 } else {
                                     MaterialTheme.colorScheme.surfaceContainerHighest
                                 }
                             )
                             Spacer(Modifier.width(14.dp))
-                            Column(Modifier.weight(1f)) {
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                                 Text(
-                                    if (isTracking) "Tracking is running" else "Tracking is stopped",
+                                    when {
+                                        !locationPermissionGranted -> "Location permission needed"
+                                        isTracking -> "Tracking is running"
+                                        else -> "Tracking is paused"
+                                    },
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Text(
-                                    if (!locationPermissionGranted) "Location permission is required"
-                                    else if (isTracking) "Location updates can be collected"
-                                    else "No location updates are being collected",
+                                    when {
+                                        !locationPermissionGranted -> "Allow location access to collect updates."
+                                        isTracking -> "Location updates can be collected."
+                                        else -> "Start tracking from the main screen when ready."
+                                    },
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -1051,68 +1058,66 @@ fun SettingsScreen(
                     }
                 }
 
-                item { SettingsGroupTitle("System checks", "Check the permissions and system conditions that affect background tracking.") }
+                item { SettingsGroupTitle("Tracking checks", "Review the conditions that can affect location collection.") }
 
                 item {
                     ExpressiveCard {
-                        Column(Modifier.padding(8.dp)) {
+                        Column(Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
                             DiagnosticRow(
                                 "Location permission",
-                                if (locationPermissionGranted) "Ready" else "Needs permission",
+                                if (locationPermissionGranted) "Granted" else "Required",
                                 if (locationPermissionGranted) Icons.Default.CheckCircle else Icons.Default.Warning
                             )
                             DiagnosticRow(
-                                "Location services",
-                                "Android setting",
+                                "Background tracking",
+                                if (batteryOptimizationIgnored) "Unrestricted" else "Battery restrictions may apply",
+                                if (batteryOptimizationIgnored) Icons.Default.CheckCircle else Icons.Default.BatteryAlert
+                            )
+                            DiagnosticRow(
+                                "Tracking interval",
+                                trackingInterval.label,
+                                Icons.Default.Schedule
+                            )
+                            DiagnosticRow(
+                                "Location accuracy",
+                                trackingAccuracy.name.lowercase().replaceFirstChar { it.uppercase() },
                                 Icons.Default.GpsFixed
                             )
+                        }
+                    }
+                }
+
+                item {
+                    ExpressiveCard {
+                        ExpressiveListRow(
+                            "Share diagnostic report",
+                            "Share app and tracking status for troubleshooting",
+                            { Icon(Icons.Default.Share, null) },
+                            trailing = { Icon(Icons.Default.ChevronRight, null) },
+                            onClick = onShareDiagnostics
+                        )
+                    }
+                }
+
+                item { SettingsGroupTitle("App information", "Read-only details that can help when reporting a problem.") }
+
+                item {
+                    ExpressiveCard {
+                        Column(Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
+                            DiagnosticRow("App version", com.locationdots.app.BuildConfig.VERSION_NAME, Icons.Default.Info)
+                            DiagnosticRow("Android version", android.os.Build.VERSION.RELEASE ?: "Unknown", Icons.Default.Android)
                             DiagnosticRow(
-                                "Battery optimization",
-                                if (batteryOptimizationIgnored) "Unrestricted" else "May limit background tracking",
-                                if (batteryOptimizationIgnored) Icons.Default.BatteryFull else Icons.Default.BatteryAlert
+                                "Device",
+                                listOf(android.os.Build.MANUFACTURER, android.os.Build.MODEL)
+                                    .filter { it.isNotBlank() }
+                                    .distinct()
+                                    .joinToString(" ")
+                                    .ifBlank { "Unknown" },
+                                Icons.Default.Smartphone
                             )
-                        }
-                    }
-                }
-
-                item {
-                    ExpressiveCard {
-                        Column(Modifier.padding(8.dp)) {
-                            ExpressiveListRow(
-                                "Location settings",
-                                icon = { Icon(Icons.Default.GpsFixed, null) },
-                                trailing = { Icon(Icons.Default.ChevronRight, null) },
-                                onClick = onOpenLocationSettings
-                            )
-                            ExpressiveListRow(
-                                "Battery optimization",
-                                icon = { Icon(Icons.Default.BatterySaver, null) },
-                                trailing = { Icon(Icons.Default.ChevronRight, null) },
-                                onClick = onOpenBatterySettings
-                            )
-                            ExpressiveListRow(
-                                "Share diagnostic report",
-                                icon = { Icon(Icons.Default.Share, null) },
-                                trailing = { Icon(Icons.Default.ChevronRight, null) },
-                                onClick = onShareDiagnostics
-                            )
-                        }
-                    }
-                }
-
-                item { SettingsGroupTitle("App status", "See the storage, map, places, and tracking configuration currently in use.") }
-
-                item {
-                    ExpressiveCard {
-                        Column(Modifier.padding(8.dp)) {
-                            DiagnosticRow("Storage", "Local Room database", Icons.Default.Storage)
-                            DiagnosticRow("Maps", "MapLibre + OpenFreeMap", Icons.Default.Map)
+                            DiagnosticRow("Map engine", "MapLibre", Icons.Default.Map)
+                            DiagnosticRow("Local database", "Room · on-device", Icons.Default.Storage)
                             DiagnosticRow("Saved places", places.size.toString(), Icons.Default.Place)
-                            DiagnosticRow(
-                                "Tracking profile",
-                                trackingAccuracy.name.lowercase().replaceFirstChar { it.uppercase() } + " · " + trackingInterval.label,
-                                Icons.Default.Tune
-                            )
                         }
                     }
                 }
@@ -1562,9 +1567,31 @@ private fun InfoCard(icon: androidx.compose.ui.graphics.vector.ImageVector, titl
 
 @Composable
 private fun DiagnosticRow(title: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
-    ExpressiveListRow(title, icon = { Icon(icon, null) }, trailing = {
-        Text(value, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    })
+    Row(
+        Modifier.fillMaxWidth().padding(vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(22.dp)
+        )
+        Spacer(Modifier.width(14.dp))
+        Text(
+            title,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Spacer(Modifier.width(12.dp))
+        Text(
+            value,
+            modifier = Modifier.weight(1.1f),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.End
+        )
+    }
 }
 
 private fun ThemeChoice.label(): String = when (this) {
