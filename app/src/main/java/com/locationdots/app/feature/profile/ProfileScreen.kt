@@ -67,7 +67,8 @@ fun ProfileScreen(
                     name = profileName,
                     photoUri = profilePhotoUri,
                     isTracking = isTracking,
-                    onEdit = { showEditDialog = true }
+                    onEdit = { showEditDialog = true },
+                    onChangePhoto = onPhotoChange
                 )
             }
 
@@ -177,7 +178,8 @@ private fun ProfileIdentityCard(
     name: String,
     photoUri: String?,
     isTracking: Boolean,
-    onEdit: () -> Unit
+    onEdit: () -> Unit,
+    onChangePhoto: () -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -224,7 +226,7 @@ private fun ProfileIdentityCard(
                     Spacer(Modifier.width(7.dp))
                     Text("Edit profile")
                 }
-                FilledTonalButton(onClick = onEdit, modifier = Modifier.weight(1f), shape = MaterialTheme.shapes.large) {
+                FilledTonalButton(onClick = onChangePhoto, modifier = Modifier.weight(1f), shape = MaterialTheme.shapes.large) {
                     Icon(Icons.Default.CameraAlt, null, Modifier.size(17.dp))
                     Spacer(Modifier.width(7.dp))
                     Text("Profile photo")
