@@ -732,88 +732,38 @@ fun SettingsScreen(
             ) {
                 item {
                     ExpressiveCard(emphasized = true) {
-                        Column(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(18.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        Row(
+                            Modifier.fillMaxWidth().padding(18.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                ExpressiveIconBadge(
-                                    icon = { Icon(Icons.Default.Lock, null) },
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                            ExpressiveIconBadge(
+                                icon = { Icon(Icons.Default.Shield, null) },
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                            Spacer(Modifier.width(14.dp))
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text("Stored on this device", style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    "Your timeline, locations, and saved places stay in the app's local database. No account is required.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Spacer(Modifier.width(14.dp))
-                                Column(Modifier.weight(1f)) {
-                                    Text(
-                                        "Private by design",
-                                        style = MaterialTheme.typography.titleLarge
-                                    )
-                                    Text(
-                                        "Your location history is stored locally on this device.",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
                             }
-                            HorizontalDivider(
-                                color = MaterialTheme.colorScheme.outlineVariant
-                            )
-                            Text(
-                                "No account is required, and Location Dots does not need a cloud history to work.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
                         }
                     }
                 }
 
                 item {
-                    SettingsGroupTitle(
-                        "Your data",
-                        "Manage the information Location Dots keeps on this device."
-                    )
+                    SettingsGroupTitle("Location access")
                 }
 
                 item {
                     ExpressiveCard {
                         Column(Modifier.padding(8.dp)) {
                             ExpressiveListRow(
-                                "Saved places",
-                                "Manage places you have saved",
-                                { Icon(Icons.Default.Place, null) },
-                                trailing = { Icon(Icons.Default.ChevronRight, null) },
-                                onClick = { openSettingsPage(SettingsPage.SAVED_PLACES) }
-                            )
-                            ExpressiveListRow(
-                                "Export & backup",
-                                "Create or restore a local JSON backup",
-                                { Icon(Icons.Default.FileUpload, null) },
-                                trailing = { Icon(Icons.Default.ChevronRight, null) },
-                                onClick = { openSettingsPage(SettingsPage.EXPORT_BACKUP) }
-                            )
-                        }
-                    }
-                }
-
-                item {
-                    SettingsGroupTitle(
-                        "Location access",
-                        "Review the Android access Location Dots uses for location tracking."
-                    )
-                }
-
-                item {
-                    ExpressiveCard {
-                        Column(Modifier.padding(8.dp)) {
-                            ExpressiveListRow(
-                                "Location permission",
-                                if (locationPermissionGranted) {
-                                    "Allowed"
-                                } else {
-                                    "Permission required"
-                                },
-                                { Icon(Icons.Default.LocationOn, null) },
+                                title = "Location permission",
+                                subtitle = if (locationPermissionGranted) "Allowed by Android" else "Required to record new locations",
+                                icon = { Icon(Icons.Default.LocationOn, null) },
                                 trailing = {
                                     if (locationPermissionGranted) {
                                         Icon(
@@ -822,17 +772,19 @@ fun SettingsScreen(
                                             tint = MaterialTheme.colorScheme.primary
                                         )
                                     } else {
-                                        TextButton(onClick = onRequestLocationPermission) {
-                                            Text("Allow")
-                                        }
+                                        TextButton(onClick = onRequestLocationPermission) { Text("Allow") }
                                     }
                                 },
                                 onClick = if (locationPermissionGranted) null else onRequestLocationPermission
                             )
+                            HorizontalDivider(
+                                Modifier.padding(horizontal = 14.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant
+                            )
                             ExpressiveListRow(
-                                "Android location settings",
-                                "Device-level location services",
-                                { Icon(Icons.Default.GpsFixed, null) },
+                                title = "Device location services",
+                                subtitle = "Open Android location settings",
+                                icon = { Icon(Icons.Default.GpsFixed, null) },
                                 trailing = { Icon(Icons.Default.ChevronRight, null) },
                                 onClick = onOpenLocationSettings
                             )
@@ -841,23 +793,36 @@ fun SettingsScreen(
                 }
 
                 item {
-                    SettingsGroupTitle(
-                        "Danger zone",
-                        "Permanent actions that remove local data from this device."
-                    )
+                    SettingsGroupTitle("Data management")
                 }
 
                 item {
                     ExpressiveCard {
                         ExpressiveListRow(
-                            "Delete all local data",
-                            "Locations, timeline events, and saved places",
-                            { Icon(Icons.Default.DeleteForever, null) },
+                            title = "Export & backup",
+                            subtitle = "Export a JSON backup or restore one",
+                            icon = { Icon(Icons.Default.FolderZip, null) },
+                            trailing = { Icon(Icons.Default.ChevronRight, null) },
+                            onClick = { openSettingsPage(SettingsPage.EXPORT_BACKUP) }
+                        )
+                    }
+                }
+
+                item {
+                    SettingsGroupTitle("Permanent actions")
+                }
+
+                item {
+                    ExpressiveCard {
+                        ExpressiveListRow(
+                            title = "Delete all local data",
+                            subtitle = "Remove locations, timeline events, and saved places",
+                            icon = { Icon(Icons.Default.DeleteForever, null) },
                             trailing = {
-                                Text(
-                                    "Delete",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.error
+                                Icon(
+                                    Icons.Default.ChevronRight,
+                                    null,
+                                    tint = MaterialTheme.colorScheme.error
                                 )
                             },
                             onClick = { showClearDialog = true }
