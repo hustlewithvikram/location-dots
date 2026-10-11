@@ -154,7 +154,6 @@ fun SettingsScreen(
     onRequestCurrentLocation: ((onLocation: (Double, Double) -> Unit) -> Unit)
 ) {
 
-    val updatesToastContext = androidx.compose.ui.platform.LocalContext.current
     var page by rememberSaveable { mutableStateOf(SettingsPage.HOME) }
     var settingsNavigationDirection by remember { mutableStateOf(NavigationDirection.FORWARD) }
     var showClearDialog by remember { mutableStateOf(false) }
@@ -1304,6 +1303,7 @@ private fun SettingsHome(
     onAbout: () -> Unit,
     onTrackingChange: (Boolean) -> Unit
 ) {
+    val updatesToastContext = androidx.compose.ui.platform.LocalContext.current
     LazyColumn(
         modifier = modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(18.dp, 10.dp, 18.dp, 112.dp),
