@@ -100,13 +100,33 @@ jobs:
           ls -lh app/build/outputs/apk/release/app-release.apk
           ls -lh app/build/outputs/bundle/release/app-release.aab
 
+      - name: Prepare release update manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          cp app/build/outputs/apk/release/app-release.apk release-assets/location-dots-release.apk
+          cp app/build/outputs/bundle/release/app-release.aab release-assets/location-dots-release.aab
+          SHA256=$(sha256sum release-assets/location-dots-release.apk | cut -d ' ' -f 1)
+          cat > release-assets/update.json <<EOF
+          {
+            "channel": "release",
+            "versionName": "${{ inputs.version_name }}",
+            "versionCode": ${{ inputs.version_code }},
+            "commit": "${{ github.sha }}",
+            "apk": "location-dots-release.apk",
+            "sha256": "$SHA256"
+          }
+          EOF
+
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
           name: location-dots-${{ inputs.version_name }}
           path: |
-            app/build/outputs/apk/release/app-release.apk
-            app/build/outputs/bundle/release/app-release.aab
+            release-assets/location-dots-release.apk
+            release-assets/location-dots-release.aab
+            release-assets/update.json
           if-no-files-found: error
           retention-days: 30
 
