@@ -1417,7 +1417,7 @@ private fun SettingsHome(
                                 VerticalDivider(Modifier.height(38.dp), color = MaterialTheme.colorScheme.outlineVariant)
                                 Spacer(Modifier.width(8.dp))
                                 IconButton(onClick = {
-                                    Toast.makeText(context, "Open Updates to check and download the latest build.", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(androidx.compose.ui.platform.LocalContext.current, "Open Updates to check and download the latest build.", Toast.LENGTH_SHORT).show()
                                 }) {
                                     Icon(Icons.Default.Refresh, "Check for updates")
                                 }
