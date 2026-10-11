@@ -1,7 +1,15 @@
 package com.locationdots.app.feature.settings
 
 import android.content.Intent
+import android.app.AlertDialog as PlatformAlertDialog
 import androidx.activity.compose.BackHandler
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.ui.graphics.StrokeCap
@@ -143,6 +151,7 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
         downloadedApk?.delete()
         downloadedApk = null
         cachedApkVersionCode = null
+        showInstallDialog = false
         message = if (updateAvailable) "Downloaded APK discarded. You can download it again." else "Downloaded APK discarded."
     }
     fun openInstaller(file: File) {
@@ -153,16 +162,28 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
                 message = "The downloaded APK is no longer available. Download it again."
                 return
             }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                !context.packageManager.canRequestPackageInstalls()
+            ) {
+                message = "Allow Location Dots to install APKs, then tap Install again."
+                context.startActivity(Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                    data = android.net.Uri.parse("package:${context.packageName}")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                })
+                return
+            }
             val uri = FileProvider.getUriForFile(context, context.packageName + ".fileprovider", file)
-            val intent = Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
-                data = uri
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/vnd.android.package-archive")
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, false)
-                putExtra(Intent.EXTRA_RETURN_RESULT, false)
+            }
+            if (intent.resolveActivity(context.packageManager) == null) {
+                message = "No Android package installer is available on this device."
+                return
             }
             context.startActivity(intent)
         } catch (error: Exception) {
-            message = "Could not open Android's package installer. Check that installing unknown apps is allowed for Location Dots."
+            message = "Could not launch Android's installer: ${error.localizedMessage ?: "unknown error"}"
         }
     }
     fun downloadUpdate() {
@@ -219,6 +240,8 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
                 cachedApkVersionCode = versionCode
                 progress = 1f
                 message = "Download verified. Ready to install ${latestVersion ?: "update"}."
+                showInstallDialog = true
+                postInstallNotification(apkFile, latestVersion ?: "update", context)
             } catch (error: CancellationException) {
                 partial.delete()
                 message = "Download cancelled."
@@ -235,6 +258,28 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
     }
     LaunchedEffect(Unit) { checkForUpdates() }
     BackHandler(onBack = onBack)
+
+    LaunchedEffect(downloadedApk, cachedApkVersionCode, latestVersionCode) {
+        if (downloadedApk?.isFile == true && cachedApkVersionCode == latestVersionCode) {
+            showInstallDialog = true
+        }
+    }
+
+    if (showInstallDialog && downloadedApk?.isFile == true && cachedApkVersionCode == latestVersionCode) {
+        AlertDialog(
+            onDismissRequest = { showInstallDialog = false },
+            icon = { Icon(Icons.Default.SystemUpdate, null) },
+            title = { Text("Update ready to install") },
+            text = { Text("Location Dots ${latestVersion ?: ""} has been downloaded and verified. Install it now?") },
+            confirmButton = {
+                Button(onClick = {
+                    showInstallDialog = false
+                    downloadedApk?.let(::openInstaller)
+                }) { Text("Install") }
+            },
+            dismissButton = { TextButton(onClick = { showInstallDialog = false }) { Text("Later") } }
+        )
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing),
@@ -336,50 +381,44 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
         }
         item {
             ExpressiveCard {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Update details", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        if (updateChannel == "debug") "Development channel · GitHub Actions" else "Stable channel · GitHub Releases",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Text("Version details", style = MaterialTheme.typography.titleMedium)
                     val installedInfo = remember { runCatching { context.packageManager.getPackageInfo(context.packageName, 0) }.getOrNull() }
                     val installedCode = installedInfo?.let {
                         @Suppress("DEPRECATION")
-                        if (android.os.Build.VERSION.SDK_INT >= 28) it.longVersionCode else it.versionCode.toLong()
+                        if (Build.VERSION.SDK_INT >= 28) it.longVersionCode else it.versionCode.toLong()
                     } ?: -1L
-                    ExpressiveListRow(
-                        "Installed APK",
-                        "${installedVersion(context)} · version code $installedCode",
-                        { Icon(Icons.Default.PhoneAndroid, null) },
-                        trailing = { }
-                    )
-                    ExpressiveListRow(
-                        "Update channel",
-                        if (updateChannel == "debug") "Debug / development" else "Release / stable",
-                        { Icon(Icons.Default.AccountTree, null) },
-                        trailing = { }
-                    )
-                    if (latestVersion != null) {
-                        ExpressiveListRow(
-                            if (updateChannel == "debug") "Latest debug build" else "Latest release",
-                            "${latestVersion!!} · version code ${latestVersionCode ?: "—"}",
-                            { Icon(Icons.Default.NewReleases, null) },
-                            trailing = { }
-                        )
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Column(Modifier.weight(1f)) {
+                            Text("INSTALLED", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(installedVersion(context), style = MaterialTheme.typography.titleMedium)
+                            Text("Code $installedCode", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Column(Modifier.weight(1f)) {
+                            Text("LATEST", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(latestVersion ?: "Not checked", style = MaterialTheme.typography.titleMedium)
+                            Text("Code ${latestVersionCode ?: "—"}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
-                    if (latestCommit != null) {
-                        ExpressiveListRow("Published commit", latestCommit!!.take(10), { Icon(Icons.Default.Commit, null) }, trailing = { })
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.AccountTree, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.width(10.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Update channel", style = MaterialTheme.typography.bodyMedium)
+                            Text(if (updateChannel == "debug") "Development" else "Stable", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
-                    if (latestRun != null && updateChannel == "debug") {
-                        ExpressiveListRow("Workflow run", "#$latestRun", { Icon(Icons.Default.Terminal, null) }, trailing = { })
+                    if (latestCommit != null && updateChannel == "debug") {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Commit, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(Modifier.width(10.dp))
+                            Column {
+                                Text("Source commit", style = MaterialTheme.typography.bodyMedium)
+                                Text(latestCommit!!.take(10), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
                     }
-                    ExpressiveListRow("Package", context.packageName, { Icon(Icons.Default.Apps, null) }, trailing = { })
-                    Text(
-                        "Updates follow the installed build channel. Downloads are verified before Android is asked to install them.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
             }
         }
@@ -413,4 +452,38 @@ private fun compareVersions(first: String, second: String): Int {
         if (comparison != 0) return comparison
     }
     return 0
+}
+
+
+private fun postInstallNotification(file: File, version: String, context: Context) {
+    runCatching {
+        val channelId = "app_updates"
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            manager.createNotificationChannel(
+                NotificationChannel(channelId, "App updates", NotificationManager.IMPORTANCE_HIGH).apply {
+                    description = "Installation prompt when an update has finished downloading"
+                }
+            )
+        }
+        val uri = FileProvider.getUriForFile(context, context.packageName + ".fileprovider", file)
+        val installIntent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/vnd.android.package-archive")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context, 7401, installIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val notification = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+            .setContentTitle("Location Dots update ready")
+            .setContentText("Version $version is downloaded and verified. Tap to install.")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("Version $version is downloaded and verified. Tap to open Android's installer."))
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .build()
+        NotificationManagerCompat.from(context).notify(7401, notification)
+    }
 }
