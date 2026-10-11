@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import com.locationdots.app.BuildConfig
 import com.locationdots.app.ui.components.ExpressiveCard
 import com.locationdots.app.ui.components.ExpressiveIconBadge
 import com.locationdots.app.ui.components.ExpressiveListRow
@@ -22,8 +23,9 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
 import java.net.URL
+import java.security.MessageDigest
 
-private const val LATEST_RELEASE_URL = "https://api.github.com/repos/hustlewithvikram/location-dots/releases/latest"
+private const val RELEASES_API = "https://api.github.com/repos/hustlewithvikram/location-dots/releases"
 
 @Composable
 fun UpdatesSettingsPage(onBack: () -> Unit) {
@@ -35,59 +37,75 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
     var updateAvailable by remember { mutableStateOf(false) }
     var latestVersion by remember { mutableStateOf<String?>(null) }
     var apkUrl by remember { mutableStateOf<String?>(null) }
+    var expectedSha256 by remember { mutableStateOf<String?>(null) }
+    val updateChannel = BuildConfig.UPDATE_CHANNEL
     var message by remember { mutableStateOf("Check whether a newer version is available.") }
 
     fun checkForUpdates() {
         if (checking || downloading) return
         checking = true
-        message = "Checking for updates…"
+        updateAvailable = false
+        apkUrl = null
+        message = "Checking the ${updateChannel} update channel…"
         scope.launch {
             try {
-                val release = withContext(Dispatchers.IO) {
-                    val connection = URL(LATEST_RELEASE_URL).openConnection()
+                val metadata = withContext(Dispatchers.IO) {
+                    val endpoint = if (updateChannel == "debug") "${RELEASES_API}/tags/debug-latest" else "${RELEASES_API}/latest"
+                    val connection = URL(endpoint).openConnection()
                     connection.connectTimeout = 10000
                     connection.readTimeout = 10000
                     connection.setRequestProperty("Accept", "application/vnd.github+json")
-                    JSONObject(connection.getInputStream().bufferedReader().use { it.readText() })
-                }
-                val tag = release.optString("tag_name").removePrefix("v")
-                @Suppress("DEPRECATION")
-                val current = context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0"
-                val assets = release.optJSONArray("assets")
-                var foundApk: String? = null
-                if (assets != null) {
+                    val release = JSONObject(connection.getInputStream().bufferedReader().use { it.readText() })
+                    val assets = release.optJSONArray("assets") ?: throw IllegalStateException("Release has no assets")
+                    var metadataUrl: String? = null
+                    var apkAssetUrl: String? = null
                     for (index in 0 until assets.length()) {
                         val asset = assets.optJSONObject(index) ?: continue
-                        if (asset.optString("name").endsWith(".apk", true)) {
-                            foundApk = asset.optString("browser_download_url").takeIf { it.startsWith("https://") }
-                            if (foundApk != null) break
+                        when (asset.optString("name")) {
+                            "update.json" -> metadataUrl = asset.optString("browser_download_url")
+                            "app-debug.apk", "location-dots-release.apk" -> apkAssetUrl = asset.optString("browser_download_url")
                         }
                     }
+                    val url = metadataUrl ?: throw IllegalStateException("Update manifest is missing")
+                    val dataConnection = URL(url).openConnection()
+                    dataConnection.connectTimeout = 10000
+                    dataConnection.readTimeout = 10000
+                    val data = JSONObject(dataConnection.getInputStream().bufferedReader().use { it.readText() })
+                    val wantedName = data.optString("apk")
+                    val download = (0 until assets.length()).mapNotNull { assets.optJSONObject(it) }
+                        .firstOrNull { it.optString("name") == wantedName }?.optString("browser_download_url")
+                        ?.takeIf { it.startsWith("https://") } ?: apkAssetUrl
+                        ?: throw IllegalStateException("APK asset is missing")
+                    data.put("_downloadUrl", download)
+                    data
                 }
-                val newer = compareVersions(tag, current) > 0
-                latestVersion = tag
-                apkUrl = foundApk
-                updateAvailable = newer && foundApk != null
+                if (metadata.optString("channel") != updateChannel) throw IllegalStateException("Wrong update channel")
+                val info = context.packageManager.getPackageInfo(context.packageName, 0)
+                @Suppress("DEPRECATION")
+                val currentCode = if (android.os.Build.VERSION.SDK_INT >= 28) info.longVersionCode else info.versionCode.toLong()
+                val candidateCode = metadata.optLong("versionCode", -1L)
+                val candidateName = metadata.optString("versionName", "Unknown")
+                if (candidateCode <= 0L) throw IllegalStateException("Invalid version metadata")
+                latestVersion = candidateName
+                expectedSha256 = metadata.optString("sha256").takeIf { it.matches(Regex("[a-fA-F0-9]{64}")) }
+                apkUrl = metadata.optString("_downloadUrl").takeIf { it.startsWith("https://") }
+                updateAvailable = candidateCode > currentCode && apkUrl != null && expectedSha256 != null
                 message = when {
-                    newer && foundApk == null -> "Version $tag is published, but its APK is not attached yet."
-                    updateAvailable -> "Version $tag is ready to download."
-                    else -> "You're using the latest version ($current)."
+                    candidateCode <= currentCode -> "You are using the latest ${updateChannel} build (${installedVersion(context)})."
+                    apkUrl == null -> "A newer build exists, but its APK is missing."
+                    expectedSha256 == null -> "Update metadata is incomplete. Download blocked for safety."
+                    updateAvailable -> "Version ${candidateName} is available on the ${updateChannel} channel."
+                    else -> "No compatible update is available."
                 }
             } catch (error: Exception) {
                 updateAvailable = false
-                message = if (error.message?.contains("404") == true) {
-                    "No published release was found yet."
-                } else {
-                    "Couldn't check for updates. Check your connection and try again."
-                }
-            } finally {
-                checking = false
-            }
+                message = if (error.message?.contains("404") == true) "No published ${updateChannel} update was found." else "Could not check for updates. Check your connection and try again."
+            } finally { checking = false }
         }
     }
-
     fun downloadUpdate() {
         val url = apkUrl ?: return
+        val expectedHash = expectedSha256 ?: return
         if (downloading) return
         downloading = true
         progress = 0f
@@ -100,22 +118,22 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
                     connection.readTimeout = 30000
                     val total = connection.contentLengthLong
                     val target = File(context.cacheDir, "location-dots-update.apk")
-                    connection.getInputStream().use { input ->
-                        target.outputStream().use { output ->
-                            val buffer = ByteArray(8192)
-                            var received = 0L
-                            while (true) {
-                                val count = input.read(buffer)
-                                if (count < 0) break
-                                output.write(buffer, 0, count)
-                                received += count
-                                if (total > 0) {
-                                    val value = (received.toFloat() / total).coerceIn(0f, 1f)
-                                    withContext(Dispatchers.Main) { progress = value }
-                                }
+                    connection.getInputStream().use { input -> target.outputStream().use { output ->
+                        val buffer = ByteArray(8192)
+                        var received = 0L
+                        while (true) {
+                            val count = input.read(buffer)
+                            if (count < 0) break
+                            output.write(buffer, 0, count)
+                            received += count
+                            if (total > 0) {
+                                val value = (received.toFloat() / total).coerceIn(0f, 1f)
+                                withContext(Dispatchers.Main) { progress = value }
                             }
                         }
-                    }
+                    } }
+                    val hash = MessageDigest.getInstance("SHA-256").digest(target.readBytes()).joinToString("") { "%02x".format(it) }
+                    if (!hash.equals(expectedHash, true)) { target.delete(); throw IllegalStateException("checksum mismatch") }
                     target
                 }
                 val uri = FileProvider.getUriForFile(context, context.packageName + ".fileprovider", apkFile)
@@ -124,15 +142,12 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
                 context.startActivity(intent)
-                message = "Download complete. Follow Android's installer to update."
+                message = "Download verified. Follow Android installer to update."
             } catch (error: Exception) {
-                message = "Couldn't download the update. Please try again."
-            } finally {
-                downloading = false
-            }
+                message = if (error.message?.contains("checksum", true) == true) "The downloaded APK failed verification and was discarded." else "Could not download the update. Please try again."
+            } finally { downloading = false }
         }
     }
-
     LaunchedEffect(Unit) { checkForUpdates() }
     BackHandler(onBack = onBack)
 
@@ -177,7 +192,7 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
                                     downloading -> "Downloading update"
                                     checking -> "Checking for updates"
                                     updateAvailable -> "Update available"
-                                    else -> "Software updates"
+                                    else -> if (updateChannel == "debug") "Development updates" else "Stable updates"
                                 },
                                 style = MaterialTheme.typography.titleMedium
                             )
@@ -226,14 +241,14 @@ fun UpdatesSettingsPage(onBack: () -> Unit) {
                     )
                     if (latestVersion != null) {
                         ExpressiveListRow(
-                            "Latest release",
+                            if (updateChannel == "debug") "Latest debug build" else "Latest release",
                             latestVersion!!,
                             { Icon(Icons.Default.NewReleases, null) },
                             trailing = { }
                         )
                     }
                     Text(
-                        "Updates are checked against published GitHub releases. Android will ask you to confirm installation after the APK downloads.",
+                        "Updates follow the installed build channel. Downloads are verified before Android is asked to install them.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
