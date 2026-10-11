@@ -774,7 +774,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun exportLocalData() {
+    private fun exportLocalData(selectedSections: Set<BackupSection>) {
         val app = application as LocationDotsApplication
         lifecycleScope.launch {
             val json = withContext(Dispatchers.Default) {
@@ -785,7 +785,10 @@ class MainActivity : ComponentActivity() {
                     put("format", "location-dots-local-export")
                     put("version", 1)
                     put("generatedAtEpochMillis", System.currentTimeMillis())
-                    put("locations", JSONArray().apply {
+                    put("includedSections", JSONArray().apply {
+                        selectedSections.forEach { put(it.name.lowercase()) }
+                    })
+                    if (BackupSection.LOCATIONS in selectedSections) put("locations", JSONArray().apply {
                         locations.forEach {
                             put(JSONObject().apply {
                                 put("id", it.id)
@@ -796,7 +799,7 @@ class MainActivity : ComponentActivity() {
                             })
                         }
                     })
-                    put("places", JSONArray().apply {
+                    if (BackupSection.PLACES in selectedSections) put("places", JSONArray().apply {
                         places.forEach {
                             put(JSONObject().apply {
                                 put("id", it.id)
@@ -808,7 +811,7 @@ class MainActivity : ComponentActivity() {
                             })
                         }
                     })
-                    put("timelineEvents", JSONArray().apply {
+                    if (BackupSection.TIMELINE in selectedSections) put("timelineEvents", JSONArray().apply {
                         events.forEach {
                             put(JSONObject().apply {
                                 put("id", it.id)
@@ -828,6 +831,10 @@ class MainActivity : ComponentActivity() {
                         }
                     })
                 }.toString(2)
+            }
+            if (selectedSections.isEmpty()) {
+                withContext(Dispatchers.Main) { importError = "Select at least one data type to export." }
+                return@launch
             }
             pendingExportJson = json
             exportBackupLauncher.launch(
@@ -849,7 +856,10 @@ class MainActivity : ComponentActivity() {
             locations = root.optJSONArray("locations")?.length() ?: 0,
             places = root.optJSONArray("places")?.length() ?: 0,
             timelineEvents = root.optJSONArray("timelineEvents")?.length() ?: 0,
-            generatedAtEpochMillis = root.optLong("generatedAtEpochMillis", 0L)
+            generatedAtEpochMillis = root.optLong("generatedAtEpochMillis", 0L),
+            includesLocations = root.has("locations"),
+            includesPlaces = root.has("places"),
+            includesTimeline = root.has("timelineEvents")
         )
     }
 
@@ -869,14 +879,15 @@ class MainActivity : ComponentActivity() {
             val events = parseTimelineEvents(root.optJSONArray("timelineEvents"))
 
             app.database.withTransaction {
+                // Partial backups only replace the sections they actually contain.
                 if (replaceExisting) {
-                    app.database.locationDao().deleteAll()
-                    app.database.placeDao().deleteAll()
-                    app.database.timelineEventDao().deleteAll()
+                    if (root.has("locations")) app.database.locationDao().deleteAll()
+                    if (root.has("places")) app.database.placeDao().deleteAll()
+                    if (root.has("timelineEvents")) app.database.timelineEventDao().deleteAll()
                 }
-                app.database.locationDao().insertAll(locations)
-                app.database.placeDao().insertAll(places)
-                app.database.timelineEventDao().insertAll(events)
+                if (root.has("locations")) app.database.locationDao().insertAll(locations)
+                if (root.has("places")) app.database.placeDao().insertAll(places)
+                if (root.has("timelineEvents")) app.database.timelineEventDao().insertAll(events)
             }
         }.onSuccess {
             importLoading = false
@@ -999,15 +1010,22 @@ class MainActivity : ComponentActivity() {
 
     private fun exportSummary(snapshot: com.locationdots.app.domain.insights.InsightsSnapshot) {
         val text = buildString {
-            appendLine("Location Dots — activity summary")
+            appendLine("LOCATION DOTS")
+            appendLine("PERSONAL ACTIVITY SUMMARY")
+            appendLine("==========================")
             appendLine()
-            appendLine("Places: " + snapshot.totalPlaces)
-            appendLine("Visits: " + snapshot.totalVisits)
+            appendLine("PLACES & VISITS")
+            appendLine("Saved places: " + snapshot.totalPlaces)
+            appendLine("Recorded visits: " + snapshot.totalVisits)
             appendLine("Journeys: " + snapshot.journeyCount)
-            appendLine("Distance: " + snapshot.totalDistanceMeters.toInt() + " m")
-            appendLine("Time: " + snapshot.totalTimeMinutes + " min")
             appendLine()
-            appendLine("Generated locally on this device.")
+            appendLine("TRAVEL")
+            appendLine("Total distance: " + formatDistanceForSummary(snapshot.totalDistanceMeters))
+            appendLine("Time in activity: " + formatDurationForSummary(snapshot.totalTimeMinutes))
+            appendLine()
+            appendLine("--------------------------")
+            appendLine("Generated on " + SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()).format(Date()))
+            appendLine("Summarized locally by Location Dots.")
         }
         startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
