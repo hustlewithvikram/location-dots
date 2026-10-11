@@ -12,7 +12,7 @@
     <path android:fillColor="#C6EFB6" android:pathData="M110,50 C96,46 87,53 78,59 C71,63 65,69 60,75 C56,80 57,84 62,87 C68,91 75,89 80,85 C89,77 98,76 110,78Z" />
     <path android:fillColor="#8DDD89" android:pathData="M110,61 C97,58 88,65 80,70 C73,75 69,79 70,84 C72,89 78,89 84,85 C93,78 100,78 110,81Z" />
     <path android:fillColor="#52C7F5" android:pathData="M110,70 C98,69 91,74 84,79 C78,84 75,88 76,93 C78,98 83,98 88,95 C96,90 102,89 110,90Z" />
-    <path android:fillColor="#FFFFFF" android:pathData="M32,76 L59,55 L84,33" android:strokeColor="#FFFFFF" android:strokeWidth="5" android:strokeLineCap="round" android:strokeLineJoin="round" />
+    <path android:fillColor="#00000000" android:pathData="M32,76 L59,55 L84,33" android:strokeColor="#FFFFFF" android:strokeWidth="5" android:strokeLineCap="round" android:strokeLineJoin="round" />
     <path android:fillColor="#00000000" android:pathData="M32,76 L59,55 L84,33" android:strokeColor="#6AA8FF" android:strokeWidth="2.6" android:strokeLineCap="round" android:strokeLineJoin="round" />
     <path android:fillColor="#086BFA" android:pathData="M32,70 A6,6 0,1 0,32 82 A6,6 0,1 0,32 70" />
     <path android:fillColor="#086BFA" android:pathData="M59,50 A5,5 0,1 0,59 60 A5,5 0,1 0,59 50" />
