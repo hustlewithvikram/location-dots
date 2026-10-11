@@ -1,8 +1,5 @@
 package com.locationdots.app.feature.profile
 
-import android.graphics.BitmapFactory
-import android.net.Uri
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -21,14 +18,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.locationdots.app.domain.model.TimelineEvent
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.locationdots.app.ui.components.ProfileAvatar
 
 @Composable
 fun ProfileScreen(
@@ -112,7 +104,7 @@ fun ProfileScreen(
                     icon = Icons.Default.Lock,
                     title = "Private by design",
                     value = "Stored on this device",
-                    description = "Your profile and location history stay local. No account is required."
+                    description = "Your profile and location history are stored on this device. No account is required."
                 )
             }
 
@@ -193,84 +185,50 @@ private fun ProfileIdentityCard(
         color = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
         Column(
-            Modifier.fillMaxWidth().padding(22.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            Modifier.fillMaxWidth().padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Box {
-                ProfileAvatar(photoUri = photoUri, name = name, modifier = Modifier.size(108.dp))
-                FilledTonalIconButton(
-                    onClick = onEdit,
-                    modifier = Modifier.align(Alignment.BottomEnd).size(40.dp)
-                ) {
-                    Icon(Icons.Default.Edit, "Edit profile", Modifier.size(18.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Box {
+                    ProfileAvatar(photoUri = photoUri, name = name, modifier = Modifier.size(88.dp))
+                    Surface(
+                        modifier = Modifier.align(Alignment.BottomEnd).size(30.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        onClick = onEdit
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(Icons.Default.Edit, "Edit profile", Modifier.size(15.dp))
+                        }
+                    }
+                }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Text(name.ifBlank { "Your name" }, style = MaterialTheme.typography.headlineSmall, maxLines = 2)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                        Surface(
+                            shape = CircleShape,
+                            color = if (isTracking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                        ) { Spacer(Modifier.size(7.dp)) }
+                        Text(if (isTracking) "Tracking active" else "Tracking paused",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Text("Your personal location journal", style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-
-            Spacer(Modifier.height(14.dp))
-            Text(
-                name.ifBlank { "Your name" },
-                style = MaterialTheme.typography.headlineSmall
-            )
-            Text(
-                if (isTracking) "Tracking is active" else "Tracking is paused",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(Modifier.height(16.dp))
-            Button(
-                onClick = onEdit,
-                modifier = Modifier.fillMaxWidth().height(48.dp),
-                shape = MaterialTheme.shapes.large
-            ) {
-                Icon(Icons.Default.Edit, null, Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Edit profile")
-            }
-        }
-    }
-}
-
-@Composable
-private fun ProfileAvatar(
-    photoUri: String?,
-    name: String,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-    val bitmap by produceState<android.graphics.Bitmap?>(initialValue = null, photoUri) {
-        value = if (photoUri.isNullOrBlank()) {
-            null
-        } else {
-            withContext(Dispatchers.IO) {
-                runCatching {
-                    context.contentResolver.openInputStream(Uri.parse(photoUri))?.use {
-                        BitmapFactory.decodeStream(it)
-                    }
-                }.getOrNull()
-            }
-        }
-    }
-
-    Surface(
-        modifier = modifier.clip(CircleShape),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.primaryContainer
-    ) {
-        if (bitmap != null) {
-            Image(
-                bitmap = bitmap!!.asImageBitmap(),
-                contentDescription = "Profile photo",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    name.trim().firstOrNull()?.uppercase() ?: "L",
-                    style = MaterialTheme.typography.displaySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(onClick = onEdit, modifier = Modifier.weight(1f), shape = MaterialTheme.shapes.large) {
+                    Icon(Icons.Default.Edit, null, Modifier.size(17.dp))
+                    Spacer(Modifier.width(7.dp))
+                    Text("Edit profile")
+                }
+                FilledTonalButton(onClick = onEdit, modifier = Modifier.weight(1f), shape = MaterialTheme.shapes.large) {
+                    Icon(Icons.Default.CameraAlt, null, Modifier.size(17.dp))
+                    Spacer(Modifier.width(7.dp))
+                    Text("Profile photo")
+                }
             }
         }
     }
