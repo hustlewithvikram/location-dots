@@ -11,6 +11,8 @@ A privacy-focused Android app that quietly records where you go and turns your d
 [![Material 3](https://img.shields.io/badge/Material%203-6750A4)](https://m3.material.io/)
 [![Status](https://img.shields.io/badge/Status-Pre--release-3F51B5)](#status)
 
+<img src="assets/location-dots-app-icon.svg" alt="Location Dots app icon" width="180" />
+
 <img src="assets/location-dots-hero-banner.svg" alt="Location Dots" width="100%" />
 
 </div>
