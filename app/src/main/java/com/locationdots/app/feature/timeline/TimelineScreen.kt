@@ -49,6 +49,8 @@ fun TimelineScreen(
     onJourneyClick: (String) -> Unit,
     onSearchClick: () -> Unit,
     onProfileClick: () -> Unit,
+    profileName: String,
+    profilePhotoUri: String?,
     actionButton: com.locationdots.app.feature.settings.ActionButton,
     themeChoice: com.locationdots.app.feature.settings.ThemeChoice,
     onActionButtonClick: () -> Unit,
@@ -84,6 +86,8 @@ fun TimelineScreen(
                         isTracking = isTracking,
                         onSearchClick = onSearchClick,
                         onProfileClick = onProfileClick,
+                        profileName = profileName,
+                        profilePhotoUri = profilePhotoUri,
                         actionButton = actionButton,
                         themeChoice = themeChoice,
                         onActionButtonClick = {
@@ -292,10 +296,14 @@ private fun TodayCard(
                 Icon(Icons.Default.Search, "Search your timeline")
             }
             Spacer(Modifier.width(6.dp))
-            FilledTonalIconButton(
+            Surface(
                 onClick = onProfileClick,
+                modifier = Modifier.size(44.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
             ) {
-                Icon(Icons.Default.Person, "Open profile")
+                ProfileAvatar(photoUri = profilePhotoUri, name = profileName, modifier = Modifier.fillMaxSize())
             }
         }
 
