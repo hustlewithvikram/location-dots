@@ -1181,7 +1181,7 @@ fun SettingsScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
-                        "Location Dots found the following data in this backup.",
+                        "Review the data types in this backup before choosing how to restore them.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1195,13 +1195,13 @@ fun SettingsScreen(
                             Modifier.padding(14.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            ImportStatRow("Places", importPreview.places)
-                            ImportStatRow("Locations", importPreview.locations)
-                            ImportStatRow("Timeline events", importPreview.timelineEvents)
+                            if (importPreview.includesPlaces) ImportStatRow("Saved places", importPreview.places)
+                            if (importPreview.includesLocations) ImportStatRow("Location history", importPreview.locations)
+                            if (importPreview.includesTimeline) ImportStatRow("Timeline & journeys", importPreview.timelineEvents)
                         }
                     }
                     Text(
-                        "Replace all removes the current local history before importing. Merge keeps existing data and adds the backup.",
+                        "Merge adds the included records while keeping current data. Replace included data clears only the matching sections present in this backup; sections not included are left untouched.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1212,7 +1212,7 @@ fun SettingsScreen(
                     onClick = { onConfirmImport(importPreview, true) },
                     enabled = !importLoading
                 ) {
-                    Text("Replace all")
+                    Text("Replace included data")
                 }
             },
             dismissButton = {
