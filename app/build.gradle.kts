@@ -60,6 +60,7 @@ extensions.configure<ApplicationExtension> {
 
     buildTypes {
         getByName("debug") {
+            buildConfigField("String", "UPDATE_CHANNEL", "\"debug\"")
             // CI debug artifacts use the stable release signer when configured so
             // successive GitHub builds can update an existing installation.
             if (hasReleaseSigning) {
@@ -68,6 +69,7 @@ extensions.configure<ApplicationExtension> {
         }
 
         getByName("release") {
+            buildConfigField("String", "UPDATE_CHANNEL", "\"release\"")
             isMinifyEnabled = true
             isShrinkResources = true
             if (hasReleaseSigning) {
@@ -81,14 +83,6 @@ extensions.configure<ApplicationExtension> {
         buildConfig = true
     }
 
-    buildTypes {
-        getByName("debug") {
-            buildConfigField("String", "UPDATE_CHANNEL", "\"debug\"")
-        }
-        getByName("release") {
-            buildConfigField("String", "UPDATE_CHANNEL", "\"release\"")
-        }
-    }
 
     packaging {
         resources {
