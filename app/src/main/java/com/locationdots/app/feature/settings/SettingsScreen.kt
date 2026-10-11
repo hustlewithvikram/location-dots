@@ -154,6 +154,7 @@ fun SettingsScreen(
     onRequestCurrentLocation: ((onLocation: (Double, Double) -> Unit) -> Unit)
 ) {
 
+    val updatesToastContext = androidx.compose.ui.platform.LocalContext.current
     var page by rememberSaveable { mutableStateOf(SettingsPage.HOME) }
     var settingsNavigationDirection by remember { mutableStateOf(NavigationDirection.FORWARD) }
     var showClearDialog by remember { mutableStateOf(false) }
@@ -1417,7 +1418,7 @@ private fun SettingsHome(
                                 VerticalDivider(Modifier.height(38.dp), color = MaterialTheme.colorScheme.outlineVariant)
                                 Spacer(Modifier.width(8.dp))
                                 IconButton(onClick = {
-                                    Toast.makeText(androidx.compose.ui.platform.LocalContext.current, "Open Updates to check and download the latest build.", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(updatesToastContext, "Open Updates to check and download the latest build.", Toast.LENGTH_SHORT).show()
                                 }) {
                                     Icon(Icons.Default.Refresh, "Check for updates")
                                 }
