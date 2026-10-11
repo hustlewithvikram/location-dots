@@ -78,6 +78,16 @@ extensions.configure<ApplicationExtension> {
 
     buildFeatures {
         compose = true
+        buildConfig = true
+    }
+
+    buildTypes {
+        getByName("debug") {
+            buildConfigField("String", "UPDATE_CHANNEL", "\"debug\"")
+        }
+        getByName("release") {
+            buildConfigField("String", "UPDATE_CHANNEL", "\"release\"")
+        }
     }
 
     packaging {
