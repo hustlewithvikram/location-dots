@@ -1,4 +1,4 @@
-package com.locationdots.app.core.permissions
+package com.vikram.locationdots.core.permissions
 
 import android.Manifest
 import android.content.Context
