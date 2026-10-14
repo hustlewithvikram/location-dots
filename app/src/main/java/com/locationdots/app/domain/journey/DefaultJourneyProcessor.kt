@@ -1,10 +1,10 @@
-package com.locationdots.app.domain.journey
+package com.vikram.locationdots.domain.journey
 
-import com.locationdots.app.domain.model.JourneyMode
-import com.locationdots.app.domain.model.LocationPoint
-import com.locationdots.app.domain.model.TimelineEvent
+import com.vikram.locationdots.domain.model.JourneyMode
+import com.vikram.locationdots.domain.model.LocationPoint
+import com.vikram.locationdots.domain.model.TimelineEvent
 import android.content.SharedPreferences
-import com.locationdots.app.domain.places.PlaceEngine
+import com.vikram.locationdots.domain.places.PlaceEngine
 import java.time.Duration
 import java.time.Instant
 import kotlin.math.atan2
