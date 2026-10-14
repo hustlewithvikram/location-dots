@@ -1,4 +1,4 @@
-package com.locationdots.app.service
+package com.vikram.locationdots.service
 
 import android.app.Service
 import android.content.Intent
