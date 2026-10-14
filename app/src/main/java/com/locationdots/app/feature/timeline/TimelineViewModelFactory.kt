@@ -1,8 +1,8 @@
-package com.locationdots.app.feature.timeline
+package com.vikram.locationdots.feature.timeline
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.locationdots.app.domain.timeline.TimelineRepository
+import com.vikram.locationdots.domain.timeline.TimelineRepository
 
 class TimelineViewModelFactory(
     private val repository: TimelineRepository
