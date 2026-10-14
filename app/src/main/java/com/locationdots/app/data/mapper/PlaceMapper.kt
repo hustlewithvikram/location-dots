@@ -1,7 +1,7 @@
-package com.locationdots.app.data.mapper
+package com.vikram.locationdots.data.mapper
 
-import com.locationdots.app.data.local.PlaceEntity
-import com.locationdots.app.domain.model.Place
+import com.vikram.locationdots.data.local.PlaceEntity
+import com.vikram.locationdots.domain.model.Place
 import java.time.Instant
 
 fun PlaceEntity.toDomain() = Place(
