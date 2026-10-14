@@ -1,4 +1,4 @@
-package com.locationdots.app.ui.components
+package com.vikram.locationdots.ui.components
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
