@@ -1,7 +1,7 @@
-package com.locationdots.app.feature.onboarding
+package com.vikram.locationdots.feature.onboarding
 
 import androidx.lifecycle.ViewModel
-import com.locationdots.app.core.location.LocationTrackingController
+import com.vikram.locationdots.core.location.LocationTrackingController
 import kotlinx.coroutines.flow.StateFlow
 
 class OnboardingViewModel(
