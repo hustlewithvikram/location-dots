@@ -1,9 +1,9 @@
-package com.locationdots.app.feature.place
+package com.vikram.locationdots.feature.place
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.locationdots.app.domain.places.PlaceRepository
-import com.locationdots.app.domain.timeline.TimelineRepository
+import com.vikram.locationdots.domain.places.PlaceRepository
+import com.vikram.locationdots.domain.timeline.TimelineRepository
 
 class PlaceDetailViewModelFactory(
     private val repository: PlaceRepository,
