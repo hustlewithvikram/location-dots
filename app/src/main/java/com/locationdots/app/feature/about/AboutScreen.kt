@@ -1,4 +1,4 @@
-package com.locationdots.app.feature.about
+package com.vikram.locationdots.feature.about
 
 import android.content.Intent
 import android.net.Uri
@@ -13,9 +13,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.locationdots.app.ui.components.ExpressiveCard
-import com.locationdots.app.ui.components.ExpressiveIconBadge
-import com.locationdots.app.ui.components.ExpressiveListRow
+import com.vikram.locationdots.ui.components.ExpressiveCard
+import com.vikram.locationdots.ui.components.ExpressiveIconBadge
+import com.vikram.locationdots.ui.components.ExpressiveListRow
 import androidx.core.net.toUri
 
 private const val SOURCE_URL = "https://github.com/hustlewithvikram/location-dots"
