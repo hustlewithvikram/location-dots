@@ -1,9 +1,9 @@
-package com.locationdots.app.core.location
+package com.vikram.locationdots.core.location
 
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
-import com.locationdots.app.service.LocationTrackingService
+import com.vikram.locationdots.service.LocationTrackingService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
