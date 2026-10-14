@@ -1,6 +1,6 @@
-package com.locationdots.app.domain.places
+package com.vikram.locationdots.domain.places
 
-import com.locationdots.app.domain.model.Place
+import com.vikram.locationdots.domain.model.Place
 import kotlinx.coroutines.flow.Flow
 
 interface PlaceRepository {
