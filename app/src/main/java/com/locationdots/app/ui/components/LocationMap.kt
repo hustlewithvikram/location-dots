@@ -1,4 +1,4 @@
-package com.locationdots.app.ui.components
+package com.vikram.locationdots.ui.components
 
 import android.content.Context
 import android.graphics.Color
