@@ -1,6 +1,6 @@
-package com.locationdots.app.core.location
+package com.vikram.locationdots.core.location
 
-import com.locationdots.app.domain.model.LocationPoint
+import com.vikram.locationdots.domain.model.LocationPoint
 import kotlinx.coroutines.flow.Flow
 
 interface LocationProvider {
