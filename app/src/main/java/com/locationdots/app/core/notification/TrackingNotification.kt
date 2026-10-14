@@ -1,4 +1,4 @@
-package com.locationdots.app.core.notification
+package com.vikram.locationdots.core.notification
 
 data class TrackingNotification(
     val title: String,
