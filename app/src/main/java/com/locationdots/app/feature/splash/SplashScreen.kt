@@ -1,4 +1,4 @@
-package com.locationdots.app.feature.splash
+package com.vikram.locationdots.feature.splash
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -51,7 +51,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.locationdots.app.ui.theme.LocationDotsTheme
+import com.vikram.locationdots.ui.theme.LocationDotsTheme
 
 /*
  * Reference palette.
