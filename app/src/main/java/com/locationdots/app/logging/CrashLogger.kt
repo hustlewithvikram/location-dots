@@ -1,4 +1,4 @@
-package com.locationdots.app.logging
+package com.vikram.locationdots.logging
 
 import android.content.ContentValues
 import android.content.Context
