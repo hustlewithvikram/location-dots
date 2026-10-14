@@ -9,7 +9,7 @@ plugins {
 }
 
 extensions.configure<ApplicationExtension> {
-    namespace = "com.locationdots.app"
+    namespace = "com.vikram.locationdots"
     compileSdk {
         version = release(37) {
             minorApiLevel = 0
@@ -17,7 +17,7 @@ extensions.configure<ApplicationExtension> {
     }
 
     defaultConfig {
-        applicationId = "com.locationdots.app"
+        applicationId = "com.vikram.locationdots"
         minSdk = 26
         targetSdk = 37
         versionCode = providers.gradleProperty("versionCode")
