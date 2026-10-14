@@ -1,8 +1,8 @@
-package com.locationdots.app.feature.insights
+package com.vikram.locationdots.feature.insights
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.locationdots.app.domain.insights.InsightsRepository
+import com.vikram.locationdots.domain.insights.InsightsRepository
 
 class InsightsViewModelFactory(
     private val repository: InsightsRepository
