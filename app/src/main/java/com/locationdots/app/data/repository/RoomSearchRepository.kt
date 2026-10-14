@@ -1,11 +1,11 @@
-package com.locationdots.app.data.repository
+package com.vikram.locationdots.data.repository
 
-import com.locationdots.app.domain.model.JourneyMode
-import com.locationdots.app.domain.model.TimelineEvent
-import com.locationdots.app.domain.places.PlaceRepository
-import com.locationdots.app.domain.search.SearchRepository
-import com.locationdots.app.domain.search.SearchResult
-import com.locationdots.app.domain.timeline.TimelineRepository
+import com.vikram.locationdots.domain.model.JourneyMode
+import com.vikram.locationdots.domain.model.TimelineEvent
+import com.vikram.locationdots.domain.places.PlaceRepository
+import com.vikram.locationdots.domain.search.SearchRepository
+import com.vikram.locationdots.domain.search.SearchResult
+import com.vikram.locationdots.domain.timeline.TimelineRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.util.Locale
