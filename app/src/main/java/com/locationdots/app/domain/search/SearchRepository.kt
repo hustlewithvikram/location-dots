@@ -1,7 +1,7 @@
-package com.locationdots.app.domain.search
+package com.vikram.locationdots.domain.search
 
-import com.locationdots.app.domain.model.Place
-import com.locationdots.app.domain.model.TimelineEvent
+import com.vikram.locationdots.domain.model.Place
+import com.vikram.locationdots.domain.model.TimelineEvent
 
 sealed interface SearchResult {
     data class PlaceResult(val place: Place) : SearchResult
