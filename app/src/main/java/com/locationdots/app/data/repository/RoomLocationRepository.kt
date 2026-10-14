@@ -1,10 +1,10 @@
-package com.locationdots.app.data.repository
+package com.vikram.locationdots.data.repository
 
-import com.locationdots.app.data.local.LocationDao
-import com.locationdots.app.data.mapper.toDomain
-import com.locationdots.app.data.mapper.toEntity
-import com.locationdots.app.domain.location.LocationRepository
-import com.locationdots.app.domain.model.LocationPoint
+import com.vikram.locationdots.data.local.LocationDao
+import com.vikram.locationdots.data.mapper.toDomain
+import com.vikram.locationdots.data.mapper.toEntity
+import com.vikram.locationdots.domain.location.LocationRepository
+import com.vikram.locationdots.domain.model.LocationPoint
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.Instant
