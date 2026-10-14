@@ -1,4 +1,4 @@
-package com.locationdots.app.feature.profile
+package com.vikram.locationdots.feature.profile
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -19,8 +19,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.locationdots.app.domain.model.TimelineEvent
-import com.locationdots.app.ui.components.ProfileAvatar
+import com.vikram.locationdots.domain.model.TimelineEvent
+import com.vikram.locationdots.ui.components.ProfileAvatar
 
 @Composable
 fun ProfileScreen(
