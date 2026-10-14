@@ -1,11 +1,11 @@
-package com.locationdots.app.feature.place
+package com.vikram.locationdots.feature.place
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.locationdots.app.domain.model.Place
-import com.locationdots.app.domain.places.PlaceRepository
-import com.locationdots.app.domain.model.TimelineEvent
-import com.locationdots.app.domain.timeline.TimelineRepository
+import com.vikram.locationdots.domain.model.Place
+import com.vikram.locationdots.domain.places.PlaceRepository
+import com.vikram.locationdots.domain.model.TimelineEvent
+import com.vikram.locationdots.domain.timeline.TimelineRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
