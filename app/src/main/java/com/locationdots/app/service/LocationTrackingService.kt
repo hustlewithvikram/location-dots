@@ -1,4 +1,4 @@
-package com.locationdots.app.service
+package com.vikram.locationdots.service
 
 import android.Manifest
 import android.app.Notification
@@ -14,9 +14,9 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
-import com.locationdots.app.LocationDotsApplication
-import com.locationdots.app.R
-import com.locationdots.app.domain.model.TimelineEvent
+import com.vikram.locationdots.LocationDotsApplication
+import com.vikram.locationdots.R
+import com.vikram.locationdots.domain.model.TimelineEvent
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.Job
@@ -146,13 +146,13 @@ class LocationTrackingService : LifecycleService() {
 
     private fun markTrackingStarted() {
         getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE).edit()
-            .putBoolean(com.locationdots.app.core.location.LocationTrackingController.KEY_TRACKING_ACTIVE, true)
+            .putBoolean(com.vikram.locationdots.core.location.LocationTrackingController.KEY_TRACKING_ACTIVE, true)
             .apply()
     }
 
     private fun markTrackingStopped() {
         getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE).edit()
-            .putBoolean(com.locationdots.app.core.location.LocationTrackingController.KEY_TRACKING_ACTIVE, false)
+            .putBoolean(com.vikram.locationdots.core.location.LocationTrackingController.KEY_TRACKING_ACTIVE, false)
             .apply()
     }
 
