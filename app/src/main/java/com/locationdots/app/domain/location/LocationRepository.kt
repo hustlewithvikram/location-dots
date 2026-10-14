@@ -1,6 +1,6 @@
-package com.locationdots.app.domain.location
+package com.vikram.locationdots.domain.location
 
-import com.locationdots.app.domain.model.LocationPoint
+import com.vikram.locationdots.domain.model.LocationPoint
 import kotlinx.coroutines.flow.Flow
 import java.time.Instant
 
