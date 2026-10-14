@@ -1,4 +1,4 @@
-package com.locationdots.app.feature.timeline
+package com.vikram.locationdots.feature.timeline
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
@@ -22,9 +22,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.maplibre.android.geometry.LatLng
-import com.locationdots.app.domain.model.JourneyMode
-import com.locationdots.app.domain.model.TimelineEvent
-import com.locationdots.app.ui.components.*
+import com.vikram.locationdots.domain.model.JourneyMode
+import com.vikram.locationdots.domain.model.TimelineEvent
+import com.vikram.locationdots.ui.components.*
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -51,8 +51,8 @@ fun TimelineScreen(
     onProfileClick: () -> Unit,
     profileName: String,
     profilePhotoUri: String?,
-    actionButton: com.locationdots.app.feature.settings.ActionButton,
-    themeChoice: com.locationdots.app.feature.settings.ThemeChoice,
+    actionButton: com.vikram.locationdots.feature.settings.ActionButton,
+    themeChoice: com.vikram.locationdots.feature.settings.ThemeChoice,
     onActionButtonClick: () -> Unit,
     onPlacesClick: () -> Unit,
     onInsightsClick: () -> Unit,
@@ -91,7 +91,7 @@ fun TimelineScreen(
                         actionButton = actionButton,
                         themeChoice = themeChoice,
                         onActionButtonClick = {
-                            if (actionButton == com.locationdots.app.feature.settings.ActionButton.TODAY) {
+                            if (actionButton == com.vikram.locationdots.feature.settings.ActionButton.TODAY) {
                                 scope.launch { listState.animateScrollToItem(0) }
                             } else {
                                 onActionButtonClick()
@@ -253,8 +253,8 @@ private fun TodayCard(
     onProfileClick: () -> Unit,
     profileName: String,
     profilePhotoUri: String?,
-    actionButton: com.locationdots.app.feature.settings.ActionButton,
-    themeChoice: com.locationdots.app.feature.settings.ThemeChoice,
+    actionButton: com.vikram.locationdots.feature.settings.ActionButton,
+    themeChoice: com.vikram.locationdots.feature.settings.ThemeChoice,
     onActionButtonClick: () -> Unit
 ) {
     val zone = ZoneId.systemDefault()
@@ -333,22 +333,22 @@ private fun TodayCard(
 
 @Composable
 private fun ActionButtonIcon(
-    actionButton: com.locationdots.app.feature.settings.ActionButton,
-    themeChoice: com.locationdots.app.feature.settings.ThemeChoice,
+    actionButton: com.vikram.locationdots.feature.settings.ActionButton,
+    themeChoice: com.vikram.locationdots.feature.settings.ThemeChoice,
     onClick: () -> Unit
 ) {
     FilledTonalIconButton(onClick = onClick) {
         Icon(
             when (actionButton) {
-                com.locationdots.app.feature.settings.ActionButton.THEME -> when (themeChoice) {
-                    com.locationdots.app.feature.settings.ThemeChoice.SYSTEM -> Icons.Default.BrightnessAuto
-                    com.locationdots.app.feature.settings.ThemeChoice.LIGHT -> Icons.Default.LightMode
-                    com.locationdots.app.feature.settings.ThemeChoice.DARK -> Icons.Default.DarkMode
+                com.vikram.locationdots.feature.settings.ActionButton.THEME -> when (themeChoice) {
+                    com.vikram.locationdots.feature.settings.ThemeChoice.SYSTEM -> Icons.Default.BrightnessAuto
+                    com.vikram.locationdots.feature.settings.ThemeChoice.LIGHT -> Icons.Default.LightMode
+                    com.vikram.locationdots.feature.settings.ThemeChoice.DARK -> Icons.Default.DarkMode
                 }
-                com.locationdots.app.feature.settings.ActionButton.REFRESH -> Icons.Default.Refresh
-                com.locationdots.app.feature.settings.ActionButton.TRACKING -> Icons.Default.MyLocation
-                com.locationdots.app.feature.settings.ActionButton.TODAY -> Icons.Default.Today
-                com.locationdots.app.feature.settings.ActionButton.EXPORT -> Icons.Default.FileDownload
+                com.vikram.locationdots.feature.settings.ActionButton.REFRESH -> Icons.Default.Refresh
+                com.vikram.locationdots.feature.settings.ActionButton.TRACKING -> Icons.Default.MyLocation
+                com.vikram.locationdots.feature.settings.ActionButton.TODAY -> Icons.Default.Today
+                com.vikram.locationdots.feature.settings.ActionButton.EXPORT -> Icons.Default.FileDownload
             },
             contentDescription = actionButton.label()
         )

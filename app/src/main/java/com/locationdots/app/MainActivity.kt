@@ -1,4 +1,4 @@
-package com.locationdots.app
+package com.vikram.locationdots
 
 import android.Manifest
 import android.content.Intent
@@ -28,26 +28,26 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import com.locationdots.app.core.location.LocationTrackingController
-import com.locationdots.app.data.local.LocationEntity
-import com.locationdots.app.data.local.PlaceEntity
-import com.locationdots.app.data.local.TimelineEventEntity
-import com.locationdots.app.core.permissions.LocationPermissionManager
-import com.locationdots.app.domain.model.TimelineEvent
-import com.locationdots.app.feature.about.AboutScreen
-import com.locationdots.app.feature.insights.*
-import com.locationdots.app.feature.journey.JourneyDetailScreen
-import com.locationdots.app.feature.map.*
-import com.locationdots.app.feature.onboarding.OnboardingScreen
-import com.locationdots.app.feature.place.*
-import com.locationdots.app.feature.profile.ProfileScreen
-import com.locationdots.app.feature.search.*
-import com.locationdots.app.feature.settings.*
-import com.locationdots.app.feature.splash.SplashScreen
-import com.locationdots.app.feature.timeline.*
-import com.locationdots.app.ui.components.AppBottomBar
-import com.locationdots.app.ui.components.AppTab
-import com.locationdots.app.ui.theme.LocationDotsTheme
+import com.vikram.locationdots.core.location.LocationTrackingController
+import com.vikram.locationdots.data.local.LocationEntity
+import com.vikram.locationdots.data.local.PlaceEntity
+import com.vikram.locationdots.data.local.TimelineEventEntity
+import com.vikram.locationdots.core.permissions.LocationPermissionManager
+import com.vikram.locationdots.domain.model.TimelineEvent
+import com.vikram.locationdots.feature.about.AboutScreen
+import com.vikram.locationdots.feature.insights.*
+import com.vikram.locationdots.feature.journey.JourneyDetailScreen
+import com.vikram.locationdots.feature.map.*
+import com.vikram.locationdots.feature.onboarding.OnboardingScreen
+import com.vikram.locationdots.feature.place.*
+import com.vikram.locationdots.feature.profile.ProfileScreen
+import com.vikram.locationdots.feature.search.*
+import com.vikram.locationdots.feature.settings.*
+import com.vikram.locationdots.feature.splash.SplashScreen
+import com.vikram.locationdots.feature.timeline.*
+import com.vikram.locationdots.ui.components.AppBottomBar
+import com.vikram.locationdots.ui.components.AppTab
+import com.vikram.locationdots.ui.theme.LocationDotsTheme
 import org.json.JSONArray
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -1013,7 +1013,7 @@ class MainActivity : ComponentActivity() {
         actionButton = ActionButton.THEME
     }
 
-    private fun exportSummary(snapshot: com.locationdots.app.domain.insights.InsightsSnapshot) {
+    private fun exportSummary(snapshot: com.vikram.locationdots.domain.insights.InsightsSnapshot) {
         val text = buildString {
             appendLine("LOCATION DOTS")
             appendLine("PERSONAL ACTIVITY SUMMARY")

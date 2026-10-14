@@ -1,7 +1,7 @@
-package com.locationdots.app.domain.places
+package com.vikram.locationdots.domain.places
 
-import com.locationdots.app.domain.model.LocationPoint
-import com.locationdots.app.domain.model.Place
+import com.vikram.locationdots.domain.model.LocationPoint
+import com.vikram.locationdots.domain.model.Place
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals

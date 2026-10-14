@@ -1,4 +1,4 @@
-package com.locationdots.app.feature.settings
+package com.vikram.locationdots.feature.settings
 
 import android.content.Intent
 import android.Manifest
@@ -24,10 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
-import com.locationdots.app.BuildConfig
-import com.locationdots.app.ui.components.ExpressiveCard
-import com.locationdots.app.ui.components.ExpressiveIconBadge
-import com.locationdots.app.ui.components.ExpressiveListRow
+import com.vikram.locationdots.BuildConfig
+import com.vikram.locationdots.ui.components.ExpressiveCard
+import com.vikram.locationdots.ui.components.ExpressiveIconBadge
+import com.vikram.locationdots.ui.components.ExpressiveListRow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.CancellationException

@@ -1,4 +1,4 @@
-package com.locationdots.app.feature.search
+package com.vikram.locationdots.feature.search
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,11 +17,11 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.locationdots.app.domain.model.JourneyMode
-import com.locationdots.app.domain.search.SearchResult
-import com.locationdots.app.ui.components.ExpressiveCard
-import com.locationdots.app.ui.components.ExpressiveIconBadge
-import com.locationdots.app.ui.components.ExpressiveIconButton
+import com.vikram.locationdots.domain.model.JourneyMode
+import com.vikram.locationdots.domain.search.SearchResult
+import com.vikram.locationdots.ui.components.ExpressiveCard
+import com.vikram.locationdots.ui.components.ExpressiveIconBadge
+import com.vikram.locationdots.ui.components.ExpressiveIconButton
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale

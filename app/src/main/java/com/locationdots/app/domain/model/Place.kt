@@ -1,4 +1,4 @@
-package com.locationdots.app.domain.model
+package com.vikram.locationdots.domain.model
 
 import java.time.Instant
 

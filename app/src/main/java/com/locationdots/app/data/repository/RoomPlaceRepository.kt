@@ -1,10 +1,10 @@
-package com.locationdots.app.data.repository
+package com.vikram.locationdots.data.repository
 
-import com.locationdots.app.data.local.PlaceDao
-import com.locationdots.app.data.mapper.toDomain
-import com.locationdots.app.data.mapper.toEntity
-import com.locationdots.app.domain.model.Place
-import com.locationdots.app.domain.places.PlaceRepository
+import com.vikram.locationdots.data.local.PlaceDao
+import com.vikram.locationdots.data.mapper.toDomain
+import com.vikram.locationdots.data.mapper.toEntity
+import com.vikram.locationdots.domain.model.Place
+import com.vikram.locationdots.domain.places.PlaceRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlin.math.*

@@ -1,4 +1,4 @@
-package com.locationdots.app.core.navigation
+package com.vikram.locationdots.core.navigation
 
 sealed interface AppDestination {
     val route: String

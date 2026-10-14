@@ -1,4 +1,4 @@
-package com.locationdots.app.feature.place
+package com.vikram.locationdots.feature.place
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -53,8 +53,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.window.DialogProperties
-import com.locationdots.app.domain.model.Place
-import com.locationdots.app.ui.components.LocationMap
+import com.vikram.locationdots.domain.model.Place
+import com.vikram.locationdots.ui.components.LocationMap
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import org.maplibre.android.geometry.LatLng

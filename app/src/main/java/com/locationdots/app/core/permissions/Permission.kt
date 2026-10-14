@@ -1,4 +1,4 @@
-package com.locationdots.app.core.permissions
+package com.vikram.locationdots.core.permissions
 
 enum class Permission {
     FineLocation,

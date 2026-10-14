@@ -1,4 +1,4 @@
-package com.locationdots.app.feature.journey
+package com.vikram.locationdots.feature.journey
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,8 +16,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.window.Dialog
 import org.maplibre.android.geometry.LatLng
-import com.locationdots.app.domain.model.*
-import com.locationdots.app.ui.components.*
+import com.vikram.locationdots.domain.model.*
+import com.vikram.locationdots.ui.components.*
 import java.time.Duration
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter

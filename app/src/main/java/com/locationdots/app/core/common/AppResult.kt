@@ -1,4 +1,4 @@
-package com.locationdots.app.core.common
+package com.vikram.locationdots.core.common
 
 sealed interface AppResult<out T> {
     data class Success<T>(val data: T) : AppResult<T>

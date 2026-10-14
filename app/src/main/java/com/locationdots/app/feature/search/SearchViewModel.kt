@@ -1,9 +1,9 @@
-package com.locationdots.app.feature.search
+package com.vikram.locationdots.feature.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.locationdots.app.domain.search.SearchRepository
-import com.locationdots.app.domain.search.SearchResult
+import com.vikram.locationdots.domain.search.SearchRepository
+import com.vikram.locationdots.domain.search.SearchResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

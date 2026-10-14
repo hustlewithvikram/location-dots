@@ -1,4 +1,4 @@
-package com.locationdots.app.feature.onboarding
+package com.vikram.locationdots.feature.onboarding
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -54,8 +54,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.locationdots.app.feature.splash.SplashScreen
-import com.locationdots.app.ui.theme.LocationDotsTheme
+import com.vikram.locationdots.feature.splash.SplashScreen
+import com.vikram.locationdots.ui.theme.LocationDotsTheme
 
 private val OnboardingBackground = Color(0xFFFEFEFF)
 private val OnboardingText = Color(0xFF111A36)

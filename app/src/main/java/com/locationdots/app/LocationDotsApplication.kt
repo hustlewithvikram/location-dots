@@ -1,23 +1,23 @@
-package com.locationdots.app
+package com.vikram.locationdots
 
 import android.app.Application
 import com.google.android.gms.location.LocationServices
-import com.locationdots.app.core.location.FusedLocationProvider
-import com.locationdots.app.data.local.LocationDotsDatabase
-import com.locationdots.app.data.repository.RoomInsightsRepository
-import com.locationdots.app.data.repository.RoomLocationRepository
-import com.locationdots.app.data.repository.RoomPlaceRepository
-import com.locationdots.app.data.repository.RoomSearchRepository
-import com.locationdots.app.data.repository.RoomTimelineRepository
-import com.locationdots.app.domain.insights.InsightsRepository
-import com.locationdots.app.domain.journey.DefaultJourneyProcessor
-import com.locationdots.app.domain.journey.JourneyProcessor
-import com.locationdots.app.domain.location.LocationRepository
-import com.locationdots.app.domain.places.PlaceEngine
-import com.locationdots.app.domain.places.PlaceRepository
-import com.locationdots.app.domain.search.SearchRepository
-import com.locationdots.app.domain.timeline.TimelineRepository
-import com.locationdots.app.logging.CrashLogger
+import com.vikram.locationdots.core.location.FusedLocationProvider
+import com.vikram.locationdots.data.local.LocationDotsDatabase
+import com.vikram.locationdots.data.repository.RoomInsightsRepository
+import com.vikram.locationdots.data.repository.RoomLocationRepository
+import com.vikram.locationdots.data.repository.RoomPlaceRepository
+import com.vikram.locationdots.data.repository.RoomSearchRepository
+import com.vikram.locationdots.data.repository.RoomTimelineRepository
+import com.vikram.locationdots.domain.insights.InsightsRepository
+import com.vikram.locationdots.domain.journey.DefaultJourneyProcessor
+import com.vikram.locationdots.domain.journey.JourneyProcessor
+import com.vikram.locationdots.domain.location.LocationRepository
+import com.vikram.locationdots.domain.places.PlaceEngine
+import com.vikram.locationdots.domain.places.PlaceRepository
+import com.vikram.locationdots.domain.search.SearchRepository
+import com.vikram.locationdots.domain.timeline.TimelineRepository
+import com.vikram.locationdots.logging.CrashLogger
 
 class LocationDotsApplication : Application() {
     override fun onCreate() {

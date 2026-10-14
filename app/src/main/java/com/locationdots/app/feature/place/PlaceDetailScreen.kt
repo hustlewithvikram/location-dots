@@ -1,4 +1,4 @@
-package com.locationdots.app.feature.place
+package com.vikram.locationdots.feature.place
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,9 +17,9 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.platform.LocalConfiguration
 import org.maplibre.android.geometry.LatLng
 import androidx.compose.ui.unit.dp
-import com.locationdots.app.domain.model.Place
-import com.locationdots.app.domain.model.TimelineEvent
-import com.locationdots.app.ui.components.*
+import com.vikram.locationdots.domain.model.Place
+import com.vikram.locationdots.domain.model.TimelineEvent
+import com.vikram.locationdots.ui.components.*
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId

@@ -1,4 +1,4 @@
-package com.locationdots.app.domain.insights
+package com.vikram.locationdots.domain.insights
 
 interface InsightsRepository {
     suspend fun getSnapshot(): InsightsSnapshot

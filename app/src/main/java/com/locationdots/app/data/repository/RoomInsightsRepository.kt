@@ -1,11 +1,11 @@
-package com.locationdots.app.data.repository
+package com.vikram.locationdots.data.repository
 
-import com.locationdots.app.domain.insights.DailyInsight
-import com.locationdots.app.domain.insights.InsightsRepository
-import com.locationdots.app.domain.insights.InsightsSnapshot
-import com.locationdots.app.domain.insights.PlaceInsight
-import com.locationdots.app.domain.model.TimelineEvent
-import com.locationdots.app.domain.timeline.TimelineRepository
+import com.vikram.locationdots.domain.insights.DailyInsight
+import com.vikram.locationdots.domain.insights.InsightsRepository
+import com.vikram.locationdots.domain.insights.InsightsSnapshot
+import com.vikram.locationdots.domain.insights.PlaceInsight
+import com.vikram.locationdots.domain.model.TimelineEvent
+import com.vikram.locationdots.domain.timeline.TimelineRepository
 import java.time.Duration
 import java.time.LocalDate
 import java.time.ZoneId

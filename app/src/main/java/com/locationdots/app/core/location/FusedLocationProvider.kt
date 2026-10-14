@@ -1,4 +1,4 @@
-package com.locationdots.app.core.location
+package com.vikram.locationdots.core.location
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -10,7 +10,7 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.Priority
-import com.locationdots.app.domain.model.LocationPoint
+import com.vikram.locationdots.domain.model.LocationPoint
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow

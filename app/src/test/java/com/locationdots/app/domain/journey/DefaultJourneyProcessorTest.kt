@@ -1,10 +1,10 @@
-package com.locationdots.app.domain.journey
+package com.vikram.locationdots.domain.journey
 
-import com.locationdots.app.domain.model.LocationPoint
-import com.locationdots.app.domain.model.Place
-import com.locationdots.app.domain.model.TimelineEvent
-import com.locationdots.app.domain.places.PlaceRepository
-import com.locationdots.app.domain.places.PlaceEngine
+import com.vikram.locationdots.domain.model.LocationPoint
+import com.vikram.locationdots.domain.model.Place
+import com.vikram.locationdots.domain.model.TimelineEvent
+import com.vikram.locationdots.domain.places.PlaceRepository
+import com.vikram.locationdots.domain.places.PlaceEngine
 import android.content.SharedPreferences
 import java.lang.reflect.Proxy
 import java.time.Duration

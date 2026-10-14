@@ -1,4 +1,4 @@
-package com.locationdots.app.data.local
+package com.vikram.locationdots.data.local
 
 import androidx.room.Entity
 import androidx.room.Index

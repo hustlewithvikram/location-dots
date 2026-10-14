@@ -1,6 +1,6 @@
-package com.locationdots.app.domain.insights
+package com.vikram.locationdots.domain.insights
 
-import com.locationdots.app.domain.model.JourneyMode
+import com.vikram.locationdots.domain.model.JourneyMode
 
 data class InsightsSnapshot(
     val totalPlaces: Int = 0,

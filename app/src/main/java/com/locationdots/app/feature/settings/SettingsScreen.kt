@@ -1,4 +1,4 @@
-package com.locationdots.app.feature.settings
+package com.vikram.locationdots.feature.settings
 
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -16,9 +16,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.locationdots.app.domain.model.Place
-import com.locationdots.app.feature.place.PlaceEditorDialog
-import com.locationdots.app.ui.components.*
+import com.vikram.locationdots.domain.model.Place
+import com.vikram.locationdots.feature.place.PlaceEditorDialog
+import com.vikram.locationdots.ui.components.*
 
 enum class ThemeChoice { SYSTEM, LIGHT, DARK }
 

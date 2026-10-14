@@ -1,12 +1,12 @@
-package com.locationdots.app.data.repository
+package com.vikram.locationdots.data.repository
 
-import com.locationdots.app.data.local.TimelineEventDao
-import com.locationdots.app.data.local.TimelineEventEntity
-import com.locationdots.app.domain.model.JourneyMode
-import com.locationdots.app.domain.model.LocationPoint
-import com.locationdots.app.domain.model.TimelineEvent
-import com.locationdots.app.domain.places.PlaceRepository
-import com.locationdots.app.domain.timeline.TimelineRepository
+import com.vikram.locationdots.data.local.TimelineEventDao
+import com.vikram.locationdots.data.local.TimelineEventEntity
+import com.vikram.locationdots.domain.model.JourneyMode
+import com.vikram.locationdots.domain.model.LocationPoint
+import com.vikram.locationdots.domain.model.TimelineEvent
+import com.vikram.locationdots.domain.places.PlaceRepository
+import com.vikram.locationdots.domain.timeline.TimelineRepository
 import java.time.Instant
 
 class RoomTimelineRepository(

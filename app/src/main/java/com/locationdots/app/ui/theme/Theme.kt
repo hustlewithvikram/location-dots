@@ -1,4 +1,4 @@
-package com.locationdots.app.ui.theme
+package com.vikram.locationdots.ui.theme
 
 import android.annotation.SuppressLint
 import android.os.Build

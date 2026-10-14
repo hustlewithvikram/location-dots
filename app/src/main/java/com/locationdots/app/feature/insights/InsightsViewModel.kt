@@ -1,9 +1,9 @@
-package com.locationdots.app.feature.insights
+package com.vikram.locationdots.feature.insights
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.locationdots.app.domain.insights.InsightsRepository
-import com.locationdots.app.domain.insights.InsightsSnapshot
+import com.vikram.locationdots.domain.insights.InsightsRepository
+import com.vikram.locationdots.domain.insights.InsightsSnapshot
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

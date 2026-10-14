@@ -1,4 +1,4 @@
-package com.locationdots.app.feature.map
+package com.vikram.locationdots.feature.map
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,8 +16,8 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import org.maplibre.android.geometry.LatLng
-import com.locationdots.app.domain.model.Place
-import com.locationdots.app.ui.components.*
+import com.vikram.locationdots.domain.model.Place
+import com.vikram.locationdots.ui.components.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties

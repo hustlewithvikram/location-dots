@@ -1,6 +1,6 @@
-package com.locationdots.app.domain.timeline
+package com.vikram.locationdots.domain.timeline
 
-import com.locationdots.app.domain.model.TimelineEvent
+import com.vikram.locationdots.domain.model.TimelineEvent
 import java.time.Instant
 
 interface TimelineRepository {
