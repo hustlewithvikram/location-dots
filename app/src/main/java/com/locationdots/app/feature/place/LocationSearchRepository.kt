@@ -1,4 +1,4 @@
-package com.locationdots.app.feature.place
+package com.vikram.locationdots.feature.place
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
