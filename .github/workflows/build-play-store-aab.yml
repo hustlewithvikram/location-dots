@@ -105,10 +105,16 @@ jobs:
         run: gradle :app:testDebugUnitTest --stacktrace --no-daemon
 
       - name: Run release lint
-        run: gradle :app:lintRelease --stacktrace --no-daemon -PversionCode=${{ inputs.version_code }} -PversionName="${{ inputs.version_name }}"
+        env:
+          VERSION_NAME: ${{ inputs.version_name }}
+          VERSION_CODE: ${{ inputs.version_code }}
+        run: gradle :app:lintRelease --stacktrace --no-daemon "-PversionCode=$VERSION_CODE" "-PversionName=$VERSION_NAME"
 
       - name: Build signed release App Bundle
-        run: gradle :app:bundleRelease --stacktrace --no-daemon -PversionCode=${{ inputs.version_code }} -PversionName="${{ inputs.version_name }}"
+        env:
+          VERSION_NAME: ${{ inputs.version_name }}
+          VERSION_CODE: ${{ inputs.version_code }}
+        run: gradle :app:bundleRelease --stacktrace --no-daemon "-PversionCode=$VERSION_CODE" "-PversionName=$VERSION_NAME"
 
       - name: Verify bundle and prepare upload artifact
         shell: bash
