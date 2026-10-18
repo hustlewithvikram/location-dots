@@ -401,7 +401,6 @@ class MainActivity : ComponentActivity() {
                         destination.key == -40 -> ProfileScreen(
                         events = timelineState.events,
                         placesCount = places.size,
-                        isTracking = isTracking,
                         profileName = profileName,
                         profilePhotoUri = profilePhotoUri,
                         onNameChange = { name ->
@@ -409,6 +408,10 @@ class MainActivity : ComponentActivity() {
                             preferences.edit().putString("profile_name", name).apply()
                         },
                         onPhotoChange = { profilePhotoLauncher.launch(arrayOf("image/*")) },
+                        onPhotoUriChange = { photo ->
+                            profilePhotoUri = photo
+                            preferences.edit().putString("profile_photo_uri", photo).apply()
+                        },
                         onBack = {
                             pendingNavigationDirection = NavigationDirection.BACK
                             isProfileOpen = false
