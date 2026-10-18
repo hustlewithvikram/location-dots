@@ -59,6 +59,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -328,8 +329,11 @@ class MainActivity : ComponentActivity() {
                         navigateBack()
                         predictiveBackProgress.animateTo(0f)
                     } catch (cancelled: CancellationException) {
-                        // A cancelled edge swipe must restore the current screen smoothly.
-                        predictiveBackProgress.animateTo(0f)
+                        // The gesture coroutine is cancelled on a cancelled swipe, so use a
+                        // non-cancellable context to finish restoring the visual state.
+                        withContext(NonCancellable) {
+                            predictiveBackProgress.animateTo(0f)
+                        }
                         throw cancelled
                     }
                 }
