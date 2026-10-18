@@ -160,15 +160,31 @@ private fun DayHeader(date: LocalDate) {
         Text(
             title,
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.width(76.dp),
+            color = if (isToday) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             softWrap = false
         )
-        Spacer(Modifier.width(8.dp))
-        Text(
-            formatted,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+        Spacer(Modifier.width(10.dp))
+        Surface(
+            shape = RoundedCornerShape(50),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh
+        ) {
+            Text(
+                formatted,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                softWrap = false
+            )
+        }
+        Spacer(Modifier.weight(1f))
+        Box(
+            Modifier
+                .width(28.dp)
+                .height(1.dp)
+                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f))
         )
     }
 }
@@ -199,23 +215,26 @@ private fun TimelineEventRow(
             ) {
                 Text(
                     time(eventTime),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    softWrap = false
                 )
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(7.dp))
                 TimelineDot(event)
             }
             Box(
                 Modifier
-                    .width(12.dp)
-                    .height(74.dp),
+                    .width(14.dp)
+                    .height(92.dp),
                 contentAlignment = Alignment.TopCenter
             ) {
                 Box(
                     Modifier
                         .width(2.dp)
                         .fillMaxHeight()
-                        .background(MaterialTheme.colorScheme.outlineVariant)
+                        .clip(RoundedCornerShape(50))
+                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.8f))
                 )
             }
         }
