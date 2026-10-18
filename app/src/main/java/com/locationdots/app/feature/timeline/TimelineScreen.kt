@@ -772,13 +772,91 @@ private fun MiniLocationPreview(
     }
 }
 
-@Composable private fun EmptyTimeline(isTracking: Boolean) {
-    Column(Modifier.fillMaxSize().padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        ExpressiveIconBadge(Modifier.size(72.dp), { Icon(Icons.Default.Timeline, null, Modifier.size(34.dp)) })
-        Spacer(Modifier.height(18.dp))
-        Text("Your timeline starts here", style = MaterialTheme.typography.headlineSmall)
+@Composable
+private fun EmptyTimeline(isTracking: Boolean) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 28.dp, vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        ExpressiveIconBadge(
+            modifier = Modifier.size(76.dp),
+            icon = { Icon(Icons.Default.Timeline, null, Modifier.size(34.dp)) }
+        )
+        Spacer(Modifier.height(20.dp))
+        Surface(
+            shape = RoundedCornerShape(50),
+            color = if (isTracking) MaterialTheme.colorScheme.primaryContainer
+                else MaterialTheme.colorScheme.surfaceContainerHigh
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                Box(
+                    Modifier
+                        .size(7.dp)
+                        .clip(CircleShape)
+                        .background(if (isTracking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline)
+                )
+                Text(
+                    if (isTracking) "Tracking is on" else "Tracking is off",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (isTracking) MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+        Text(
+            if (isTracking) "Your timeline is getting started" else "Start your location journal",
+            style = MaterialTheme.typography.headlineSmall,
+            textAlign = TextAlign.Center
+        )
         Spacer(Modifier.height(8.dp))
-        Text(if (isTracking) "Keep moving. Location Dots will build your first places and journeys automatically." else "Turn on tracking to start building your personal map.", textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            if (isTracking) {
+                "Your visits and journeys will appear here as they’re detected. Keep Location Dots running and allow location access for reliable updates."
+            } else {
+                "Turn on tracking to record places you visit and journeys between them. Your timeline will grow automatically as activity is detected."
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(22.dp))
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(22.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLow
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(
+                    if (isTracking) Icons.Default.MyLocation else Icons.Default.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        if (isTracking) "Waiting for your first activity" else "What you’ll see here",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    Text(
+                        if (isTracking) "New places may take a little time to detect. Check that location permission and background tracking are allowed if nothing appears."
+                        else "Place visits, journey details, and daily activity summaries will appear here once tracking is enabled.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
     }
 }
 private fun buildItems(events: List<TimelineEvent>): List<TimelineItem> {
