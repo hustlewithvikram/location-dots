@@ -297,7 +297,7 @@ private fun TodayCard(events: List<TimelineEvent>) {
     }
     val visits = todayEvents.filterIsInstance<TimelineEvent.Visit>()
     val journeys = todayEvents.filterIsInstance<TimelineEvent.Journey>()
-    val now = java.time.Instant.now().coerceIn(dayStart, dayEnd)
+    val now = Instant.now().coerceIn(dayStart, dayEnd)
     val minutes = visits.sumOf {
         val start = maxOf(it.arrival, dayStart)
         val end = minOf(it.departure ?: now, now)
@@ -307,28 +307,63 @@ private fun TodayCard(events: List<TimelineEvent>) {
     val locale = LocalConfiguration.current.locales[0]
     val dateLabel = DateTimeFormatter.ofPattern("EEEE, d MMMM", locale).format(today)
 
-    Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surfaceContainerLow
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 15.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("Today at a glance", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        dateLabel,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Row(
+                        Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            Modifier
+                                .size(7.dp)
+                                .clip(CircleShape)
+                                .background(if (visits.any { it.departure == null }) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondaryContainer)
+                        )
+                        Text(
+                            if (visits.any { it.departure == null }) "In progress" else "Daily summary",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                }
+            }
+
             Row(
-                modifier = Modifier.padding(vertical = 16.dp),
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 SummaryMetric(visits.size.toString(), "stops", Icons.Default.Place, Modifier.weight(1f))
                 SummaryDivider()
                 SummaryMetric(journeys.size.toString(), "trips", Icons.Default.Route, Modifier.weight(1f))
                 SummaryDivider()
-                SummaryMetric(formatDuration(minutes), "stayed", Icons.Default.Schedule, Modifier.weight(1f))
+                SummaryMetric(formatDuration(minutes), "time here", Icons.Default.Schedule, Modifier.weight(1f))
                 SummaryDivider()
                 SummaryMetric(formatDistance(distance), "distance", Icons.Default.Straighten, Modifier.weight(1f))
             }
         }
     }
 }
-
 
 @Composable
 private fun ActionButtonIcon(
@@ -434,41 +469,63 @@ private fun VisitCard(
         modifier = modifier,
         onClick = { onPlaceClick(event.place.id) },
         containerColor = if (isCurrent) {
-            MaterialTheme.colorScheme.primaryContainer
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.58f)
         } else {
             MaterialTheme.colorScheme.surfaceContainerHigh
         }
     ) {
         Row(
-            Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
+            Modifier.padding(horizontal = 14.dp, vertical = 15.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             ExpressiveIconBadge(
-                modifier = Modifier.size(42.dp),
+                modifier = Modifier.size(46.dp),
                 icon = { Icon(Icons.Default.Place, null) }
             )
             Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(
+                Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text(
                         event.place.name ?: "Unnamed place",
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
-
+                    if (isCurrent) {
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.13f)
+                        ) {
+                            Text(
+                                "NOW",
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                 }
-                Spacer(Modifier.height(3.dp))
                 Text(
-                    if (isCurrent) "You're here for $duration"
-                    else "Stayed $duration",
-                    style = MaterialTheme.typography.bodySmall,
+                    if (isCurrent) "Here for $duration" else "Stayed $duration",
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    time(event.arrival) + if (isCurrent) " · Started" else " · Visit",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.82f)
                 )
             }
             Icon(
                 Icons.Default.ChevronRight,
-                contentDescription = null,
+                contentDescription = "View place details",
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
