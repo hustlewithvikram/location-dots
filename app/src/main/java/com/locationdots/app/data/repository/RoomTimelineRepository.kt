@@ -7,6 +7,8 @@ import com.vikram.locationdots.domain.model.LocationPoint
 import com.vikram.locationdots.domain.model.TimelineEvent
 import com.vikram.locationdots.domain.places.PlaceRepository
 import com.vikram.locationdots.domain.timeline.TimelineRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.time.Instant
 
 class RoomTimelineRepository(
@@ -18,7 +20,10 @@ class RoomTimelineRepository(
         dao.getAll().mapNotNull { toDomain(it) }
 
     override suspend fun getPage(limit: Int, offset: Int): List<TimelineEvent> =
-        dao.getPage(limit, offset).map { toDomain(it) }.filterNotNull()
+        dao.getPage(limit, offset).mapNotNull { toDomain(it) }
+
+    override fun observeRecent(limit: Int): Flow<List<TimelineEvent>> =
+        dao.observeRecent(limit).map { rows -> rows.mapNotNull { toDomain(it) } }
 
     override suspend fun getVisitsForPlace(placeId: String): List<TimelineEvent.Visit> =
         dao.getVisitsForPlace(placeId).mapNotNull { toDomain(it) as? TimelineEvent.Visit }
@@ -28,7 +33,7 @@ class RoomTimelineRepository(
 
     override suspend fun replaceAll(events: List<TimelineEvent>) {
         dao.deleteAll()
-        dao.insertAll(events.map(::toEntity))
+        if (events.isNotEmpty()) dao.insertAll(events.map(::toEntity))
     }
 
     override suspend fun replaceRange(from: Instant, to: Instant, events: List<TimelineEvent>) {
@@ -103,7 +108,8 @@ class RoomTimelineRepository(
 
     private fun encodePath(path: List<LocationPoint>): String =
         path.joinToString(";") { point ->
-            listOf(point.latitude, point.longitude, point.accuracyMeters ?: -1f, point.timestamp.toEpochMilli()).joinToString(",")
+            listOf(point.latitude, point.longitude, point.accuracyMeters ?: -1f, point.timestamp.toEpochMilli())
+                .joinToString(",")
         }
 
     private fun decodePath(encoded: String?): List<LocationPoint> =
@@ -119,6 +125,7 @@ class RoomTimelineRepository(
                 )
             }.getOrNull()
         }.orEmpty()
+
     private companion object {
         const val TYPE_VISIT = "visit"
         const val TYPE_JOURNEY = "journey"

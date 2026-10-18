@@ -11,6 +11,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.Priority
 import com.vikram.locationdots.domain.model.LocationPoint
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -23,7 +24,8 @@ class FusedLocationProvider(
 
     private val _locations = MutableSharedFlow<LocationPoint>(
         replay = 0,
-        extraBufferCapacity = 32
+        extraBufferCapacity = 64,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
     override val locations: Flow<LocationPoint> = _locations.asSharedFlow()
@@ -46,21 +48,21 @@ class FusedLocationProvider(
     @SuppressLint("MissingPermission")
     override fun start() {
         if (!hasLocationPermission()) return
-
-        // A restarted service can call start again. Remove the old callback first so
-        // repeated starts never leave multiple active location registrations behind.
         client.removeLocationUpdates(callback)
 
         val preferences = context.getSharedPreferences("location_dots_ui", Context.MODE_PRIVATE)
         val interval = preferences.getLong("tracking_interval_millis", DEFAULT_UPDATE_INTERVAL_MILLIS)
+            .coerceIn(MIN_UPDATE_INTERVAL_MILLIS, MAX_UPDATE_INTERVAL_MILLIS)
         val accuracy = preferences.getString("tracking_accuracy", "HIGH")
         val priority = if (accuracy == "BALANCED") {
             Priority.PRIORITY_BALANCED_POWER_ACCURACY
         } else {
             Priority.PRIORITY_HIGH_ACCURACY
         }
+
         val request = LocationRequest.Builder(priority, interval)
-            .setMinUpdateIntervalMillis((interval / 2).coerceAtLeast(5_000L))
+            .setMinUpdateIntervalMillis((interval / 2).coerceAtLeast(MIN_UPDATE_INTERVAL_MILLIS))
+            .setMaxUpdateDelayMillis(interval)
             .setWaitForAccurateLocation(accuracy != "BALANCED")
             .build()
 
@@ -72,16 +74,14 @@ class FusedLocationProvider(
     }
 
     private fun hasLocationPermission(): Boolean =
-        ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
 
     private companion object {
         const val DEFAULT_UPDATE_INTERVAL_MILLIS = 30_000L
+        const val MIN_UPDATE_INTERVAL_MILLIS = 5_000L
+        const val MAX_UPDATE_INTERVAL_MILLIS = 15 * 60_000L
     }
 }

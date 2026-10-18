@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TimelineEventDao {
@@ -14,6 +15,13 @@ interface TimelineEventDao {
         LIMIT :limit OFFSET :offset
     """)
     suspend fun getPage(limit: Int, offset: Int): List<TimelineEventEntity>
+
+    @Query("""
+        SELECT * FROM timeline_events
+        ORDER BY timestampEpochMillis DESC
+        LIMIT :limit
+    """)
+    fun observeRecent(limit: Int): Flow<List<TimelineEventEntity>>
 
     @Query("""
         SELECT * FROM timeline_events
@@ -61,6 +69,6 @@ interface TimelineEventDao {
         events: List<TimelineEventEntity>
     ) {
         deleteRange(fromEpochMillis, toEpochMillis)
-        insertAll(events)
+        if (events.isNotEmpty()) insertAll(events)
     }
 }

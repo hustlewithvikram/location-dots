@@ -19,8 +19,10 @@ import com.vikram.locationdots.R
 import com.vikram.locationdots.domain.model.TimelineEvent
 import java.time.Duration
 import java.time.Instant
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class LocationTrackingService : LifecycleService() {
 
@@ -37,7 +39,6 @@ class LocationTrackingService : LifecycleService() {
         }
 
         val app = application as LocationDotsApplication
-
         ServiceCompat.startForeground(
             this,
             NOTIFICATION_ID,
@@ -69,16 +70,16 @@ class LocationTrackingService : LifecycleService() {
                         processingFrom.minus(PROCESSING_CONTEXT)
                     }
                     val points = app.locationRepository.getLocationPoints(contextFrom, to)
-                    val events = app.journeyProcessor.process(points)
-                        .filter { it.overlaps(processingFrom, to) }
-
+                    val events = withContext(Dispatchers.Default) {
+                        app.journeyProcessor.process(points)
+                            .filter { it.overlaps(processingFrom, to) }
+                    }
                     app.timelineRepository.replaceRange(processingFrom, to, events)
                 }.onFailure { error ->
                     Log.e(TAG, "Failed to process location update; continuing tracking.", error)
                 }
             }
         }
-
         app.locationProvider.start()
     }
 
@@ -122,11 +123,7 @@ class LocationTrackingService : LifecycleService() {
     private fun createNotificationChannel() {
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(
-            NotificationChannel(
-                CHANNEL_ID,
-                "Location tracking",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
+            NotificationChannel(CHANNEL_ID, "Location tracking", NotificationManager.IMPORTANCE_LOW).apply {
                 description = "Shows when Location Dots is recording your location."
             }
         )
