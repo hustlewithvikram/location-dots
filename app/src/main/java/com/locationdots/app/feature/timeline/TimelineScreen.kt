@@ -600,6 +600,17 @@ private fun JourneyCard(
     val duration = event.endedAt?.let {
         formatMinutes(Duration.between(event.startedAt, it).toMinutes().coerceAtLeast(0))
     } ?: "In progress"
+    // Keep long journeys cheap to draw in the small preview while preserving the route shape.
+    val previewPoints = remember(points) {
+        if (points.size <= 120) {
+            points.map { it.latitude to it.longitude }
+        } else {
+            (0..119).map { index ->
+                val pointIndex = index * points.lastIndex / 119
+                points[pointIndex].latitude to points[pointIndex].longitude
+            } + (points.last().latitude to points.last().longitude)
+        }
+    }
 
     ExpressiveCard(
         modifier = modifier,
@@ -684,7 +695,7 @@ private fun JourneyCard(
 
             if (points.size > 1) {
                 MiniLocationPreview(
-                    points = points.map { it.latitude to it.longitude },
+                    points = previewPoints,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(84.dp)
