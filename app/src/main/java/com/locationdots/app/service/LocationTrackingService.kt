@@ -74,7 +74,12 @@ class LocationTrackingService : LifecycleService() {
                         app.journeyProcessor.process(points)
                             .filter { it.overlaps(processingFrom, to) }
                     }
-                    app.timelineRepository.replaceRange(processingFrom, to, events)
+                    // An empty processor result can mean that the available points were
+                    // insufficient to reconstruct visits (for example after a location gap).
+                    // Do not delete previously recorded history on that ambiguous result.
+                    if (events.isNotEmpty()) {
+                        app.timelineRepository.replaceRange(processingFrom, to, events)
+                    }
                 }.onFailure { error ->
                     Log.e(TAG, "Failed to process location update; continuing tracking.", error)
                 }
