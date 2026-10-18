@@ -13,10 +13,9 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.Priority
 import com.vikram.locationdots.domain.model.LocationPoint
-import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import java.time.Instant
 
 class FusedLocationProvider(
@@ -24,18 +23,18 @@ class FusedLocationProvider(
     private val client: FusedLocationProviderClient
 ) : LocationProvider {
 
-    private val _locations = MutableSharedFlow<LocationPoint>(
-        replay = 0,
-        extraBufferCapacity = 64,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
+    // Location points are persisted and used to reconstruct visits and journeys.
+    // An unbounded channel avoids silently discarding older fixes while the database
+    // and journey processor are temporarily busy. Processing remains serialized by
+    // the service collector.
+    private val locationChannel = Channel<LocationPoint>(Channel.UNLIMITED)
 
-    override val locations: Flow<LocationPoint> = _locations.asSharedFlow()
+    override val locations: Flow<LocationPoint> = locationChannel.receiveAsFlow()
 
     private val callback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             result.locations.forEach { location ->
-                _locations.tryEmit(
+                locationChannel.trySend(
                     LocationPoint(
                         latitude = location.latitude,
                         longitude = location.longitude,
