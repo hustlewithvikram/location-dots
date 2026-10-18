@@ -111,7 +111,7 @@ class FusedLocationProvider(
     }
 
     private fun emitLocation(location: android.location.Location) {
-        _locations.tryEmit(
+        locationChannel.trySend(
             LocationPoint(
                 latitude = location.latitude,
                 longitude = location.longitude,
