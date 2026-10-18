@@ -13,6 +13,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
     <application
+        android:enableOnBackInvokedCallback="true"
         android:name=".LocationDotsApplication"
         android:theme="@style/Theme.LocationDots"
         android:allowBackup="false"
