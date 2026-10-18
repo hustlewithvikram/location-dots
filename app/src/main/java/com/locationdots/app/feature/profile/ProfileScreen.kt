@@ -192,7 +192,7 @@ fun ProfileScreen(
                             )
                         }
                         Icon(
-                            androidx.compose.material.icons.filled.ChevronRight.let { it },
+                            Icons.Default.ChevronRight,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -342,7 +342,7 @@ private fun EditProfileDialog(
                     }
                 }
                 OutlinedButton(onClick = onChangePhoto, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.Default.LocationOn, null)
+                    Icon(Icons.Default.CameraAlt, null)
                     Spacer(Modifier.width(8.dp))
                     Text("Choose a photo")
                 }
