@@ -48,13 +48,25 @@ fun ProfileAvatar(photoUri: String?, name: String, modifier: Modifier = Modifier
     }
     Surface(modifier = modifier.clip(CircleShape), shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
         val imageBitmap = bitmap.value
-        if (imageBitmap != null) {
-            Image(bitmap = imageBitmap.asImageBitmap(), contentDescription = "Profile photo",
-                modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        val doodle = photoUri?.takeIf { it.startsWith("doodle:") }?.removePrefix("doodle:")
+        if (doodle != null) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(doodle, style = MaterialTheme.typography.headlineMedium)
+            }
+        } else if (imageBitmap != null) {
+            Image(
+                bitmap = imageBitmap.asImageBitmap(),
+                contentDescription = "Profile photo",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
         } else {
             Box(contentAlignment = Alignment.Center) {
-                Text(name.trim().firstOrNull()?.uppercase() ?: "L",
-                    style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Text(
+                    name.trim().firstOrNull()?.uppercase() ?: "L",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             }
         }
     }
