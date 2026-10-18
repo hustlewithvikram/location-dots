@@ -177,6 +177,30 @@ class DefaultJourneyProcessorTest {
     }
 
     @Test
+    fun invalidCoordinatePointsAreIgnoredWithoutBreakingVisitDetection() = runBlocking {
+        val start = Instant.parse("2026-10-02T10:00:00Z")
+        val validPoints = points(start, count = 17, secondsBetween = 30, latitudeStep = 0.00002)
+        val invalidPoints = listOf(
+            LocationPoint(
+                latitude = 91.0,
+                longitude = 73.8567,
+                accuracyMeters = 10f,
+                timestamp = start.plusSeconds(17 * 30L)
+            ),
+            LocationPoint(
+                latitude = 18.5200,
+                longitude = 181.0,
+                accuracyMeters = 10f,
+                timestamp = start.plusSeconds(18 * 30L)
+            )
+        )
+
+        val events = processor.process(validPoints + invalidPoints)
+
+        assertEquals(1, events.filterIsInstance<TimelineEvent.Visit>().size)
+    }
+
+    @Test
     fun poorAccuracyPointsAreIgnoredForVisitConfirmation() = runBlocking {
         val start = Instant.parse("2026-10-02T10:00:00Z")
         val points = points(start, count = 17, secondsBetween = 30, latitudeStep = 0.00002)
