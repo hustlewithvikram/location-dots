@@ -19,12 +19,17 @@ class RoomInsightsRepository(
         val visits = events.filterIsInstance<TimelineEvent.Visit>()
         val journeys = events.filterIsInstance<TimelineEvent.Journey>()
 
+        val now = java.time.Instant.now()
         val visitDurations = visits.mapNotNull { visit ->
             visit.departure?.let {
                 Duration.between(visit.arrival, it).toMinutes().coerceAtLeast(0)
             }
         }
-        val totalTime = visitDurations.sum()
+        // The headline total includes an ongoing stay, while average and longest
+        // visit records remain based on completed visits for fair comparisons.
+        val totalTime = visits.sumOf { visit ->
+            Duration.between(visit.arrival, visit.departure ?: now).toMinutes().coerceAtLeast(0)
+        }
         val totalDistance = journeys.sumOf { it.distanceMeters ?: 0.0 }
 
         val topPlaces = visits
@@ -35,9 +40,7 @@ class RoomInsightsRepository(
                     name = placeVisits.first().place.name ?: "Unnamed place",
                     visits = placeVisits.size,
                     timeMinutes = placeVisits.sumOf {
-                        it.departure?.let { departure ->
-                            Duration.between(it.arrival, departure).toMinutes().coerceAtLeast(0)
-                        } ?: 0
+                        Duration.between(it.arrival, it.departure ?: now).toMinutes().coerceAtLeast(0)
                     }
                 )
             }
