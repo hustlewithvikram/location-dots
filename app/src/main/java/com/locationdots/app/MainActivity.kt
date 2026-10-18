@@ -11,7 +11,7 @@ import com.google.android.gms.location.LocationServices
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.SystemBarStyle
 import androidx.core.view.WindowCompat
@@ -22,7 +22,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.dp
+import androidx.compose.animation.core.Animatable
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
@@ -53,6 +58,7 @@ import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -281,7 +287,9 @@ class MainActivity : ComponentActivity() {
                     isSearchOpen ||
                     currentTab != AppTab.TIMELINE
 
-                BackHandler(enabled = canNavigateBack) {
+                val predictiveBackProgress = remember { Animatable(0f) }
+
+                val navigateBack: () -> Unit = {
                     when {
                         isAboutOpen -> {
                             pendingNavigationDirection = NavigationDirection.BACK
@@ -311,8 +319,34 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                PredictiveBackHandler(enabled = canNavigateBack) { progress ->
+                    try {
+                        progress.collect { event ->
+                            predictiveBackProgress.snapTo(event.progress)
+                        }
+                        // The destination changes only after Android commits the gesture.
+                        navigateBack()
+                        predictiveBackProgress.animateTo(0f)
+                    } catch (cancelled: CancellationException) {
+                        // A cancelled edge swipe must restore the current screen smoothly.
+                        predictiveBackProgress.animateTo(0f)
+                        throw cancelled
+                    }
+                }
+
                 AnimatedContent(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            val progress = predictiveBackProgress.value
+                            val scale = 1f - (0.045f * progress)
+                            scaleX = scale
+                            scaleY = scale
+                            translationX = 28.dp.toPx() * progress
+                            shadowElevation = 24.dp.toPx() * progress
+                            shape = RoundedCornerShape(28.dp * progress)
+                            clip = progress > 0f
+                        },
                     targetState = destination,
                     transitionSpec = {
                         if (!animationsEnabled) {
