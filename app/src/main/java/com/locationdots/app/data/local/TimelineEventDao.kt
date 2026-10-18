@@ -11,14 +11,14 @@ import kotlinx.coroutines.flow.Flow
 interface TimelineEventDao {
     @Query("""
         SELECT * FROM timeline_events
-        ORDER BY timestampEpochMillis DESC
+        ORDER BY timestampEpochMillis DESC, id DESC
         LIMIT :limit OFFSET :offset
     """)
     suspend fun getPage(limit: Int, offset: Int): List<TimelineEventEntity>
 
     @Query("""
         SELECT * FROM timeline_events
-        ORDER BY timestampEpochMillis DESC
+        ORDER BY timestampEpochMillis DESC, id DESC
         LIMIT :limit
     """)
     fun observeRecent(limit: Int): Flow<List<TimelineEventEntity>>
