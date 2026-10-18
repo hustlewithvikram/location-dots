@@ -120,7 +120,34 @@ fun TimelineScreen(
                 }
                 if (isRefreshing) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
                 if (isLoadingMore) item { Box(Modifier.fillMaxWidth().padding(18.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(Modifier.size(26.dp)) } }
-                if (!hasMore && items.isNotEmpty()) item { Text("You’re all caught up.", Modifier.fillMaxWidth().padding(18.dp), textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                if (!hasMore && items.isNotEmpty()) item(key = "timeline-end") {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp, bottom = 12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            "You’re all caught up",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            "You’ve reached the beginning of your recorded history.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                        TextButton(
+                            onClick = { scope.launch { listState.animateScrollToItem(0) } }
+                        ) {
+                            Icon(Icons.Default.KeyboardArrowUp, contentDescription = null)
+                            Spacer(Modifier.width(6.dp))
+                            Text("Back to today")
+                        }
+                    }
+                }
                 if (errorMessage != null) item {
                     ExpressiveCard(onClick = onRetry) {
                         Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
