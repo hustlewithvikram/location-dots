@@ -570,62 +570,87 @@ private fun JourneyCard(
             else -> emptyList()
         }
     }
+    val duration = event.endedAt?.let {
+        formatMinutes(Duration.between(event.startedAt, it).toMinutes().coerceAtLeast(0))
+    } ?: "In progress"
 
     ExpressiveCard(
         modifier = modifier,
         onClick = { onJourneyClick(event.id) },
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
-        Column {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             Row(
-                Modifier.padding(start = 14.dp, top = 14.dp, end = 10.dp, bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 ExpressiveIconBadge(
-                    modifier = Modifier.size(42.dp),
+                    modifier = Modifier.size(44.dp),
                     icon = { Icon(modeIcon(event.mode), null) }
                 )
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
                     Row(
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            event.startPlace?.name ?: "Unknown",
-                            style = MaterialTheme.typography.titleMedium,
+                            event.startPlace?.name ?: "Unknown start",
+                            style = MaterialTheme.typography.titleSmall,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false)
+                            modifier = Modifier.weight(1f)
                         )
                         Icon(
                             Icons.Default.ArrowForward,
                             contentDescription = "To",
-                            modifier = Modifier.padding(horizontal = 6.dp).size(18.dp),
+                            modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            event.endPlace?.name ?: "Unknown",
-                            style = MaterialTheme.typography.titleMedium,
+                            event.endPlace?.name ?: "Unknown destination",
+                            style = MaterialTheme.typography.titleSmall,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false)
+                            modifier = Modifier.weight(1f)
                         )
                     }
-                    Spacer(Modifier.height(3.dp))
-                    Text(
-                        event.mode.label() + " · " +
-                            (event.endedAt?.let {
-                                formatMinutes(Duration.between(event.startedAt, it).toMinutes().coerceAtLeast(0))
-                            } ?: "In progress") +
-                            " · " + formatDistance(event.distanceMeters ?: 0.0),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            event.mode.label(),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text("·", color = MaterialTheme.colorScheme.outline)
+                        Text(
+                            duration,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (event.endedAt == null) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text("·", color = MaterialTheme.colorScheme.outline)
+                        Text(
+                            formatDistance(event.distanceMeters ?: 0.0),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            softWrap = false
+                        )
+                    }
                 }
                 Icon(
                     Icons.Default.ChevronRight,
-                    contentDescription = null,
+                    contentDescription = "View journey details",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -635,10 +660,14 @@ private fun JourneyCard(
                     points = points.map { it.latitude to it.longitude },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(76.dp)
-                        .padding(start = 12.dp, end = 12.dp, bottom = 12.dp)
+                        .height(84.dp)
                 )
             }
+            Text(
+                time(event.startedAt) + if (event.endedAt == null) " · Started" else " · Journey",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
