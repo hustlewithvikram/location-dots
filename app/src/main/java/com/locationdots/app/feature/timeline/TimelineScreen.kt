@@ -77,27 +77,29 @@ fun TimelineScreen(
         onRefresh = onRefresh,
         modifier = Modifier.fillMaxSize().statusBarsPadding()
     ) {
-    Column(Modifier.fillMaxSize()) {
-            if (items.isEmpty() && !isRefreshing && !isLoadingMore) EmptyTimeline(isTracking)
-            else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 12.dp, 16.dp, 112.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.fillMaxSize()) {
+            // Keep primary actions visible even before the first timeline event exists.
+            TimelineTopActions(
+                onSearchClick = onSearchClick,
+                onProfileClick = onProfileClick,
+                profileName = profileName,
+                profilePhotoUri = profilePhotoUri,
+                actionButton = actionButton,
+                themeChoice = themeChoice,
+                onActionButtonClick = {
+                    if (actionButton == com.vikram.locationdots.feature.settings.ActionButton.TODAY && items.isNotEmpty()) {
+                        scope.launch { listState.animateScrollToItem(0) }
+                    } else {
+                        onActionButtonClick()
+                    }
+                },
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+            if (items.isEmpty() && !isRefreshing && !isLoadingMore) {
+                Box(Modifier.weight(1f).fillMaxWidth()) { EmptyTimeline(isTracking) }
+            } else LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(16.dp, 4.dp, 16.dp, 112.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 item("summary") {
-                    TodayCard(
-                        events = events,
-                        isTracking = isTracking,
-                        onSearchClick = onSearchClick,
-                        onProfileClick = onProfileClick,
-                        profileName = profileName,
-                        profilePhotoUri = profilePhotoUri,
-                        actionButton = actionButton,
-                        themeChoice = themeChoice,
-                        onActionButtonClick = {
-                            if (actionButton == com.vikram.locationdots.feature.settings.ActionButton.TODAY) {
-                                scope.launch { listState.animateScrollToItem(0) }
-                            } else {
-                                onActionButtonClick()
-                            }
-                        }
-                    )
+                    TodayCard(events = events)
                 }
                 items.forEach { item ->
                     when (item) {
@@ -246,17 +248,40 @@ private fun TimelineDot(event: TimelineEvent) {
 }
 
 @Composable
-private fun TodayCard(
-    events: List<TimelineEvent>,
-    isTracking: Boolean,
+private fun TimelineTopActions(
     onSearchClick: () -> Unit,
     onProfileClick: () -> Unit,
     profileName: String,
     profilePhotoUri: String?,
     actionButton: com.vikram.locationdots.feature.settings.ActionButton,
     themeChoice: com.vikram.locationdots.feature.settings.ThemeChoice,
-    onActionButtonClick: () -> Unit
+    onActionButtonClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        ActionButtonIcon(actionButton = actionButton, themeChoice = themeChoice, onClick = onActionButtonClick)
+        Spacer(Modifier.weight(1f))
+        FilledTonalIconButton(onClick = onSearchClick) {
+            Icon(Icons.Default.Search, "Search your timeline")
+        }
+        Spacer(Modifier.width(6.dp))
+        Surface(
+            onClick = onProfileClick,
+            modifier = Modifier.size(44.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+        ) {
+            ProfileAvatar(photoUri = profilePhotoUri, name = profileName, modifier = Modifier.fillMaxSize())
+        }
+    }
+}
+
+@Composable
+private fun TodayCard(events: List<TimelineEvent>) {
     val zone = ZoneId.systemDefault()
     val today = LocalDate.now(zone)
     val dayStart = today.atStartOfDay(zone).toInstant()
@@ -283,32 +308,6 @@ private fun TodayCard(
     val dateLabel = DateTimeFormatter.ofPattern("EEEE, d MMMM", locale).format(today)
 
     Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            ActionButtonIcon(
-                actionButton = actionButton,
-                themeChoice = themeChoice,
-                onClick = onActionButtonClick
-            )
-            Spacer(Modifier.weight(1f))
-
-            FilledTonalIconButton(onClick = onSearchClick) {
-                Icon(Icons.Default.Search, "Search your timeline")
-            }
-            Spacer(Modifier.width(6.dp))
-            Surface(
-                onClick = onProfileClick,
-                modifier = Modifier.size(44.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-            ) {
-                ProfileAvatar(photoUri = profilePhotoUri, name = profileName, modifier = Modifier.fillMaxSize())
-            }
-        }
-
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.extraLarge,
