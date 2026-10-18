@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.CurrentLocationRequest
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
@@ -67,6 +69,44 @@ class FusedLocationProvider(
             .build()
 
         client.requestLocationUpdates(request, callback, context.mainLooper)
+            .addOnFailureListener { error ->
+                android.util.Log.e(TAG, "Unable to start location updates", error)
+            }
+
+        // Request a one-shot fix as soon as tracking starts instead of waiting for the
+        // periodic callback. Fall back to the cached fix while GPS warms up.
+        val cancellation = CancellationTokenSource()
+        client.getCurrentLocation(
+            CurrentLocationRequest.Builder()
+                .setPriority(priority)
+                .setMaxUpdateAgeMillis(MAX_CACHED_LOCATION_AGE_MILLIS)
+                .build(),
+            cancellation.token
+        ).addOnSuccessListener { location ->
+            if (location != null) {
+                emitLocation(location)
+            } else {
+                client.lastLocation.addOnSuccessListener { cached ->
+                    if (cached != null) emitLocation(cached)
+                }
+            }
+        }.addOnFailureListener { error ->
+            android.util.Log.w(TAG, "Current location request failed; waiting for regular updates", error)
+            client.lastLocation.addOnSuccessListener { cached ->
+                if (cached != null) emitLocation(cached)
+            }
+        }
+    }
+
+    private fun emitLocation(location: android.location.Location) {
+        _locations.tryEmit(
+            LocationPoint(
+                latitude = location.latitude,
+                longitude = location.longitude,
+                accuracyMeters = location.accuracy,
+                timestamp = Instant.ofEpochMilli(location.time)
+            )
+        )
     }
 
     override fun stop() {
@@ -80,6 +120,8 @@ class FusedLocationProvider(
             PackageManager.PERMISSION_GRANTED
 
     private companion object {
+        const val TAG = "FusedLocationProvider"
+        const val MAX_CACHED_LOCATION_AGE_MILLIS = 120_000L
         const val DEFAULT_UPDATE_INTERVAL_MILLIS = 30_000L
         const val MIN_UPDATE_INTERVAL_MILLIS = 5_000L
         const val MAX_UPDATE_INTERVAL_MILLIS = 15 * 60_000L
