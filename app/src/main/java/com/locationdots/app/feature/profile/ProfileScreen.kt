@@ -8,7 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Edit
@@ -142,7 +142,7 @@ fun ProfileScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("Recent activity", style = MaterialTheme.typography.titleMedium)
                             Spacer(Modifier.weight(1f))
-                            Icon(Icons.Default.CalendarMonth, null, tint = MaterialTheme.colorScheme.primary)
+                            Icon(Icons.Default.DateRange, null, tint = MaterialTheme.colorScheme.primary)
                         }
                         if (latestEvent == null) {
                             Text(
