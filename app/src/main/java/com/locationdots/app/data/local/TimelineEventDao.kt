@@ -63,6 +63,12 @@ interface TimelineEventDao {
     suspend fun insertAll(events: List<TimelineEventEntity>)
 
     @Transaction
+    suspend fun replaceAll(events: List<TimelineEventEntity>) {
+        deleteAll()
+        if (events.isNotEmpty()) insertAll(events)
+    }
+
+    @Transaction
     suspend fun replaceRange(
         fromEpochMillis: Long,
         toEpochMillis: Long,
