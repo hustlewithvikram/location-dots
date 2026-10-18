@@ -1,26 +1,32 @@
 package com.vikram.locationdots.feature.profile
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Route
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.vikram.locationdots.domain.model.TimelineEvent
 import com.vikram.locationdots.ui.components.ProfileAvatar
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
+private val profileDoodles = listOf("🌿", "🌙", "☀️", "🌊", "🌸", "🍄", "🪐", "🐈")
 
 @Composable
 fun ProfileScreen(
@@ -31,11 +37,18 @@ fun ProfileScreen(
     profilePhotoUri: String?,
     onNameChange: (String) -> Unit,
     onPhotoChange: () -> Unit,
+    onPhotoUriChange: (String) -> Unit,
     onBack: () -> Unit,
     onSettings: () -> Unit
 ) {
     val visits = events.count { it is TimelineEvent.Visit }
     val journeys = events.count { it is TimelineEvent.Journey }
+    val latestEvent = events.maxByOrNull {
+        when (it) {
+            is TimelineEvent.Visit -> it.arrival
+            is TimelineEvent.Journey -> it.startedAt
+        }
+    }
     var showEditDialog by remember { mutableStateOf(false) }
 
     Column(
@@ -59,21 +72,19 @@ fun ProfileScreen(
 
         androidx.compose.foundation.lazy.LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 18.dp, top = 12.dp, end = 18.dp, bottom = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            contentPadding = PaddingValues(start = 18.dp, top = 8.dp, end = 18.dp, bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             item {
                 ProfileIdentityCard(
                     name = profileName,
                     photoUri = profilePhotoUri,
-                    isTracking = isTracking,
-                    onEdit = { showEditDialog = true },
-                    onChangePhoto = onPhotoChange
+                    onEdit = { showEditDialog = true }
                 )
             }
 
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Your activity", style = MaterialTheme.typography.titleLarge)
                     Row(
                         Modifier.fillMaxWidth(),
@@ -83,36 +94,86 @@ fun ProfileScreen(
                         ProfileStat(visits.toString(), "visits", Icons.Default.LocationOn, Modifier.weight(1f))
                         ProfileStat(journeys.toString(), "journeys", Icons.Default.Route, Modifier.weight(1f))
                     }
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(22.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerLow
+                    ) {
+                        Row(
+                            Modifier.padding(horizontal = 16.dp, vertical = 15.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Surface(
+                                modifier = Modifier.size(42.dp),
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primaryContainer
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Default.Timeline, null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                                }
+                            }
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                Text("Your location journal", style = MaterialTheme.typography.titleSmall)
+                                Text(
+                                    when {
+                                        events.isEmpty() -> "Your visits and journeys will appear here as your timeline grows."
+                                        visits == 1 && journeys == 0 -> "Your first recorded visit is part of your story."
+                                        else -> "A record of the places you visit and the journeys between them."
+                                    },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
                 }
-            }
-
-            item {
-                ProfileSectionCard(
-                    icon = Icons.Default.Timeline,
-                    title = "Tracking",
-                    value = if (isTracking) "Active" else "Paused",
-                    description = if (isTracking) {
-                        "Location Dots is currently recording your movement on this device."
-                    } else {
-                        "Tracking is paused. Turn it on in Settings when you want to continue your timeline."
-                    },
-                    emphasized = isTracking
-                )
-            }
-
-            item {
-                ProfileSectionCard(
-                    icon = Icons.Default.Lock,
-                    title = "Private by design",
-                    value = "Stored on this device",
-                    description = "Your profile and location history are stored on this device. No account is required."
-                )
             }
 
             item {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.extraLarge,
+                    shape = RoundedCornerShape(22.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerLow
+                ) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Recent activity", style = MaterialTheme.typography.titleMedium)
+                            Spacer(Modifier.weight(1f))
+                            Icon(Icons.Default.CalendarMonth, null, tint = MaterialTheme.colorScheme.primary)
+                        }
+                        if (latestEvent == null) {
+                            Text(
+                                "Nothing recorded yet. Keep Location Dots running to start building your personal timeline.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            val latestTime = when (latestEvent) {
+                                is TimelineEvent.Visit -> latestEvent.arrival
+                                is TimelineEvent.Journey -> latestEvent.startedAt
+                            }
+                            val latestTitle = when (latestEvent) {
+                                is TimelineEvent.Visit -> "Visited a place"
+                                is TimelineEvent.Journey -> "Recorded a journey"
+                            }
+                            Text(latestTitle, style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                DateTimeFormatter.ofPattern("EEE, d MMM · h:mm a")
+                                    .withZone(ZoneId.systemDefault())
+                                    .format(latestTime),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            item {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(22.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerLow,
                     onClick = onSettings
                 ) {
@@ -120,41 +181,20 @@ fun ProfileScreen(
                         Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Settings, null, tint = MaterialTheme.colorScheme.primary)
-                        Column(
-                            Modifier.weight(1f).padding(horizontal = 14.dp),
-                            verticalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            Text("App settings", style = MaterialTheme.typography.titleMedium)
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Text("Personalise Location Dots", style = MaterialTheme.typography.titleMedium)
                             Text(
                                 "Tracking, appearance, maps and data controls",
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Icon(
+                            androidx.compose.material.icons.filled.ChevronRight.let { it },
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
-                }
-            }
-
-            item {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Default.Info,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        "Location Dots · Local location journal",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
             }
         }
@@ -163,12 +203,14 @@ fun ProfileScreen(
     if (showEditDialog) {
         EditProfileDialog(
             currentName = profileName,
+            photoUri = profilePhotoUri,
             onDismiss = { showEditDialog = false },
             onSave = { name ->
                 onNameChange(name)
                 showEditDialog = false
             },
-            onChangePhoto = onPhotoChange
+            onChangePhoto = onPhotoChange,
+            onSelectDoodle = { doodle -> onPhotoUriChange("doodle:$doodle") }
         )
     }
 }
@@ -177,110 +219,41 @@ fun ProfileScreen(
 private fun ProfileIdentityCard(
     name: String,
     photoUri: String?,
-    isTracking: Boolean,
-    onEdit: () -> Unit,
-    onChangePhoto: () -> Unit
+    onEdit: () -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
+        shape = RoundedCornerShape(28.dp),
         color = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
-        Column(
-            Modifier.fillMaxWidth().padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Box {
-                    ProfileAvatar(photoUri = photoUri, name = name, modifier = Modifier.size(88.dp))
-                    Surface(
-                        modifier = Modifier.align(Alignment.BottomEnd).size(30.dp),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        onClick = onEdit
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.Edit, "Edit profile", Modifier.size(15.dp))
-                        }
-                    }
-                }
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                    Text(name.ifBlank { "Your name" }, style = MaterialTheme.typography.headlineSmall, maxLines = 2)
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                        Surface(
-                            shape = CircleShape,
-                            color = if (isTracking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                        ) { Spacer(Modifier.size(7.dp)) }
-                        Text(if (isTracking) "Tracking active" else "Tracking paused",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Text("Your personal location journal", style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                OutlinedButton(onClick = onEdit, modifier = Modifier.weight(1f), shape = MaterialTheme.shapes.large) {
-                    Icon(Icons.Default.Edit, null, Modifier.size(17.dp))
-                    Spacer(Modifier.width(7.dp))
-                    Text("Edit profile")
-                }
-                FilledTonalButton(onClick = onChangePhoto, modifier = Modifier.weight(1f), shape = MaterialTheme.shapes.large) {
-                    Icon(Icons.Default.CameraAlt, null, Modifier.size(17.dp))
-                    Spacer(Modifier.width(7.dp))
-                    Text("Profile photo")
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ProfileSectionCard(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    value: String,
-    description: String,
-    emphasized: Boolean = false
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
-        color = if (emphasized) {
-            MaterialTheme.colorScheme.primaryContainer
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerLow
-        }
-    ) {
         Row(
-            Modifier.padding(18.dp),
-            verticalAlignment = Alignment.Top
+            Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Surface(
-                modifier = Modifier.size(44.dp),
-                shape = CircleShape,
-                color = if (emphasized) {
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
-                } else {
-                    MaterialTheme.colorScheme.primaryContainer
-                }
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
-                }
-            }
-            Column(
-                Modifier.weight(1f).padding(start = 14.dp),
-                verticalArrangement = Arrangement.spacedBy(3.dp)
-            ) {
-                Text(title, style = MaterialTheme.typography.titleMedium)
-                Text(value, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            ProfileAvatar(photoUri = photoUri, name = name, modifier = Modifier.size(88.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    description,
+                    name.ifBlank { "Your name" },
+                    style = MaterialTheme.typography.headlineSmall,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    "Your personal location journal",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                FilledTonalButton(
+                    onClick = onEdit,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    Icon(Icons.Default.Edit, null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Edit profile", style = MaterialTheme.typography.labelLarge)
+                }
             }
         }
     }
@@ -295,21 +268,17 @@ private fun ProfileStat(
 ) {
     Surface(
         modifier = modifier,
-        shape = MaterialTheme.shapes.large,
+        shape = RoundedCornerShape(22.dp),
         color = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
         Column(
-            Modifier.padding(vertical = 14.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            Modifier.padding(vertical = 16.dp, horizontal = 6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
-            Icon(icon, null, Modifier.size(19.dp), tint = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.height(5.dp))
-            Text(value, style = MaterialTheme.typography.titleMedium)
-            Text(
-                label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Icon(icon, null, Modifier.size(21.dp), tint = MaterialTheme.colorScheme.primary)
+            Text(value, style = MaterialTheme.typography.titleLarge)
+            Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -317,9 +286,11 @@ private fun ProfileStat(
 @Composable
 private fun EditProfileDialog(
     currentName: String,
+    photoUri: String?,
     onDismiss: () -> Unit,
     onSave: (String) -> Unit,
-    onChangePhoto: () -> Unit
+    onChangePhoto: () -> Unit,
+    onSelectDoodle: (String) -> Unit
 ) {
     var name by remember(currentName) { mutableStateOf(currentName) }
 
@@ -327,28 +298,61 @@ private fun EditProfileDialog(
         onDismissRequest = onDismiss,
         title = { Text("Edit profile") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    ProfileAvatar(photoUri = photoUri, name = name, modifier = Modifier.size(100.dp))
+                }
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it.take(40) },
-                    label = { Text("Name") },
+                    label = { Text("Your name") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedButton(
-                    onClick = onChangePhoto,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Default.CameraAlt, null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Change profile photo")
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Choose a doodle", style = MaterialTheme.typography.titleSmall)
+                    Row(
+                        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        profileDoodles.forEach { doodle ->
+                            val selected = photoUri == "doodle:$doodle"
+                            Surface(
+                                onClick = { onSelectDoodle(doodle) },
+                                shape = CircleShape,
+                                color = if (selected) MaterialTheme.colorScheme.primaryContainer
+                                    else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                border = if (selected) androidx.compose.foundation.BorderStroke(
+                                    2.dp, MaterialTheme.colorScheme.primary
+                                ) else null
+                            ) {
+                                Box(
+                                    Modifier.size(48.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(doodle, style = MaterialTheme.typography.titleLarge)
+                                }
+                            }
+                        }
+                    }
                 }
+                OutlinedButton(onClick = onChangePhoto, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Default.LocationOn, null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Choose a photo")
+                }
+                Text(
+                    "Your photo is resized for smooth scrolling. You can use a photo or one of these doodles.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         },
         confirmButton = {
-            TextButton(
-                onClick = { onSave(name.trim().ifBlank { "Your name" }) }
-            ) { Text("Save") }
+            TextButton(onClick = { onSave(name.trim().ifBlank { "Your name" }) }) { Text("Save changes") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }
