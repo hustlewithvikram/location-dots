@@ -1,6 +1,7 @@
 package com.vikram.locationdots.feature.profile
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -324,12 +325,16 @@ private fun EditProfileDialog(
                             val selected = photoUri == "doodle:$doodle"
                             Surface(
                                 onClick = { onSelectDoodle(doodle) },
+                                modifier = Modifier.then(
+                                    if (selected) Modifier.border(
+                                        2.dp,
+                                        MaterialTheme.colorScheme.primary,
+                                        CircleShape
+                                    ) else Modifier
+                                ),
                                 shape = CircleShape,
                                 color = if (selected) MaterialTheme.colorScheme.primaryContainer
-                                    else MaterialTheme.colorScheme.surfaceContainerHigh,
-                                border = if (selected) androidx.compose.foundation.BorderStroke(
-                                    2.dp, MaterialTheme.colorScheme.primary
-                                ) else null
+                                    else MaterialTheme.colorScheme.surfaceContainerHigh
                             ) {
                                 Box(
                                     Modifier.size(48.dp),
