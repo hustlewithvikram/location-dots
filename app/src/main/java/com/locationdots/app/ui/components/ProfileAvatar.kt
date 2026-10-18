@@ -26,13 +26,13 @@ import kotlinx.coroutines.withContext
 fun ProfileAvatar(photoUri: String?, name: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val bitmap = produceState<Bitmap?>(initialValue = null, key1 = photoUri) {
-        value = if (photoUri.isNullOrBlank()) null else withContext(Dispatchers.IO) {
+        value = if (photoUri.isNullOrBlank() || photoUri.startsWith("doodle:")) null else withContext(Dispatchers.IO) {
             runCatching {
                 val uri = Uri.parse(photoUri)
                 val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
                 context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
                 if (bounds.outWidth <= 0 || bounds.outHeight <= 0) null else {
-                    val targetSize = 512
+                    val targetSize = 256
                     var sampleSize = 1
                     while (bounds.outWidth / (sampleSize * 2) >= targetSize &&
                         bounds.outHeight / (sampleSize * 2) >= targetSize
