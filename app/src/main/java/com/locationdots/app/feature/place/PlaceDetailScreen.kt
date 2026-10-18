@@ -53,10 +53,9 @@ fun PlaceDetailScreen(
             val timeFormatter = DateTimeFormatter.ofPattern("h:mm a", currentLocale)
             val sortedVisits = remember(visits) { visits.sortedByDescending { it.arrival } }
             val completedVisits = sortedVisits.filter { it.departure != null }
-            val totalMinutes = completedVisits.sumOf {
+            val completedStayMinutes = completedVisits.sumOf {
                 Duration.between(it.arrival, it.departure!!).toMinutes().coerceAtLeast(0)
             }
-            val average = if (completedVisits.isNotEmpty()) totalMinutes / completedVisits.size else 0
             val activeVisit = sortedVisits.firstOrNull { it.departure == null }
             var now by remember(activeVisit?.id) { mutableStateOf(Instant.now()) }
 
@@ -71,6 +70,18 @@ fun PlaceDetailScreen(
             val activeMinutes = activeVisit?.let {
                 Duration.between(it.arrival, now).toMinutes().coerceAtLeast(0)
             }
+            val totalStayMinutes = completedStayMinutes + (activeMinutes ?: 0L)
+            val completedDurations = completedVisits.map {
+                Duration.between(it.arrival, it.departure!!).toMinutes().coerceAtLeast(0)
+            }.sorted()
+            val typicalStayMinutes = if (completedDurations.size >= 2) {
+                val middle = completedDurations.size / 2
+                if (completedDurations.size % 2 == 0) {
+                    (completedDurations[middle - 1] + completedDurations[middle]) / 2
+                } else {
+                    completedDurations[middle]
+                }
+            } else null
             val lastVisit = sortedVisits.firstOrNull()
             val points = listOf(LatLng(place.latitude, place.longitude))
 
@@ -130,31 +141,30 @@ fun PlaceDetailScreen(
                 item {
                     Row(
                         Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         listOf(
-                            Triple(Icons.Default.Repeat, sortedVisits.size.toString(), "Visits"),
-                            Triple(Icons.Default.Schedule, formatMinutes(totalMinutes), "Total stay"),
-                            Triple(Icons.Default.Timelapse, formatMinutes(average), "Avg. stay")
+                            Triple(Icons.Default.Repeat, sortedVisits.size.toString(), "Total visits"),
+                            Triple(Icons.Default.Schedule, formatMinutes(totalStayMinutes), "Time spent here")
                         ).forEach { (icon, value, label) ->
                             Surface(
                                 modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(20.dp),
+                                shape = RoundedCornerShape(22.dp),
                                 color = MaterialTheme.colorScheme.surfaceContainerLow
                             ) {
                                 Column(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 15.dp),
+                                    modifier = Modifier.padding(16.dp),
                                     verticalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
                                     Icon(
                                         icon,
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(22.dp)
+                                        modifier = Modifier.size(24.dp)
                                     )
                                     Text(
                                         value,
-                                        style = MaterialTheme.typography.titleLarge,
+                                        style = MaterialTheme.typography.headlineSmall,
                                         maxLines = 1,
                                         softWrap = false,
                                         overflow = TextOverflow.Ellipsis
@@ -162,104 +172,80 @@ fun PlaceDetailScreen(
                                     Text(
                                         label,
                                         style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 1,
-                                        softWrap = false,
-                                        overflow = TextOverflow.Ellipsis
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
+                                    if (activeVisit != null && label == "Time spent here") {
+                                        Text(
+                                            "Includes current stay",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
 
-                item {
-                    ExpressiveCard {
-                        Column(
-                            Modifier.fillMaxWidth().padding(18.dp),
-                            verticalArrangement = Arrangement.spacedBy(14.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
+                if (lastVisit != null || typicalStayMinutes != null) {
+                    item {
+                        ExpressiveCard {
+                            Column(
+                                Modifier.fillMaxWidth().padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(14.dp)
                             ) {
-                                ExpressiveIconBadge(
-                                    icon = { Icon(Icons.Default.LocationOn, null) }
-                                )
-                                Spacer(Modifier.width(12.dp))
-                                Column(Modifier.weight(1f)) {
-                                    Text(
-                                        if (activeVisit != null) "Current stay" else "Place coordinates",
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
-                                    Text(
-                                        String.format(Locale.US, "%.5f, %.5f", place.latitude, place.longitude),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                if (activeVisit != null && activeMinutes != null) {
-                                    Surface(
-                                        shape = RoundedCornerShape(50.dp),
-                                        color = MaterialTheme.colorScheme.primaryContainer
+                                Text("At a glance", style = MaterialTheme.typography.titleMedium)
+                                if (lastVisit != null) {
+                                    Row(
+                                        Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Row(
-                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                        ExpressiveIconBadge(
+                                            icon = { Icon(Icons.Default.CalendarMonth, null) }
+                                        )
+                                        Spacer(Modifier.width(12.dp))
+                                        Column(
+                                            Modifier.weight(1f),
+                                            verticalArrangement = Arrangement.spacedBy(3.dp)
                                         ) {
-                                            Box(
-                                                Modifier.size(6.dp)
-                                                    .then(Modifier),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Surface(
-                                                    modifier = Modifier.size(6.dp),
-                                                    shape = RoundedCornerShape(50),
-                                                    color = MaterialTheme.colorScheme.primary
-                                                ) {}
-                                            }
+                                            Text("Last visit", style = MaterialTheme.typography.bodyLarge)
                                             Text(
-                                                "LIVE",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                                DateTimeFormatter.ofPattern("EEE, d MMM · h:mm a", currentLocale)
+                                                    .format(lastVisit.arrival.atZone(zone)),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
                                     }
                                 }
-                            }
-                            if (activeVisit != null && activeMinutes != null) {
-                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                                Row(
-                                    Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                        Text(
-                                            "Arrived at",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        Text(
-                                            timeFormatter.format(activeVisit.arrival.atZone(zone)),
-                                            style = MaterialTheme.typography.bodyLarge
-                                        )
+                                if (typicalStayMinutes != null) {
+                                    if (lastVisit != null) {
+                                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                                     }
-                                    Column(
-                                        horizontalAlignment = Alignment.End,
-                                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                                    Row(
+                                        Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text(
-                                            "Time here",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        ExpressiveIconBadge(
+                                            icon = { Icon(Icons.Default.QueryStats, null) }
                                         )
-                                        Text(
-                                            formatMinutes(activeMinutes),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
+                                        Spacer(Modifier.width(12.dp))
+                                        Column(
+                                            Modifier.weight(1f),
+                                            verticalArrangement = Arrangement.spacedBy(3.dp)
+                                        ) {
+                                            Text("Typical visit", style = MaterialTheme.typography.bodyLarge)
+                                            Text(
+                                                formatMinutes(typicalStayMinutes),
+                                                style = MaterialTheme.typography.titleMedium,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                            Text(
+                                                "Median of completed visits",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
                                     }
                                 }
                             }
