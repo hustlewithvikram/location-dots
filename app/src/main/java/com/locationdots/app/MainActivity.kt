@@ -401,6 +401,7 @@ class MainActivity : ComponentActivity() {
                         destination.key == -40 -> ProfileScreen(
                         events = timelineState.events,
                         placesCount = places.size,
+                        isTracking = isTracking,
                         profileName = profileName,
                         profilePhotoUri = profilePhotoUri,
                         onNameChange = { name ->
