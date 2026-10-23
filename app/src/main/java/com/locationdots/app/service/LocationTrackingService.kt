@@ -61,14 +61,25 @@ class LocationTrackingService : LifecycleService() {
                     }
 
                     val to = point.timestamp
-                    val from = to.minus(PROCESSING_WINDOW)
-                    val activeVisit = app.timelineRepository.getActiveVisit()
-                    val processingFrom = minOf(from, activeVisit?.arrival ?: from)
-                    val contextFrom = if (activeVisit != null) {
-                        processingFrom
-                    } else {
-                        processingFrom.minus(PROCESSING_CONTEXT)
+                    val preferences = getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
+                    val lastProcessedAt = preferences.getLong(KEY_LAST_TIMELINE_PROCESSING_AT, 0L)
+                    val nowMillis = to.toEpochMilli()
+
+                    // Every location fix is persisted, but timeline reconstruction is more
+                    // expensive. Throttle it so a stream of 20–30 second fixes does not cause
+                    // repeated scans and journey reconstruction for nearly identical windows.
+                    if (lastProcessedAt > 0L &&
+                        nowMillis - lastProcessedAt < TIMELINE_PROCESSING_INTERVAL_MILLIS
+                    ) {
+                        return@runCatching
                     }
+
+                    val activeVisit = app.timelineRepository.getActiveVisit()
+                    val windowStart = to.minus(PROCESSING_WINDOW)
+                    // Keep an older active visit in the processing range so a long stay can
+                    // still receive its correct departure time.
+                    val processingFrom = minOf(windowStart, activeVisit?.arrival ?: windowStart)
+                    val contextFrom = processingFrom.minus(PROCESSING_CONTEXT)
                     val points = app.locationRepository.getLocationPoints(contextFrom, to)
                     val events = withContext(Dispatchers.Default) {
                         app.journeyProcessor.process(points)
@@ -80,6 +91,11 @@ class LocationTrackingService : LifecycleService() {
                     if (events.isNotEmpty()) {
                         app.timelineRepository.replaceRange(processingFrom, to, events)
                     }
+                    // Record completed processing even when no events were emitted; otherwise
+                    // sparse or noisy data could trigger the same expensive scan on every fix.
+                    preferences.edit()
+                        .putLong(KEY_LAST_TIMELINE_PROCESSING_AT, nowMillis)
+                        .apply()
                 }.onFailure { error ->
                     Log.e(TAG, "Failed to process location update; continuing tracking.", error)
                 }
@@ -162,8 +178,10 @@ class LocationTrackingService : LifecycleService() {
         const val TAG = "LocationTrackingService"
         const val CHANNEL_ID = "location_tracking"
         const val PREFERENCES_NAME = "location_dots_ui"
+        const val KEY_LAST_TIMELINE_PROCESSING_AT = "last_timeline_processing_at"
         const val NOTIFICATION_ID = 1001
-        val PROCESSING_WINDOW: Duration = Duration.ofHours(48)
+        const val TIMELINE_PROCESSING_INTERVAL_MILLIS = 2 * 60 * 1000L
+        val PROCESSING_WINDOW: Duration = Duration.ofHours(12)
         val PROCESSING_CONTEXT: Duration = Duration.ofHours(2)
     }
 }
