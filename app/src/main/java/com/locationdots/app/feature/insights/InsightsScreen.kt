@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.NearMe
 import androidx.compose.material.icons.filled.PedalBike
 import androidx.compose.material.icons.filled.Place
