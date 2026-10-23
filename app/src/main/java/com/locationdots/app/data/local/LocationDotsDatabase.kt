@@ -20,6 +20,16 @@ abstract class LocationDotsDatabase : RoomDatabase() {
     abstract fun timelineEventDao(): TimelineEventDao
 
     @Transaction
+    open suspend fun deletePlaceAndReferences(placeId: String): Boolean {
+        val existing = placeDao().findById(placeId) ?: return false
+        timelineEventDao().deleteVisitsForPlace(placeId)
+        timelineEventDao().clearJourneyStartPlace(placeId)
+        timelineEventDao().clearJourneyEndPlace(placeId)
+        placeDao().deleteById(existing.id)
+        return true
+    }
+
+    @Transaction
     open suspend fun clearAllData() {
         locationDao().deleteAll()
         placeDao().deleteAll()
