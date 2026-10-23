@@ -75,6 +75,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var insightsViewModel: InsightsViewModel
 
     private var hasLocationPermission by mutableStateOf(false)
+    private var locationPermissionPermanentlyDenied by mutableStateOf(false)
     private var isTracking by mutableStateOf(false)
     private var selectedPlaceId by mutableStateOf<String?>(null)
     private var selectedJourneyId by mutableStateOf<String?>(null)
@@ -170,8 +171,14 @@ class MainActivity : ComponentActivity() {
                 result[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
                     result[Manifest.permission.ACCESS_COARSE_LOCATION] == true
             if (hasLocationPermission) {
+                locationPermissionPermanentlyDenied = false
                 preferences.edit().putBoolean("onboarding_complete", true).apply()
                 startTracking()
+            } else {
+                val requestCount = preferences.getInt("location_permission_request_count", 0)
+                val shouldExplain = shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) ||
+                    shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)
+                locationPermissionPermanentlyDenied = requestCount >= 2 && !shouldExplain
             }
         }
 
@@ -389,8 +396,10 @@ class MainActivity : ComponentActivity() {
                     )
                         destination.key == -90 -> OnboardingScreen(
                         hasLocationPermission = hasLocationPermission,
+                        locationPermissionPermanentlyDenied = locationPermissionPermanentlyDenied,
                         isTracking = isTracking,
                         onRequestLocationPermission = ::requestLocationPermission,
+                        onOpenAppSettings = ::openAppSettings,
                         onStartTracking = ::startTracking,
                         onStopTracking = ::stopTracking
                     )
@@ -722,7 +731,30 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun requestLocationPermission() {
-        locationPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+        if (permissionManager.hasForegroundLocationPermission()) {
+            hasLocationPermission = true
+            locationPermissionPermanentlyDenied = false
+            return
+        }
+        preferences.edit().putInt(
+            "location_permission_request_count",
+            preferences.getInt("location_permission_request_count", 0) + 1
+        ).apply()
+        locationPermissionLauncher.launch(
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        )
+    }
+
+    private fun openAppSettings() {
+        startActivity(
+            Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", packageName, null)
+            )
+        )
     }
 
     private fun startTracking() {
@@ -1092,6 +1124,14 @@ class MainActivity : ComponentActivity() {
     private fun refreshState() {
         hasLocationPermission = permissionManager.hasForegroundLocationPermission()
         isTracking = trackingController.isTracking.value
+        if (hasLocationPermission) {
+            locationPermissionPermanentlyDenied = false
+        } else {
+            val requestCount = preferences.getInt("location_permission_request_count", 0)
+            val shouldExplain = shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) ||
+                shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)
+            locationPermissionPermanentlyDenied = requestCount >= 2 && !shouldExplain
+        }
     }
 
     private fun isLocationEnabled(): Boolean =
