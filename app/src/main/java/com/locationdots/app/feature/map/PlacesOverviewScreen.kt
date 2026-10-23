@@ -31,10 +31,12 @@ fun PlacesOverviewScreen(
     onPlaceClick: (String) -> Unit,
     onTabSelected: (AppTab) -> Unit = {},
     onRefresh: () -> Unit = {},
-    isRefreshing: Boolean = false
+    isRefreshing: Boolean = false,
+    onDeletePlace: (String) -> Unit = {}
 ) {
     val points = remember(places) { places.map { LatLng(it.latitude, it.longitude) } }
     var isMapFullscreen by remember { mutableStateOf(false) }
+    var placePendingDelete by remember { mutableStateOf<Place?>(null) }
     val totalVisits = remember(summaries) { summaries.values.sumOf { it.visitCount } }
     val totalStayMinutes = remember(summaries) { summaries.values.sumOf { it.totalStayMinutes } }
 
@@ -199,6 +201,9 @@ fun PlacesOverviewScreen(
                                 )
                             }
                         }
+                        IconButton(onClick = { placePendingDelete = place }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete place", tint = MaterialTheme.colorScheme.error)
+                        }
                         Icon(
                             Icons.Default.ChevronRight,
                             contentDescription = "Open place",
@@ -209,6 +214,27 @@ fun PlacesOverviewScreen(
             }
         }
     }
+    }
+
+    if (placePendingDelete != null) {
+        val place = placePendingDelete!!
+        AlertDialog(
+            onDismissRequest = { placePendingDelete = null },
+            icon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
+            title = { Text("Delete ${place.name ?: "this place"}?") },
+            text = {
+                Text("The saved place and its recorded visits will be removed. Location history and unrelated journeys will remain on this device. If you visit this area again, Location Dots may discover it again.")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    onDeletePlace(place.id)
+                    placePendingDelete = null
+                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { placePendingDelete = null }) { Text("Cancel") }
+            }
+        )
     }
 
     if (isMapFullscreen && points.isNotEmpty()) {
