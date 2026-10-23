@@ -29,6 +29,7 @@ class DefaultJourneyProcessorTest {
             this.place = place
         }
         override suspend fun updatePlaceName(id: String, name: String?) = Unit
+        override suspend fun deletePlace(id: String): Boolean = if (place?.id == id) { place = null; true } else false
         override suspend fun saveNamedPlace(name: String, latitude: Double, longitude: Double): Place =
             error("Not used by this test")
     }
