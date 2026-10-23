@@ -47,7 +47,7 @@ fun ExpressiveCard(
         },
         colors = CardDefaults.cardColors(
             containerColor = containerColor ?: if (emphasized) {
-                MaterialTheme.colorScheme.primaryContainer
+                MaterialTheme.colorScheme.surfaceContainer
             } else {
                 MaterialTheme.colorScheme.surfaceContainerLow
             }
