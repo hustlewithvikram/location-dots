@@ -570,7 +570,10 @@ fun SettingsScreen(
                 }
 
                 item {
-                    ExpressiveCard(emphasized = true) {
+                    ExpressiveCard(
+                        emphasized = true,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    ) {
                         Column(
                             Modifier.padding(18.dp),
                             verticalArrangement = Arrangement.spacedBy(14.dp)
