@@ -483,7 +483,8 @@ class MainActivity : ComponentActivity() {
                                     pendingNavigationDirection = NavigationDirection.BACK
                                     selectedPlaceId = null
                                 },
-                                placeVm::updateName
+                                placeVm::updateName,
+                                ::deletePlace
                             )
                         }
                     }
@@ -499,7 +500,8 @@ class MainActivity : ComponentActivity() {
                             pendingNavigationDirection = NavigationDirection.FORWARD
                             selectedPlaceId = it
                         },
-                        onTabSelected = ::selectTab
+                        onTabSelected = ::selectTab,
+                        onDeletePlace = ::deletePlace
                     )
                     destination.key == 2 -> InsightsScreen(
                         snapshot = insights,
@@ -630,6 +632,7 @@ class MainActivity : ComponentActivity() {
                         onShareDiagnostics = ::shareDiagnostics,
                         onRequestLocationPermission = ::requestLocationPermission,
                         onSaveNamedPlace = ::saveNamedPlace,
+                        onDeletePlace = ::deletePlace,
                         onRequestCurrentLocation = ::requestCurrentLocation
                     )
                     else -> TimelineScreen(
@@ -780,6 +783,31 @@ class MainActivity : ComponentActivity() {
         trackingController.stop()
         trackingController.start()
         isTracking = true
+    }
+
+    private fun deletePlace(placeId: String) {
+        lifecycleScope.launch {
+            val app = application as LocationDotsApplication
+            runCatching { app.placeRepository.deletePlace(placeId) }
+                .onSuccess { deleted ->
+                    if (deleted) {
+                        if (selectedPlaceId == placeId) {
+                            pendingNavigationDirection = NavigationDirection.BACK
+                            selectedPlaceId = null
+                        }
+                        timelineViewModel.refresh()
+                        placesViewModel.refresh()
+                        insightsViewModel.refresh()
+                    }
+                }
+                .onFailure {
+                    android.widget.Toast.makeText(
+                        this@MainActivity,
+                        "Couldn't delete this place. Please try again.",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                }
+        }
     }
 
     private fun saveNamedPlace(name: String, latitude: Double, longitude: Double) {
