@@ -19,6 +19,10 @@ import androidx.compose.material.icons.filled.Route
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
@@ -44,7 +48,7 @@ fun InsightsScreen(
     val maxDaily = snapshot.dailyVisits.maxOfOrNull { it.visits + it.journeys } ?: 0
     val maxPlaceVisits = snapshot.topPlaces.maxOfOrNull { it.visits } ?: 0
     val totalModes = snapshot.modeBreakdown.values.sum()
-    var placePendingDelete by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<PlaceInsight?>(null) }
+    var placePendingDelete by remember { mutableStateOf<PlaceInsight?>(null) }
 
     PullToRefreshBox(isRefreshing = isLoading, onRefresh = onRefresh, modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -189,8 +193,7 @@ fun InsightsScreen(
         }
     }
 
-    if (placePendingDelete != null) {
-        val place = placePendingDelete!!
+    placePendingDelete?.let { place ->
         AlertDialog(
             onDismissRequest = { placePendingDelete = null },
             icon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
