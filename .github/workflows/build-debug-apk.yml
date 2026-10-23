@@ -78,16 +78,18 @@ jobs:
       - name: Lint debug
         run: gradle :app:lintDebug --stacktrace --no-daemon
 
-      - name: Verify APK
+      - name: Name and verify debug APK
         run: |
-          test -f app/build/outputs/apk/debug/app-debug.apk
-          ls -lh app/build/outputs/apk/debug/app-debug.apk
+          set -euo pipefail
+          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/location-dots-debug.apk
+          test -s app/build/outputs/apk/debug/location-dots-debug.apk
+          ls -lh app/build/outputs/apk/debug/location-dots-debug.apk
 
       - name: Prepare debug update manifest
         shell: bash
         run: |
           set -euo pipefail
-          APK="app/build/outputs/apk/debug/app-debug.apk"
+          APK="app/build/outputs/apk/debug/location-dots-debug.apk"
           VERSION_CODE=$((1000 + ${{ github.run_number }}))
           VERSION_NAME="1.0.0-dev.${{ github.run_number }}"
           SHA256=$(sha256sum "$APK" | cut -d ' ' -f 1)
@@ -98,7 +100,7 @@ jobs:
             "versionCode": $VERSION_CODE,
             "commit": "${{ github.sha }}",
             "runNumber": ${{ github.run_number }},
-            "apk": "app-debug.apk",
+            "apk": "location-dots-debug.apk",
             "sha256": "$SHA256"
           }
           EOF
@@ -108,7 +110,7 @@ jobs:
         with:
           name: location-dots-debug-${{ github.sha }}
           path: |
-            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/debug/location-dots-debug.apk
             app/build/outputs/apk/debug/update.json
           if-no-files-found: error
           retention-days: 14
