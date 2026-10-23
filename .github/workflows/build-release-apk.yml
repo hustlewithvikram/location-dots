@@ -91,13 +91,14 @@ jobs:
       - name: Build release AAB
         run: gradle :app:bundleRelease --stacktrace --no-daemon -PversionCode=${{ inputs.version_code }} -PversionName=${{ inputs.version_name }}
 
-      - name: Verify release artifacts
+      - name: Name and verify release artifacts
         shell: bash
         run: |
           set -euo pipefail
-          test -s app/build/outputs/apk/release/app-release.apk
+          cp app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/location-dots-release.apk
+          test -s app/build/outputs/apk/release/location-dots-release.apk
           test -s app/build/outputs/bundle/release/app-release.aab
-          ls -lh app/build/outputs/apk/release/app-release.apk
+          ls -lh app/build/outputs/apk/release/location-dots-release.apk
           ls -lh app/build/outputs/bundle/release/app-release.aab
 
       - name: Prepare release update manifest
@@ -105,7 +106,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release-assets
-          cp app/build/outputs/apk/release/app-release.apk release-assets/location-dots-release.apk
+          cp app/build/outputs/apk/release/location-dots-release.apk release-assets/location-dots-release.apk
           cp app/build/outputs/bundle/release/app-release.aab release-assets/location-dots-release.aab
           SHA256=$(sha256sum release-assets/location-dots-release.apk | cut -d ' ' -f 1)
           cat > release-assets/update.json <<EOF
