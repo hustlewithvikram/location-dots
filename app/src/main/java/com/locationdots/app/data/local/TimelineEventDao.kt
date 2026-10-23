@@ -41,6 +41,15 @@ interface TimelineEventDao {
     @Query("SELECT * FROM timeline_events ORDER BY timestampEpochMillis DESC")
     suspend fun getAll(): List<TimelineEventEntity>
 
+    @Query("DELETE FROM timeline_events WHERE type = 'visit' AND placeId = :placeId")
+    suspend fun deleteVisitsForPlace(placeId: String): Int
+
+    @Query("UPDATE timeline_events SET startPlaceId = NULL WHERE startPlaceId = :placeId")
+    suspend fun clearJourneyStartPlace(placeId: String): Int
+
+    @Query("UPDATE timeline_events SET endPlaceId = NULL WHERE endPlaceId = :placeId")
+    suspend fun clearJourneyEndPlace(placeId: String): Int
+
     @Query("DELETE FROM timeline_events")
     suspend fun deleteAll()
 
