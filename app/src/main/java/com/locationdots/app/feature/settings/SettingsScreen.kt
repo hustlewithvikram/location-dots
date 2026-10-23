@@ -150,6 +150,7 @@ fun SettingsScreen(
     onShareDiagnostics: () -> Unit,
     onRequestLocationPermission: () -> Unit,
     onSaveNamedPlace: (String, Double, Double) -> Unit,
+    onDeletePlace: (String) -> Unit,
     onRequestCurrentLocation: ((onLocation: (Double, Double) -> Unit) -> Unit)
 ) {
 
@@ -161,6 +162,7 @@ fun SettingsScreen(
     var previewMapStyle by remember { mutableStateOf(mapStyle) }
     var showAttributionDialog by remember { mutableStateOf(false) }
     var editingPlace by remember { mutableStateOf<Place?>(null) }
+    var placePendingDelete by remember { mutableStateOf<Place?>(null) }
     var selectedBackupSections by rememberSaveable { mutableStateOf(BackupSection.entries.toSet()) }
 
     fun openPlaceEditor(place: Place?) {
@@ -270,8 +272,13 @@ fun SettingsScreen(
                                             )
                                         },
                                         trailing = {
-                                            IconButton(onClick = { openPlaceEditor(place) }) {
-                                                Icon(Icons.Default.Edit, "Edit place")
+                                            Row {
+                                                IconButton(onClick = { openPlaceEditor(place) }) {
+                                                    Icon(Icons.Default.Edit, "Edit place")
+                                                }
+                                                IconButton(onClick = { placePendingDelete = place }) {
+                                                    Icon(Icons.Default.Delete, "Delete place", tint = MaterialTheme.colorScheme.error)
+                                                }
                                             }
                                         }
                                     )
@@ -1148,6 +1155,27 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+
+    if (placePendingDelete != null) {
+        val place = placePendingDelete!!
+        AlertDialog(
+            onDismissRequest = { placePendingDelete = null },
+            icon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
+            title = { Text("Delete ${place.name ?: "this place"}?") },
+            text = {
+                Text("This removes the saved place and its recorded visits. Location history and unrelated journeys will remain on this device. If you visit this area again, Location Dots may discover it again.")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    onDeletePlace(place.id)
+                    placePendingDelete = null
+                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { placePendingDelete = null }) { Text("Cancel") }
+            }
+        )
     }
 
     if (showPlaceEditor) {
