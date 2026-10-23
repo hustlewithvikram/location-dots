@@ -65,6 +65,8 @@ fun TimelineScreen(
     val listState = rememberLazyListState()
     val items = remember(events) { buildItems(events) }
     val scope = rememberCoroutineScope()
+    val showBackToTop by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0 } }
+    val today = LocalDate.now(ZoneId.systemDefault())
 
     LaunchedEffect(listState, items.size, hasMore, isLoadingMore) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }.collect { last ->
@@ -103,7 +105,7 @@ fun TimelineScreen(
                 }
                 items.forEach { item ->
                     when (item) {
-                        is TimelineItem.Day -> stickyHeader(key = "day-" + item.date) {
+                        is TimelineItem.Day -> if (item.date != today) stickyHeader(key = "day-" + item.date) {
                             Box(
                                 Modifier
                                     .fillMaxWidth()
@@ -129,23 +131,11 @@ fun TimelineScreen(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            "You’re all caught up",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
                             "You’ve reached the beginning of your recorded history.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
-                        TextButton(
-                            onClick = { scope.launch { listState.animateScrollToItem(0) } }
-                        ) {
-                            Icon(Icons.Default.KeyboardArrowUp, contentDescription = null)
-                            Spacer(Modifier.width(6.dp))
-                            Text("Back to today")
-                        }
                     }
                 }
                 if (errorMessage != null) item {
@@ -158,7 +148,17 @@ fun TimelineScreen(
                     }
                 }
             }
-    }
+        }
+        if (showBackToTop) {
+            SmallFloatingActionButton(
+                onClick = { scope.launch { listState.animateScrollToItem(0) } },
+                modifier = Modifier.align(Alignment.BottomEnd).padding(end = 20.dp, bottom = 118.dp),
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            ) {
+                Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Back to top")
+            }
+        }
     }
 }
 
