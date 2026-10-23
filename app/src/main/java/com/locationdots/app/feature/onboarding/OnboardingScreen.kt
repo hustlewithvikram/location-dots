@@ -71,8 +71,10 @@ private val OnboardingMapLineSecondary = Color(0xFFF1F3F8)
 @Composable
 fun OnboardingScreen(
     hasLocationPermission: Boolean,
+    locationPermissionPermanentlyDenied: Boolean,
     isTracking: Boolean,
     onRequestLocationPermission: () -> Unit,
+    onOpenAppSettings: () -> Unit,
     onStartTracking: () -> Unit,
     onStopTracking: () -> Unit
 ) {
@@ -319,6 +321,22 @@ fun OnboardingScreen(
                 ),
                 textAlign = TextAlign.Center
             )
+
+            if (page == 2 && !hasLocationPermission && locationPermissionPermanentlyDenied) {
+                Text(
+                    text = "Location permission is blocked. Open app settings, allow location access, then return here to continue.",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 12.dp, end = 12.dp, top = 14.dp),
+                    style = TextStyle(
+                        color = OnboardingSecondaryText,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
+                        fontWeight = FontWeight.Medium
+                    ),
+                    textAlign = TextAlign.Center
+                )
+            }
         }
 
         /*
@@ -373,6 +391,13 @@ fun OnboardingScreen(
                     onClick = {
                         page++
                     }
+                )
+            }
+
+            !hasLocationPermission && locationPermissionPermanentlyDenied -> {
+                OnboardingActionButton(
+                    text = "Open app settings",
+                    onClick = onOpenAppSettings
                 )
             }
 
