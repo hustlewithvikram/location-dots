@@ -101,7 +101,7 @@ fun TimelineScreen(
                 Box(Modifier.weight(1f).fillMaxWidth()) { EmptyTimeline(isTracking) }
             } else LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(16.dp, 4.dp, 16.dp, 112.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 item("summary") {
-                    TodayCard(events = events)
+                    TodayCard(events = events, isTracking = isTracking)
                 }
                 items.forEach { item ->
                     when (item) {
@@ -327,7 +327,7 @@ private fun TimelineTopActions(
 }
 
 @Composable
-private fun TodayCard(events: List<TimelineEvent>) {
+private fun TodayCard(events: List<TimelineEvent>, isTracking: Boolean) {
     val zone = ZoneId.systemDefault()
     val today = LocalDate.now(zone)
     val dayStart = today.atStartOfDay(zone).toInstant()
@@ -387,7 +387,7 @@ private fun TodayCard(events: List<TimelineEvent>) {
                                 .background(if (visits.any { it.departure == null }) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondaryContainer)
                         )
                         Text(
-                            if (visits.any { it.departure == null }) "In progress" else "Daily summary",
+                            if (isTracking) "Tracking Precisely" else if (visits.any { it.departure == null }) "In progress" else "Daily summary",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
