@@ -7,6 +7,16 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Eco
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.LocalFlorist
+import androidx.compose.material.icons.filled.Pets
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Water
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -50,8 +60,28 @@ fun ProfileAvatar(photoUri: String?, name: String, modifier: Modifier = Modifier
         val imageBitmap = bitmap.value
         val doodle = photoUri?.takeIf { it.startsWith("doodle:") }?.removePrefix("doodle:")
         if (doodle != null) {
+            val avatarIcon = when (doodle) {
+                "eco" -> Icons.Default.Eco
+                "night" -> Icons.Default.DarkMode
+                "sun" -> Icons.Default.LightMode
+                "water" -> Icons.Default.Water
+                "flower" -> Icons.Default.LocalFlorist
+                "sparkle" -> Icons.Default.AutoAwesome
+                "pets" -> Icons.Default.Pets
+                "world" -> Icons.Default.Public
+                else -> null
+            }
             Box(contentAlignment = Alignment.Center) {
-                Text(doodle, style = MaterialTheme.typography.headlineMedium)
+                if (avatarIcon != null) {
+                    Icon(
+                        imageVector = avatarIcon,
+                        contentDescription = "Profile avatar",
+                        modifier = Modifier.fillMaxSize(0.48f),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                } else {
+                    Text(doodle, style = MaterialTheme.typography.headlineMedium)
+                }
             }
         } else if (imageBitmap != null) {
             Image(
