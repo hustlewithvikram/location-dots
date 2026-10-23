@@ -512,7 +512,8 @@ class MainActivity : ComponentActivity() {
                             currentTab = AppTab.TIMELINE
                         },
                         onRefresh = insightsViewModel::refresh,
-                        onTabSelected = ::selectTab
+                        onTabSelected = ::selectTab,
+                        onDeletePlace = ::deletePlace
                     )
                     destination.key == 3 -> SettingsScreen(
                         themeChoice = themeChoice,
