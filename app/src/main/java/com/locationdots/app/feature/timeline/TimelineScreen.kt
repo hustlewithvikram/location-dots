@@ -316,7 +316,7 @@ private fun TimelineTopActions(
         Spacer(Modifier.width(6.dp))
         Surface(
             onClick = onProfileClick,
-            modifier = Modifier.size(44.dp),
+            modifier = Modifier.size(40.dp),
             shape = CircleShape,
             color = MaterialTheme.colorScheme.secondaryContainer,
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -788,15 +788,15 @@ private fun EmptyTimeline(isTracking: Boolean) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 28.dp, vertical = 24.dp),
+            .padding(horizontal = 28.dp, vertical = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         ExpressiveIconBadge(
-            modifier = Modifier.size(76.dp),
-            icon = { Icon(Icons.Default.Timeline, null, Modifier.size(34.dp)) }
+            modifier = Modifier.size(68.dp),
+            icon = { Icon(Icons.Default.Timeline, null, Modifier.size(30.dp)) }
         )
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(16.dp))
         Surface(
             shape = RoundedCornerShape(50),
             color = if (isTracking) MaterialTheme.colorScheme.primaryContainer
@@ -825,9 +825,10 @@ private fun EmptyTimeline(isTracking: Boolean) {
         Text(
             if (isTracking) "Your timeline is getting started" else "Start your location journal",
             style = MaterialTheme.typography.headlineSmall,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurface
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(10.dp))
         Text(
             if (isTracking) {
                 "Your visits and journeys will appear here as they’re detected. Keep Location Dots running and allow location access for reliable updates."
@@ -838,14 +839,14 @@ private fun EmptyTimeline(isTracking: Boolean) {
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(Modifier.height(22.dp))
+        Spacer(Modifier.height(20.dp))
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(22.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLow
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer
         ) {
             Row(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp),
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
