@@ -36,12 +36,14 @@ fun InsightsScreen(
     error: String?,
     onBack: () -> Unit,
     onRefresh: () -> Unit,
-    onTabSelected: (AppTab) -> Unit = {}
+    onTabSelected: (AppTab) -> Unit = {},
+    onDeletePlace: (String) -> Unit = {}
 ) {
     val hasData = snapshot.totalVisits > 0 || snapshot.journeyCount > 0
     val maxDaily = snapshot.dailyVisits.maxOfOrNull { it.visits + it.journeys } ?: 0
     val maxPlaceVisits = snapshot.topPlaces.maxOfOrNull { it.visits } ?: 0
     val totalModes = snapshot.modeBreakdown.values.sum()
+    var placePendingDelete by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<PlaceInsight?>(null) }
 
     PullToRefreshBox(isRefreshing = isLoading, onRefresh = onRefresh, modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -158,7 +160,9 @@ fun InsightsScreen(
 
                 if (snapshot.topPlaces.isNotEmpty()) {
                     item { ExpressiveSectionHeader("Places you return to", "Ranked by recorded visit count.") }
-                    items(snapshot.topPlaces, key = { it.placeId }) { place -> TopPlaceRow(place, maxPlaceVisits) }
+                    items(snapshot.topPlaces, key = { it.placeId }) { place ->
+                        TopPlaceRow(place, maxPlaceVisits, onDelete = { placePendingDelete = place })
+                    }
                 }
 
                 if (snapshot.totalVisits > 0) {
@@ -182,6 +186,27 @@ fun InsightsScreen(
                 }
             }
         }
+    }
+
+    if (placePendingDelete != null) {
+        val place = placePendingDelete!!
+        AlertDialog(
+            onDismissRequest = { placePendingDelete = null },
+            icon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
+            title = { Text("Delete ${place.name}?") },
+            text = {
+                Text("The saved place and its recorded visits will be removed. Location history and unrelated journeys will remain on this device. If you visit this area again, Location Dots may discover it again.")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    onDeletePlace(place.placeId)
+                    placePendingDelete = null
+                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { placePendingDelete = null }) { Text("Cancel") }
+            }
+        )
     }
 }
 
@@ -215,7 +240,7 @@ private fun DailyInsightRow(day: DailyInsight, maxValue: Int) {
 }
 
 @Composable
-private fun TopPlaceRow(place: PlaceInsight, maxVisits: Int) {
+private fun TopPlaceRow(place: PlaceInsight, maxVisits: Int, onDelete: () -> Unit) {
     val fraction = if (maxVisits <= 0) 0f else (place.visits.toFloat() / maxVisits).coerceIn(0f, 1f)
     ExpressiveCard {
         Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -228,6 +253,9 @@ private fun TopPlaceRow(place: PlaceInsight, maxVisits: Int) {
                     Text(formatMinutes(place.timeMinutes), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth().height(5.dp), trackColor = MaterialTheme.colorScheme.surfaceContainerHighest)
+            }
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Delete, contentDescription = "Delete place", tint = MaterialTheme.colorScheme.error)
             }
         }
     }
