@@ -11,7 +11,10 @@ import kotlin.math.*
 import java.time.Instant
 import java.util.UUID
 
-class RoomPlaceRepository(private val dao: PlaceDao) : PlaceRepository {
+class RoomPlaceRepository(
+    private val dao: PlaceDao,
+    private val deletePlaceTransaction: suspend (String) -> Boolean = { id -> dao.deleteById(id) > 0 }
+) : PlaceRepository {
     override fun observePlaces(): Flow<List<Place>> =
         dao.observeAll().map { it.map { entity -> entity.toDomain() } }
 
@@ -34,6 +37,8 @@ class RoomPlaceRepository(private val dao: PlaceDao) : PlaceRepository {
 
     override suspend fun savePlace(place: Place) =
         dao.insert(place.toEntity())
+
+    override suspend fun deletePlace(id: String): Boolean = deletePlaceTransaction(id)
 
     override suspend fun updatePlaceName(id: String, name: String?) {
         val existing = dao.findById(id) ?: return
