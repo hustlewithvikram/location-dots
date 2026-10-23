@@ -33,9 +33,11 @@ fun PlaceDetailScreen(
     place: Place?,
     visits: List<TimelineEvent.Visit>,
     onBack: () -> Unit,
-    onRename: (String?) -> Unit
+    onRename: (String?) -> Unit,
+    onDeletePlace: (String) -> Unit = {}
 ) {
     var showRenameDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     var renameText by remember(place?.id) { mutableStateOf(place?.name.orEmpty()) }
     var showMapFullscreen by remember { mutableStateOf(false) }
     val currentLocale = LocalConfiguration.current.locales[0]
@@ -115,6 +117,9 @@ fun PlaceDetailScreen(
                             showRenameDialog = true
                         }) {
                             Icon(Icons.Default.Edit, "Rename place")
+                        }
+                        IconButton(onClick = { showDeleteDialog = true }) {
+                            Icon(Icons.Default.Delete, "Delete place", tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -374,6 +379,26 @@ fun PlaceDetailScreen(
                 }
             }
         }
+    }
+
+    if (showDeleteDialog && place != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            icon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
+            title = { Text("Delete ${place.name ?: "this place"}?") },
+            text = {
+                Text("The saved place and its recorded visits will be removed. Location history and unrelated journeys will remain on this device. If you visit this area again, Location Dots may discover it again.")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    onDeletePlace(place.id)
+                    showDeleteDialog = false
+                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
+            }
+        )
     }
 
     if (showRenameDialog && place != null) {
