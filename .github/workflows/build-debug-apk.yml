@@ -125,5 +125,5 @@ jobs:
           fail_on_unmatched_files: true
           overwrite_files: true
           files: |
-            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/debug/location-dots-debug.apk
             app/build/outputs/apk/debug/update.json
