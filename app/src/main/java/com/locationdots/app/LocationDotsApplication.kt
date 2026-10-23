@@ -32,7 +32,7 @@ class LocationDotsApplication : Application() {
     }
 
     val placeRepository: PlaceRepository by lazy {
-        RoomPlaceRepository(database.placeDao())
+        RoomPlaceRepository(database.placeDao(), database::deletePlaceAndReferences)
     }
 
     val locationProvider by lazy {
