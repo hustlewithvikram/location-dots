@@ -14,6 +14,14 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Eco
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Water
+import androidx.compose.material.icons.filled.LocalFlorist
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Pets
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Timeline
@@ -29,7 +37,7 @@ import com.vikram.locationdots.ui.components.ProfileAvatar
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-private val profileDoodles = listOf("🌿", "🌙", "☀️", "🌊", "🌸", "🍄", "🪐", "🐈")
+private val profileDoodles = listOf("eco" to Icons.Default.Eco, "night" to Icons.Default.DarkMode, "sun" to Icons.Default.LightMode, "water" to Icons.Default.Water, "flower" to Icons.Default.LocalFlorist, "sparkle" to Icons.Default.AutoAwesome, "pets" to Icons.Default.Pets, "world" to Icons.Default.Public)
 
 @Composable
 fun ProfileScreen(
@@ -299,70 +307,44 @@ private fun EditProfileDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit profile") },
+        shape = RoundedCornerShape(32.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
+        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        title = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Edit profile", style = MaterialTheme.typography.headlineSmall)
+                Text("Make your location journal yours.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        },
         text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(18.dp)) {
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    ProfileAvatar(photoUri = photoUri, name = name, modifier = Modifier.size(100.dp))
+                    ProfileAvatar(photoUri = photoUri, name = name, modifier = Modifier.size(88.dp))
                 }
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it.take(40) },
-                    label = { Text("Your name") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Choose a doodle", style = MaterialTheme.typography.titleSmall)
-                    Row(
-                        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        profileDoodles.forEach { doodle ->
+                OutlinedTextField(value = name, onValueChange = { name = it.take(40) }, label = { Text("Your name") }, singleLine = true, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Choose an avatar", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        profileDoodles.forEach { (doodle, icon) ->
                             val selected = photoUri == "doodle:$doodle"
-                            Surface(
-                                onClick = { onSelectDoodle(doodle) },
-                                modifier = Modifier.then(
-                                    if (selected) Modifier.border(
-                                        2.dp,
-                                        MaterialTheme.colorScheme.primary,
-                                        CircleShape
-                                    ) else Modifier
-                                ),
-                                shape = CircleShape,
-                                color = if (selected) MaterialTheme.colorScheme.primaryContainer
-                                    else MaterialTheme.colorScheme.surfaceContainerHigh
-                            ) {
-                                Box(
-                                    Modifier.size(48.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(doodle, style = MaterialTheme.typography.titleLarge)
+                            Surface(onClick = { onSelectDoodle(doodle) }, modifier = Modifier.size(48.dp).then(if (selected) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, CircleShape) else Modifier), shape = CircleShape, color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainer) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(imageVector = icon, contentDescription = doodle, modifier = Modifier.size(24.dp), tint = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                         }
                     }
                 }
-                OutlinedButton(onClick = onChangePhoto, modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(onClick = onChangePhoto, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), contentPadding = PaddingValues(vertical = 13.dp)) {
                     Icon(Icons.Default.CameraAlt, null)
                     Spacer(Modifier.width(8.dp))
                     Text("Choose a photo")
                 }
-                Text(
-                    "Your photo is resized for smooth scrolling. You can use a photo or one of these doodles.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Text("Choose a crisp vector avatar or use a photo. Photos are resized for smooth scrolling.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
-        confirmButton = {
-            TextButton(onClick = { onSave(name.trim().ifBlank { "Your name" }) }) { Text("Save changes") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
-        }
+        confirmButton = { Button(onClick = { onSave(name.trim().ifBlank { "Your name" }) }, shape = RoundedCornerShape(16.dp)) { Text("Save changes") } },
+        dismissButton = { OutlinedButton(onClick = onDismiss, shape = RoundedCornerShape(16.dp)) { Text("Cancel") } }
     )
 }
