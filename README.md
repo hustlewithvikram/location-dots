@@ -17,6 +17,23 @@ A privacy-focused Android app that quietly records where you go and turns your d
 
 ---
 
+## Download Location Dots
+
+You can get the latest Location Dots APK from **Orion Store** or download a recent build from this repository.
+
+### Orion Store
+
+[**Get Location Dots on Orion Store →**](https://rookieenough.github.io/Orion-Data/redirect.html?id=location-dots&icon=https%3A%2F%2Fraw.githubusercontent.com%2Fhustlewithvikram%2Flocation-dots%2Fmaster%2Fassets%2Flocation-dots-icon.png)
+
+### Recent APK builds
+
+Recent builds are available in both variants:
+
+- **Release APK** — recommended for regular use.
+- **Debug APK** — intended for testing and troubleshooting.
+
+Check [GitHub Releases](https://github.com/hustlewithvikram/location-dots/releases) for published APKs, or visit [GitHub Actions](https://github.com/hustlewithvikram/location-dots/actions) to find recent workflow builds and their downloadable artifacts. Availability depends on the latest successful build.
+
 ## What is Location Dots?
 
 Location Dots is a **local-first location history app** for Android.
